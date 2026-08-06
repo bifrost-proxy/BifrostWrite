@@ -7714,6 +7714,104 @@ describe("chatStore", () => {
         expect(sendAttempts).toBe(2);
     });
 
+    it("retries a failed idle ACP send without reinjecting the unsent prompt", async () => {
+        useVaultStore.setState({ vaultPath: "/vault", notes: [] });
+        let sendAttempts = 0;
+        let persistedMessages: Array<{ content: string }> = [];
+        const sentPrompts: string[] = [];
+        invokeMock.mockImplementation(async (command, args) => {
+            if (command === "ai_save_session_history") {
+                const history = (args as { history?: { messages?: unknown } })
+                    .history;
+                persistedMessages = Array.isArray(history?.messages)
+                    ? history.messages.map((message) => ({
+                          content:
+                              typeof message === "object" &&
+                              message !== null &&
+                              "content" in message &&
+                              typeof message.content === "string"
+                                  ? message.content
+                                  : "",
+                      }))
+                    : [];
+                return;
+            }
+            if (command === "ai_load_session_history_page") {
+                const requestedSessionId = (args as { sessionId?: string })
+                    .sessionId;
+                return {
+                    session_id: requestedSessionId ?? "codex-session-1",
+                    total_messages: persistedMessages.length,
+                    start_index: 0,
+                    end_index: persistedMessages.length,
+                    messages: persistedMessages.map((message, index) => ({
+                        id: `persisted-${index}`,
+                        role: "assistant",
+                        kind: "error",
+                        content: message.content,
+                        timestamp: index,
+                    })),
+                };
+            }
+            if (command === "ai_send_message") {
+                sendAttempts += 1;
+                sentPrompts.push(
+                    (args as { content?: string }).content ?? "",
+                );
+                if (sendAttempts === 1) {
+                    throw new Error(
+                        "The AI runtime disconnected while sending. Reconnect the chat and retry the message.",
+                    );
+                }
+                return { ...sessionPayload, status: "streaming" };
+            }
+            return defaultInvokeImplementation(command, args);
+        });
+
+        await useChatStore.getState().initialize();
+
+        const activeSessionId = getActiveSessionId();
+        useChatStore.getState().setComposerParts([
+            { id: "text-idle-retry", type: "text", text: "Continue this chat" },
+        ]);
+
+        await useChatStore.getState().sendMessage(activeSessionId);
+
+        expect(useChatStore.getState().sessionsById[activeSessionId]).toMatchObject({
+            runtimeState: "detached",
+            status: "error",
+            resumeContextPending: false,
+        });
+        expect(
+            serializeComposerParts(
+                useChatStore.getState().composerPartsBySessionId[activeSessionId] ?? [],
+            ),
+        ).toContain("Continue this chat");
+        expect(
+            useChatStore
+                .getState()
+                .sessionsById[activeSessionId]?.messages.some(
+                    (message) =>
+                        message.role === "user" &&
+                        message.content === "Continue this chat",
+                ),
+        ).toBe(false);
+
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(
+            persistedMessages.some(
+                (message) => message.content === "Continue this chat",
+            ),
+        ).toBe(false);
+
+        await useChatStore.getState().sendMessage(activeSessionId);
+
+        expect(sendAttempts).toBe(2);
+        expect(
+            sentPrompts[1]?.match(/Continue this chat/g),
+        ).toHaveLength(1);
+    });
+
     it("interrupts the current turn and sends the queued message immediately when sending it now", async () => {
         invokeMock.mockImplementation(async (command, args) => {
             if (command === "ai_list_runtimes") return runtimePayload;
@@ -17778,7 +17876,7 @@ describe("chatStore", () => {
         ).toEqual([parent.sessionId]);
     });
 
-    it("marks live parent and child sessions as errored when their ACP runtime disconnects", () => {
+    it("marks only the affected live ACP session family as errored when its runtime disconnects", () => {
         const parent = {
             ...createSessionWithTrackedFiles("session-parent", []),
             runtimeId: "codex-acp",
@@ -17798,22 +17896,31 @@ describe("chatStore", () => {
             runtimeState: "live" as const,
             status: "streaming" as const,
         };
+        const otherCodexSession = {
+            ...createSessionWithTrackedFiles("session-other-codex", []),
+            runtimeId: "codex-acp",
+            runtimeState: "live" as const,
+            status: "streaming" as const,
+        };
 
         useChatStore.setState({
             sessionsById: {
                 [parent.sessionId]: parent,
                 [child.sessionId]: child,
                 [otherRuntime.sessionId]: otherRuntime,
+                [otherCodexSession.sessionId]: otherCodexSession,
             },
             sessionOrder: [
                 parent.sessionId,
                 child.sessionId,
                 otherRuntime.sessionId,
+                otherCodexSession.sessionId,
             ],
         });
 
         useChatStore.getState().applyRuntimeConnection({
             runtime_id: "codex-acp",
+            session_id: parent.sessionId,
             status: "error",
             message: "The ACP process exited.",
         });
@@ -17854,6 +17961,9 @@ describe("chatStore", () => {
         expect(
             useChatStore.getState().sessionsById[otherRuntime.sessionId],
         ).toBe(otherRuntime);
+        expect(
+            useChatStore.getState().sessionsById[otherCodexSession.sessionId],
+        ).toBe(otherCodexSession);
     });
 
     it("clears virtualized row UI state when deleting a session", async () => {
