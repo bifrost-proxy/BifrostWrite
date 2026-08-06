@@ -18,6 +18,7 @@ export interface Settings {
     editorLineHeight: number; // 120–220 (percentage)
     editorAutosaveDelayMs: number; // 50–5000
     editorContentWidth: number; // 600–1200
+    aiChatContentWidth: number; // 480–1200
     lineWrapping: boolean;
     editorActiveLineHighlight: boolean;
     justifyText: boolean;
@@ -192,6 +193,7 @@ const defaults: Settings = {
     editorLineHeight: 175,
     editorAutosaveDelayMs: 300,
     editorContentWidth: 940,
+    aiChatContentWidth: 600,
     lineWrapping: true,
     editorActiveLineHighlight: true,
     justifyText: false,
@@ -269,6 +271,17 @@ function normalizeIntInRange(
 
     if (!Number.isFinite(parsed)) return fallback;
     return Math.min(max, Math.max(min, Math.round(parsed)));
+}
+
+function normalizeAiChatContentWidth(value: unknown): number {
+    const width = normalizeIntInRange(
+        value,
+        defaults.aiChatContentWidth,
+        480,
+        1200,
+    );
+
+    return Math.round(width / 20) * 20;
 }
 
 function normalizeTabSize(value: unknown): 2 | 4 {
@@ -478,6 +491,9 @@ function extractSettingsFromStorage(raw: string | null): Settings | null {
                 600,
                 1200,
             ),
+            aiChatContentWidth: normalizeAiChatContentWidth(
+                parsed.state.aiChatContentWidth,
+            ),
             lineWrapping: parsed.state.lineWrapping ?? defaults.lineWrapping,
             editorActiveLineHighlight:
                 parsed.state.editorActiveLineHighlight ??
@@ -621,6 +637,7 @@ function pickSettings(state: SettingsStore): Settings {
         editorLineHeight: state.editorLineHeight,
         editorAutosaveDelayMs: state.editorAutosaveDelayMs,
         editorContentWidth: state.editorContentWidth,
+        aiChatContentWidth: state.aiChatContentWidth,
         lineWrapping: state.lineWrapping,
         editorActiveLineHighlight: state.editorActiveLineHighlight,
         justifyText: state.justifyText,
@@ -871,6 +888,12 @@ export const useSettingsStore = create<SettingsStore>()((set) => ({
                 return {
                     fileTreeExtensionFilter:
                         normalizeFileTreeExtensionFilter(value),
+                };
+            }
+
+            if (key === "aiChatContentWidth") {
+                return {
+                    aiChatContentWidth: normalizeAiChatContentWidth(value),
                 };
             }
 
