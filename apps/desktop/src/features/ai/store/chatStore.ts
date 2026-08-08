@@ -214,6 +214,10 @@ const CLOSED_SUBAGENT_QUEUE_CANCELLED_STATUS_TITLE =
     "Queued messages were cancelled because this subagent was closed by its parent thread.";
 const SAVED_CHAT_RECONNECT_FAILED_MESSAGE =
     "Could not reconnect this chat. Start a new session with saved transcript context?";
+const SAVED_CHAT_RECONNECT_FAILURE_PREFIX =
+    "Could not reconnect this chat because the AI runtime ";
+const RUNTIME_CONFIGURATION_INVALID_DIAGNOSTIC =
+    "The AI runtime configuration is invalid.";
 const CUSTOM_RUNTIME_CONTINUATION_STATUS_EVENT_ID =
     "neverwrite:recovery:custom-runtime-continuation";
 const CUSTOM_RUNTIME_UNAVAILABLE_MESSAGE =
@@ -711,6 +715,21 @@ function getRuntimeConnectionRootSessionId(
 
 function isRemovedGeminiAcpSession(session: Pick<AIChatSession, "runtimeId">) {
     return session.runtimeId === "gemini-acp";
+}
+
+function getSavedChatReconnectFailureMessage(runtimeError: string) {
+    if (runtimeError.includes(RUNTIME_CONFIGURATION_INVALID_DIAGNOSTIC)) {
+        return `${SAVED_CHAT_RECONNECT_FAILURE_PREFIX}configuration is invalid. Review its configuration and try again.`;
+    }
+
+    return SAVED_CHAT_RECONNECT_FAILED_MESSAGE;
+}
+
+function isSavedChatReconnectFailureMessage(message: string) {
+    return (
+        message === SAVED_CHAT_RECONNECT_FAILED_MESSAGE ||
+        message.startsWith(SAVED_CHAT_RECONNECT_FAILURE_PREFIX)
+    );
 }
 
 function getWorkspaceHistorySessionIdForSession(sessionId: string) {
@@ -9472,7 +9491,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
                     ...removeSessionMessage(session, messageId),
                     resumeReconnectFailed:
                         message.kind === "error" &&
-                        message.content === SAVED_CHAT_RECONNECT_FAILED_MESSAGE
+                        isSavedChatReconnectFailureMessage(message.content)
                             ? false
                             : session.resumeReconnectFailed,
                 };
@@ -11192,7 +11211,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
                 });
                 get().applySessionError({
                     session_id: sessionId,
-                    message: SAVED_CHAT_RECONNECT_FAILED_MESSAGE,
+                    message: getSavedChatReconnectFailureMessage(message),
                 });
                 if (
                     isAuthenticationErrorMessage(
