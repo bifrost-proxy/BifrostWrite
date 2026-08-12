@@ -99,7 +99,38 @@ jobs:
         run: |
           DMG_PATH=$(find "src-tauri/target/${{ matrix.target }}/release/bundle/dmg" -maxdepth 1 -name '*.dmg' -type f | head -n 1)
           test -n "$DMG_PATH"
-          scripts/verify-macos-dmg.sh "$DMG_PATH" "${{ matrix.target }}"
+          MOUNT_DIR=$(mktemp -d "${TMPDIR:-/tmp}/bifrostwrite-dmg.XXXXXX")
+          MOUNTED=0
+          cleanup() {
+            if [[ $MOUNTED -eq 1 ]]; then
+              hdiutil detach "$MOUNT_DIR" -force >/dev/null 2>&1 || true
+            fi
+            rmdir "$MOUNT_DIR" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          hdiutil attach "$DMG_PATH" -nobrowse -readonly -mountpoint "$MOUNT_DIR" >/dev/null
+          MOUNTED=1
+          APP_PATH=$(find "$MOUNT_DIR" -maxdepth 1 -type d -name 'BifrostWrite.app' -print -quit)
+          test -n "$APP_PATH"
+
+          APP_BINARY="$APP_PATH/Contents/MacOS/bifrostwrite"
+          SIDECAR="$APP_PATH/Contents/Resources/native-backend/neverwrite-native-backend"
+          test -x "$APP_BINARY"
+          test -x "$SIDECAR"
+          test ! -e "$APP_PATH/Contents/Frameworks/Electron Framework.framework"
+
+          case "${{ matrix.target }}" in
+            aarch64-apple-darwin) EXPECTED_ARCH=arm64 ;;
+            x86_64-apple-darwin) EXPECTED_ARCH=x86_64 ;;
+            *) exit 2 ;;
+          esac
+          ARCHS=" $(lipo -archs "$APP_BINARY") "
+          [[ "$ARCHS" == *" $EXPECTED_ARCH "* ]]
+
+          codesign --verify --deep --strict "$APP_PATH"
+          du -sh "$APP_PATH"
+          BIFROSTWRITE_PACKAGED_SIDECAR_PATH="$SIDECAR" node scripts/smoke-packaged-sidecar.mjs
 
       - name: Package release asset
         working-directory: apps/desktop
@@ -141,7 +172,7 @@ jobs:
         shell: bash
         run: |
           cd release
-          cat *.sha256 > "BifrostWrite-${{ needs.prepare.outputs.tag }}-checksums.txt"
+          cat ./*.sha256 > "BifrostWrite-${{ needs.prepare.outputs.tag }}-checksums.txt"
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
