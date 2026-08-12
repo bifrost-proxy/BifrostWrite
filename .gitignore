@@ -27,7 +27,8 @@ apps/desktop/dist/
 apps/desktop/dist-electron/
 apps/desktop/dist-electron*/
 apps/desktop/out/
-apps/desktop/src-tauri/resources/native-backend/
+apps/desktop/src-tauri/resources/native-backend/*
+!apps/desktop/src-tauri/resources/native-backend/.gitkeep
 apps/desktop/node_modules/
 apps/desktop/test-results/
 apps/desktop/playwright-report/

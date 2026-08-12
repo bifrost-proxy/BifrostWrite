@@ -1,2 +1,2 @@
-native-backend/
+native-backend/*
 !native-backend/.gitkeep
