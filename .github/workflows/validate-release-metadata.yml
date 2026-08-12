@@ -48,6 +48,7 @@ jobs:
       - name: Check release scripts
         run: |
           node --check scripts/sync-tauri-version.mjs
+          bash -n apps/desktop/scripts/verify-macos-dmg.sh
           node --check apps/desktop/scripts/stage-native-runtime-assets.mjs
           node --check apps/desktop/scripts/stage-tauri-sidecar.mjs
           node --check apps/desktop/scripts/smoke-packaged-sidecar.mjs
