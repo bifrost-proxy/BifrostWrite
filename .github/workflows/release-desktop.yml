@@ -143,7 +143,10 @@ jobs:
           mkdir -p dist
           ASSET="BifrostWrite-v${VERSION}-${TARGET}.dmg"
           cp "$SOURCE" "dist/$ASSET"
-          shasum -a 256 "dist/$ASSET" > "dist/$ASSET.sha256"
+          (
+            cd dist
+            shasum -a 256 "$ASSET" > "$ASSET.sha256"
+          )
 
       - uses: actions/upload-artifact@v7
         with:

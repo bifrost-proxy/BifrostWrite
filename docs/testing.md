@@ -58,7 +58,7 @@ multiple windows, file previews, deep links, and the web clipper loopback API.
 ## Version and release contract
 
 ```bash
-node scripts/sync-tauri-version.mjs --check 0.7.1
+node scripts/sync-tauri-version.mjs --check 1.0.0
 ```
 
 The release workflow validates matching versions in the desktop package,
