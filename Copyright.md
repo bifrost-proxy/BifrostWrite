@@ -56,12 +56,12 @@ dictionary licenses.
 | vite, @vitejs/plugin-react     | MIT                |
 | typescript                     | Apache-2.0         |
 
-### Electron Runtime
+### Desktop Runtime
 | Package                        | License |
 | ------------------------------ | ------- |
-| electron                       | MIT     |
-| electron-builder               | MIT     |
-| electron-updater               | MIT     |
+| @tauri-apps/api                | MIT OR Apache-2.0 |
+| @tauri-apps/cli                | MIT OR Apache-2.0 |
+| tauri                          | MIT OR Apache-2.0 |
 
 ### Editor (CodeMirror 6)
 

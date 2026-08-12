@@ -24,7 +24,7 @@ What is currently required by the app/build pipeline:
 - `Claude-agent-acp-upstream/dist/`
   - compiled runtime files that are copied into the desktop bundle
 - `Claude-agent-acp-upstream/node_modules/`
-  - production dependencies are installed by the Electron sidecar staging step
+  - production dependencies are installed by the Tauri sidecar staging step
     and copied into the packaged embedded Claude runtime
 - `acp12/`
   - used as Rust compatibility crates by the native backend for Grok legacy ACP
@@ -190,7 +190,7 @@ The `dist/` directory is rebuilt from the vendored source snapshot because the
 desktop packaging flow stages the compiled runtime files, while upstream does
 not track generated output in git.
 
-Electron release packaging treats the staged Claude runtime as incomplete unless
+Tauri release packaging treats the staged Claude runtime as incomplete unless
 the packaged resources include:
 
 - `native-backend/embedded/claude-agent-acp/dist/index.js`
