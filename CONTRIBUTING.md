@@ -15,13 +15,13 @@ Thanks for your interest in contributing to BifrostWrite. This guide covers ever
 
 - **macOS**: Xcode Command Line Tools (`xcode-select --install`)
 - **Windows**: MSVC Build Tools, WebView2
-- **Linux**: Standard build essentials for Rust and Electron packaging (`build-essential`, `pkg-config`, `curl`, `wget`)
+- **Linux**: Tauri 2 system WebView and Rust build dependencies (`build-essential`, `pkg-config`, `curl`, `wget`, WebKitGTK)
 
 ## Repository structure
 
 ```text
 apps/
-  desktop/            Electron + React desktop app (npm)
+  desktop/            Tauri 2 + React desktop app (npm)
   web-clipper/        WXT browser extension (pnpm)
 crates/
   types/              Shared DTOs and domain models
@@ -44,7 +44,7 @@ npm install
 # Frontend only (Vite dev server)
 npm run renderer:dev
 
-# Full Electron app with Rust sidecar
+# Full Tauri app with Rust sidecar
 npm run dev
 ```
 
@@ -201,7 +201,8 @@ cargo test -p neverwrite-vault      # Single crate
 
 ### Backend
 
-- **Electron** — desktop shell and IPC bridge
+- **Tauri 2** — Rust desktop shell, system WebView, commands, deep links, and window lifecycle
+- **Rust native sidecar** — JSON-lines backend for vault, AI, terminal, preview, and Web Clipper operations
 - **Tokio** — async runtime
 - **notify** — filesystem watching
 - **Node HTTP server** — local desktop API for web clipper communication (`127.0.0.1:32145`)
@@ -226,37 +227,41 @@ For development, these optional variables can override default runtime paths:
 
 ## Versioning
 
-We follow [Semantic Versioning](https://semver.org/). During the `0.x` phase, minor bumps may include breaking changes.
+We follow [Semantic Versioning](https://semver.org/). Stable releases start at `1.0.0`; prereleases use suffixes such as `-beta.1`.
 
 Versions are kept in sync across:
 
 - `apps/desktop/package.json`
 - `apps/desktop/package-lock.json`
+- `apps/desktop/src-tauri/tauri.conf.json`
+- `apps/desktop/src-tauri/Cargo.toml`
 - `apps/desktop/native-backend/Cargo.toml`
-- `apps/web-clipper/package.json`
 - `CHANGELOG.md`
 
-Use `scripts/bump-version.sh` to update the package, native backend, and Web
-Clipper version files at once, then add the matching `CHANGELOG.md` release entry.
+Use `node scripts/sync-tauri-version.mjs X.Y.Z` to update the desktop package,
+Tauri shell, and native backend version files together, then add the matching
+`CHANGELOG.md` release entry.
 Before creating a release tag, run:
 
 ```bash
-node scripts/validate-release-metadata.mjs --tag vX.Y.Z
+node scripts/sync-tauri-version.mjs --check X.Y.Z
 ```
 
 ## Release automation
 
-Desktop releases are maintainer-driven and run through the Electron release workflow in GitHub Actions.
-The same workflow validates and attaches the Web Clipper Chrome and Firefox MV3 zip artifacts to the GitHub Release.
+Desktop releases are maintainer-driven and run through the Tauri release workflow in GitHub Actions.
+The workflow builds architecture-specific Apple Silicon and Intel DMGs, mounts
+and verifies the final packages, exercises the packaged native runtimes, and
+publishes checksums with the GitHub Release.
 
 Before triggering [`.github/workflows/release-desktop.yml`](.github/workflows/release-desktop.yml):
 
-- Bump the desktop version sources with `scripts/bump-version.sh X.Y.Z`
+- Bump the desktop version sources with `node scripts/sync-tauri-version.mjs X.Y.Z`
 - Add or update the matching `CHANGELOG.md` entry
-- Run `node scripts/validate-release-metadata.mjs --tag vX.Y.Z`
-- Create and push the release tag, for example `v0.2.1`
-- Ensure the required signing secrets are configured in the GitHub repository settings
-- Review the Electron release topology and signing requirements documented in [`release/appcast/README.md`](release/appcast/README.md)
+- Run `node scripts/sync-tauri-version.mjs --check X.Y.Z`
+- Create and push the release tag, for example `v1.0.0`
+- Confirm `.github/workflows/release-desktop.yml` succeeds for both macOS architectures
+- Install the GitHub Release DMG and verify the application before updating the Homebrew Cask
 
 ## Reporting issues
 

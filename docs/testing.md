@@ -51,7 +51,7 @@ BIFROSTWRITE_TAURI_RELEASE_TARGET=aarch64-apple-darwin \
   npm run tauri:sidecar:smoke:packaged
 ```
 
-Verify the `.app` contains the native sidecar and no Electron Framework, mount
+Verify the `.app` contains the native sidecar and no legacy browser framework, mount
 the DMG, copy the app to `/Applications`, and exercise vault open/save, AI,
 multiple windows, file previews, deep links, and the web clipper loopback API.
 
