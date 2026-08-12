@@ -107,7 +107,7 @@ function createDefaultProviders() {
                     id: "openai-api-key",
                     name: "API key",
                     description:
-                        "Use an OpenAI API key stored locally in NeverWrite.",
+                        "Use an OpenAI API key stored locally in BifrostWrite.",
                 },
             ],
             onboardingRequired: false,
@@ -136,13 +136,13 @@ function createDefaultProviders() {
                     id: "gateway",
                     name: "Custom gateway",
                     description:
-                        "Use a custom Anthropic-compatible gateway just for NeverWrite.",
+                        "Use a custom Anthropic-compatible gateway just for BifrostWrite.",
                 },
                 {
                     id: "gateway-bedrock",
                     name: "Bedrock gateway",
                     description:
-                        "Use a custom Bedrock-compatible gateway just for NeverWrite.",
+                        "Use a custom Bedrock-compatible gateway just for BifrostWrite.",
                 },
             ],
         }),
@@ -190,7 +190,7 @@ function addGrokProvider(
             {
                 id: "xai-api-key",
                 name: "xAI API key",
-                description: "Use an xAI API key stored only for NeverWrite.",
+                description: "Use an xAI API key stored only for BifrostWrite.",
             },
         ],
         ...statusOverrides,
@@ -677,7 +677,7 @@ describe("AIProvidersSettings", () => {
                 {
                     id: "kilo-api-key",
                     name: "Kilo API key",
-                    description: "Use a Kilo API key stored only for NeverWrite.",
+                    description: "Use a Kilo API key stored only for BifrostWrite.",
                 },
             ],
         });
@@ -872,7 +872,7 @@ describe("AIProvidersSettings", () => {
         renderComponent(
             <AIProvidersSettings
                 searchQuery={createSettingsSearchQuery(
-                    "NEVERWRITE_GROK_ACP_BIN",
+                    "BIFROSTWRITE_GROK_ACP_BIN",
                 )}
             />,
         );

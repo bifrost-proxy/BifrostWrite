@@ -1,5 +1,5 @@
-import { invoke } from "@neverwrite/runtime";
-import { listen } from "@neverwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
+import { listen } from "@bifrostwrite/runtime";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSettingsStore } from "../../app/store/settingsStore";
 import { useVaultStore } from "../../app/store/vaultStore";

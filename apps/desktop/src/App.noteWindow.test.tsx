@@ -91,7 +91,7 @@ vi.mock("./features/ai/AIChatDetachedWindowHost", () => ({
 }));
 
 vi.mock("./app/detachedWindows", () => ({
-    ATTACH_EXTERNAL_TAB_EVENT: "neverwrite:attach-external-tab",
+    ATTACH_EXTERNAL_TAB_EVENT: "bifrostwrite:attach-external-tab",
     getCurrentWindowLabel: () => detachedWindowMock.label,
     getWindowMode: () => detachedWindowMock.mode,
     openDetachedNoteWindow: vi.fn(),

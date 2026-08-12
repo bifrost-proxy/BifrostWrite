@@ -10,7 +10,7 @@ import {
     type PointerEvent as ReactPointerEvent,
 } from "react";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
-import { openPath } from "@neverwrite/runtime";
+import { openPath } from "@bifrostwrite/runtime";
 import {
     ContextMenu,
     type ContextMenuEntry,

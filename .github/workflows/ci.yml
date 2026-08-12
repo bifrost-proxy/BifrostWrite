@@ -62,7 +62,7 @@ jobs:
         run: cargo test -p neverwrite-native-backend ai_history::migration --no-fail-fast
 
   desktop:
-    name: Desktop
+    name: Desktop (Tauri)
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
@@ -87,6 +87,11 @@ jobs:
         working-directory: apps/desktop
         run: npm ci
 
+      - name: Install Tauri Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
       - name: Run desktop lint
         working-directory: apps/desktop
         run: npm run lint
@@ -95,20 +100,26 @@ jobs:
         working-directory: apps/desktop
         run: npm test
 
-      - name: Build Electron bundles
+      - name: Build renderer
         working-directory: apps/desktop
-        run: npm run electron:build
+        run: npm run renderer:build
 
       - name: Build native desktop sidecar
         run: cargo build -p neverwrite-native-backend
 
+      - name: Check Tauri shell
+        run: cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml
+
+      - name: Test Tauri shell
+        run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
+
       - name: Run vault/editor smoke
         working-directory: apps/desktop
-        run: npm run electron:vault-editor:smoke
+        run: node scripts/smoke-native-vault-editor.mjs
 
       - name: Run AI runtime smoke
         working-directory: apps/desktop
-        run: npm run electron:ai-runtime:smoke
+        run: node scripts/smoke-native-ai-runtime.mjs
 
   web-clipper:
     name: Web Clipper

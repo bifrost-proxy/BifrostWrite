@@ -68,7 +68,7 @@ const runtimeMocks = vi.hoisted(() => {
         readonly once = vi
             .fn()
             .mockImplementation(async (eventName: string, handler: (event: { event: string; payload: unknown; windowLabel: string }) => void) => {
-                if (eventName === "neverwrite:window-created") {
+                if (eventName === "tauri://created") {
                     queueMicrotask(() => {
                         handler({
                             event: eventName,
@@ -137,10 +137,10 @@ Object.defineProperty(globalThis, "__xtermMockInstances", {
     configurable: true,
 });
 
-vi.mock("@neverwrite/runtime", () => ({
-    runtimeName: "electron",
+vi.mock("@bifrostwrite/runtime", () => ({
+    runtimeName: "tauri",
     runtime: {
-        name: "electron",
+        name: "tauri",
         invoke: runtimeMocks.invoke,
         listen: runtimeMocks.listen,
         emitTo: runtimeMocks.emitTo,

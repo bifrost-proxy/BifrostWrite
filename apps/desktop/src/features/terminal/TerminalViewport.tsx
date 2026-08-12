@@ -5,7 +5,7 @@ import { SearchAddon } from "@xterm/addon-search";
 import { SerializeAddon } from "@xterm/addon-serialize";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { WebglAddon } from "@xterm/addon-webgl";
-import { openUrl } from "@neverwrite/runtime";
+import { openUrl } from "@bifrostwrite/runtime";
 import { Terminal } from "@xterm/xterm";
 import {
     useCallback,
@@ -128,7 +128,7 @@ export function TerminalViewport({
     const shouldRestoreFocusRef = useRef(false);
     const webglAddonRef = useRef<WebglAddon | null>(null);
     // Set to true after an explicit Shift+Enter write so that onData can drop
-    // the duplicate \n that Electron's textarea sometimes leaks despite
+    // the duplicate \n that a native webview textarea can leak despite
     // event.preventDefault() — the root cause of ghost rows when lines added
     // via Shift+Enter are then deleted.
     const suppressNextNewlineRef = useRef(false);

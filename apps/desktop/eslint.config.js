@@ -8,8 +8,8 @@ import { defineConfig, globalIgnores } from "eslint/config";
 export default defineConfig([
     globalIgnores([
         "dist",
-        "dist-electron/**",
-        "dist-electron-testing/**",
+        "src-tauri/resources/**",
+        "src-tauri/target/**",
         "out/**",
         "embedded/**",
         "src/features/ai/store/wasm/*.d.ts",

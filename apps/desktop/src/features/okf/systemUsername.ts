@@ -1,9 +1,9 @@
-import { invoke } from "@neverwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
 
 let cached: string | null | undefined;
 
 /**
- * OS account name of the current user, fetched once from the Electron main
+ * OS account name of the current user, fetched once from the Tauri shell
  * process (`get_system_username`) and cached for the session. Returns `null`
  * when the username cannot be determined; callers must then omit
  * attribution fields (e.g. `status_by`) rather than write a placeholder.

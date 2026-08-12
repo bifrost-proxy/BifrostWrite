@@ -81,7 +81,7 @@ describe("vaultStore", () => {
     it("does not forget device-local AI data while the vault is active", async () => {
         const invoke = mockInvoke();
         localStorage.setItem(
-            "neverwrite:recentVaults",
+            "bifrostwrite:recentVaults",
             JSON.stringify([{ path: "/vault", name: "Vault" }]),
         );
         useVaultStore.setState({ vaultPath: "/vault" });
@@ -127,7 +127,7 @@ describe("vaultStore", () => {
         const invoke = mockInvoke();
         invoke.mockRejectedValueOnce(new Error("cleanup blocked"));
         localStorage.setItem(
-            "neverwrite:recentVaults",
+            "bifrostwrite:recentVaults",
             JSON.stringify([{ path: "/missing-vault", name: "Missing" }]),
         );
 

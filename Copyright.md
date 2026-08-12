@@ -1,6 +1,6 @@
 # Copyright & Licenses
 
-Copyright © 2024–2026 NeverWrite Contributors.
+Copyright © 2024–2026 BifrostWrite Contributors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ limitations under the License.
 
 ## Third-Party Dependencies
 
-NeverWrite is built upon open-source software. Below is a summary of the licenses
+BifrostWrite is built upon open-source software. Below is a summary of the licenses
 governing our direct and transitive dependencies, grouped by license type.
 
 ### License Summary
@@ -288,14 +288,14 @@ The bundled dictionary metadata lives in
 
 ## Modified Vendored Code
 
-The following vendored packages have been modified by NeverWrite contributors.
+The following vendored packages have been modified by BifrostWrite contributors.
 As required by the Apache-2.0 license, modifications are documented below.
 
 ### `vendor/codex-acp` — Zed Industries (Apache-2.0)
 
 Original source: https://github.com/zed-industries/codex-acp (version 0.16.0).
 
-Zed Industries has deprecated Codex ACP. NeverWrite maintains this vendored adapter internally to preserve its Codex integration and compatibility with the application's review and session workflows.
+Zed Industries has deprecated Codex ACP. BifrostWrite maintains this vendored adapter internally to preserve its Codex integration and compatibility with the application's review and session workflows.
 
 The adapter is built against the OpenAI Codex Rust workspace pinned to `rust-v0.147.0`; its packages are declared as Git dependencies in `vendor/codex-acp/Cargo.toml`.
 
@@ -303,9 +303,9 @@ The adapter is built against the OpenAI Codex Rust workspace pinned to `rust-v0.
 | --------------------- | -------------------------------------------------------------- |
 | `src/thread.rs`       | Extended to support AI review flow, multi-vault sessions, and custom diff streaming |
 | `src/codex_agent.rs`  | Adapted for Agent Client Protocol 0.14 compatibility and session configuration |
-| `src/prompt_args.rs`, `src/subagents.rs` | Added custom-prompt parsing and NeverWrite child-session lifecycle projection |
+| `src/prompt_args.rs`, `src/subagents.rs` | Added custom-prompt parsing and BifrostWrite child-session lifecycle projection |
 | `src/lib.rs`, `src/main.rs` | Adjusted crate wiring and compile limits for the promoted runtime graph |
-| `vendor/codex-utils-pty/` | Maintains the standalone PTY snapshot and NeverWrite's macOS process-group fallback on the upstream 0.147.0 source |
+| `vendor/codex-utils-pty/` | Maintains the standalone PTY snapshot and BifrostWrite's macOS process-group fallback on the upstream 0.147.0 source |
 
 ### `vendor/Claude-agent-acp-upstream` — Anthropic (Apache-2.0)
 

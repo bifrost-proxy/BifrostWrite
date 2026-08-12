@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useState } from "react";
-import { openUrl } from "@neverwrite/runtime";
+import { openUrl } from "@bifrostwrite/runtime";
 import { useVaultStore } from "../../app/store/vaultStore";
 import {
     aiGetEnvironmentDiagnostics,
@@ -366,7 +366,7 @@ function getProviderSearchValues(
             ? "grok --no-auto-update agent stdio"
             : undefined,
         provider.id === GROK_RUNTIME_ID
-            ? "NEVERWRITE_GROK_ACP_BIN"
+            ? "BIFROSTWRITE_GROK_ACP_BIN"
             : undefined,
         getMethodDisplayName(setupStatus),
         error,

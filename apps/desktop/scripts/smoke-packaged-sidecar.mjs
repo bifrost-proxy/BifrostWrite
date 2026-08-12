@@ -14,13 +14,24 @@ const executableName =
         ? "neverwrite-native-backend.exe"
         : "neverwrite-native-backend";
 const outputRoot =
-    process.env.NEVERWRITE_ELECTRON_OUTPUT_DIR?.trim() ||
-    path.join(appRoot, "dist-electron");
-const distArch =
-    process.env.NEVERWRITE_ELECTRON_DIST_ARCH?.trim() || process.arch;
+    process.env.BIFROSTWRITE_TAURI_OUTPUT_DIR?.trim() ||
+    path.join(appRoot, "src-tauri", "target");
+const targetTriple =
+    process.env.BIFROSTWRITE_TAURI_RELEASE_TARGET?.trim() ||
+    (process.platform === "darwin"
+        ? process.arch === "arm64"
+            ? "aarch64-apple-darwin"
+            : "x86_64-apple-darwin"
+        : process.platform === "win32"
+          ? process.arch === "arm64"
+              ? "aarch64-pc-windows-msvc"
+              : "x86_64-pc-windows-msvc"
+          : process.arch === "arm64"
+            ? "aarch64-unknown-linux-gnu"
+            : "x86_64-unknown-linux-gnu");
 const DEFAULT_SMOKE_TIMEOUT_MS = 15000;
 const configuredSmokeTimeoutMs = Number(
-    process.env.NEVERWRITE_PACKAGED_SIDECAR_SMOKE_TIMEOUT_MS,
+    process.env.BIFROSTWRITE_PACKAGED_SIDECAR_SMOKE_TIMEOUT_MS,
 );
 const smokeTimeoutMs =
     Number.isFinite(configuredSmokeTimeoutMs) && configuredSmokeTimeoutMs > 0
@@ -30,15 +41,21 @@ const smokeTimeoutMs =
 function defaultPackagedSidecarCandidates() {
     if (process.platform === "darwin") {
         const appRelativePath = path.join(
-            "NeverWrite.app",
+            "BifrostWrite.app",
             "Contents",
             "Resources",
             "native-backend",
             executableName,
         );
         return [
-            path.join(outputRoot, `mac-${distArch}`, appRelativePath),
-            path.join(outputRoot, "mac", appRelativePath),
+            path.join(
+                outputRoot,
+                targetTriple,
+                "release",
+                "bundle",
+                "macos",
+                appRelativePath,
+            ),
         ];
     }
 
@@ -46,44 +63,32 @@ function defaultPackagedSidecarCandidates() {
         return [
             path.join(
                 outputRoot,
-                `linux-${distArch}-unpacked`,
-                "resources",
+                targetTriple,
+                "release",
+                "bundle",
+                "appimage",
                 "native-backend",
                 executableName,
             ),
-            path.join(
-                outputRoot,
-                "linux-unpacked",
-                "resources",
-                "native-backend",
-                executableName,
-            ),
-            path.join(outputRoot, "native-backend", executableName),
         ];
     }
 
     return [
         path.join(
             outputRoot,
-            `win-${distArch}-unpacked`,
-            "resources",
+            targetTriple,
+            "release",
+            "bundle",
+            "msi",
             "native-backend",
             executableName,
         ),
-        path.join(
-            outputRoot,
-            "win-unpacked",
-            "resources",
-            "native-backend",
-            executableName,
-        ),
-        path.join(outputRoot, "native-backend", executableName),
     ];
 }
 
 async function findSidecarPath() {
-    if (process.env.NEVERWRITE_PACKAGED_SIDECAR_PATH) {
-        return process.env.NEVERWRITE_PACKAGED_SIDECAR_PATH;
+    if (process.env.BIFROSTWRITE_PACKAGED_SIDECAR_PATH) {
+        return process.env.BIFROSTWRITE_PACKAGED_SIDECAR_PATH;
     }
 
     const candidates = defaultPackagedSidecarCandidates();
@@ -92,7 +97,7 @@ async function findSidecarPath() {
             await fs.access(candidate);
             return candidate;
         } catch {
-            // Try the next electron-builder output name.
+            // Try the next Tauri bundle output name.
         }
     }
 
@@ -517,18 +522,18 @@ async function runCodeModeTurn({
         mock = await startResponsesMock({ marker, expectedToolOutput });
         await fs.writeFile(
             path.join(codexHome, "config.toml"),
-            `model = "test-gpt-5.1-codex"\nmodel_provider = "neverwrite-packaging-smoke"\nsuppress_unstable_features_warning = true\n\n[features.code_mode]\nenabled = true\n\n[features.code_mode_host]\nenabled = true\ndisable_in_process_fallback = true\n\n[model_providers.neverwrite-packaging-smoke]\nname = "NeverWrite packaging smoke"\nbase_url = "${mock.baseUrl}"\nenv_key = "NEVERWRITE_PACKAGING_SMOKE_API_KEY"\nwire_api = "responses"\n`,
+            `model = "test-gpt-5.1-codex"\nmodel_provider = "neverwrite-packaging-smoke"\nsuppress_unstable_features_warning = true\n\n[features.code_mode]\nenabled = true\n\n[features.code_mode_host]\nenabled = true\ndisable_in_process_fallback = true\n\n[model_providers.neverwrite-packaging-smoke]\nname = "BifrostWrite packaging smoke"\nbase_url = "${mock.baseUrl}"\nenv_key = "BIFROSTWRITE_PACKAGING_SMOKE_API_KEY"\nwire_api = "responses"\n`,
         );
         client = new AcpClient(acpPath, {
             ...process.env,
             CODEX_HOME: codexHome,
-            NEVERWRITE_PACKAGING_SMOKE_API_KEY: "neverwrite-packaging-smoke",
+            BIFROSTWRITE_PACKAGING_SMOKE_API_KEY: "neverwrite-packaging-smoke",
         });
 
         const initialized = await client.request("initialize", {
             protocolVersion: 1,
             clientCapabilities: {},
-            clientInfo: { name: "NeverWrite packaging smoke", version: "0.0.0" },
+            clientInfo: { name: "BifrostWrite packaging smoke", version: "0.0.0" },
         });
         if (
             initialized?.agentInfo?.name !== "codex-acp" ||

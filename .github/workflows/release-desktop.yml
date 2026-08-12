@@ -1,1129 +1,169 @@
-name: Release Desktop
+name: Release BifrostWrite
 
 on:
-    push:
-        tags:
-            - v*
-    workflow_dispatch:
-        inputs:
-            tag:
-                description: Existing release tag to publish (for example v0.2.0)
-                required: true
-                type: string
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to publish, for example v0.7.1
+        required: true
+        type: string
 
 concurrency:
-    group: release-desktop-${{ github.event.inputs.tag || github.ref_name }}
-    cancel-in-progress: false
+  group: release-bifrostwrite-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 
 permissions:
-    contents: write
+  contents: write
 
 env:
-    RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+  RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
 
 jobs:
-    prepare:
-        name: Prepare Release
-        runs-on: ubuntu-latest
-        outputs:
-            version: ${{ steps.meta.outputs.version }}
-            tag: ${{ steps.meta.outputs.tag }}
-            channel: ${{ steps.meta.outputs.channel }}
-            repo_slug: ${{ steps.meta.outputs.repo_slug }}
-            pages_base_url: ${{ steps.meta.outputs.pages_base_url }}
-
-        steps:
-            - uses: actions/checkout@v6
-              with:
-                  fetch-depth: 0
-                  ref: ${{ env.RELEASE_TAG }}
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v6
-              with:
-                  node-version: 22
-
-            - name: Validate release tag input
-              shell: bash
-              run: |
-                  if [[ ! "$RELEASE_TAG" =~ ^v[0-9] ]]; then
-                    echo "Release tag must look like vX.Y.Z." >&2
-                    exit 1
-                  fi
-
-            - name: Validate release metadata
-              run: node scripts/validate-release-metadata.mjs --tag "$RELEASE_TAG"
-
-            - name: Extract release notes
-              run: node scripts/extract-changelog-release-notes.mjs "$RELEASE_TAG" > release-notes.md
-
-            - name: Build release body
-              run: node scripts/build-release-body.mjs --version "$RELEASE_TAG" --notes-file release-notes.md --output release-body.md
-
-            - name: Compute release metadata
-              id: meta
-              run: |
-                  VERSION="${RELEASE_TAG#v}"
-                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-                  echo "tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
-                  echo "channel=stable" >> "$GITHUB_OUTPUT"
-                  node --input-type=module <<'EOF' >> "$GITHUB_OUTPUT"
-                  import {
-                    CANONICAL_RELEASE_PAGES_BASE_URL,
-                    CANONICAL_RELEASE_REPO_SLUG,
-                  } from "./scripts/electron-release-lib.mjs";
-
-                  console.log(`repo_slug=${CANONICAL_RELEASE_REPO_SLUG}`);
-                  console.log(`pages_base_url=${CANONICAL_RELEASE_PAGES_BASE_URL}`);
-                  EOF
-
-            - name: Upload release body artifact
-              uses: actions/upload-artifact@v7
-              with:
-                  name: release-body-${{ steps.meta.outputs.tag }}
-                  path: release-body.md
-                  if-no-files-found: error
-
-    build-target:
-        name: Build ${{ matrix.target }}
-        needs:
-            - prepare
-            - apt-repository-preflight
-        runs-on: ${{ matrix.runner }}
-        strategy:
-            fail-fast: false
-            matrix:
-                include:
-                    - runner: macos-latest
-                      platform: mac
-                      arch: universal
-                      target: universal-apple-darwin
-                      rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
-                      node_dist_arm64: darwin-arm64
-                      node_dist_x64: darwin-x64
-                    - runner: windows-11-arm
-                      platform: win
-                      arch: arm64
-                      target: aarch64-pc-windows-msvc
-                      rust_targets: aarch64-pc-windows-msvc
-                      node_dist: win-arm64
-                    - runner: windows-latest
-                      platform: win
-                      arch: x64
-                      target: x86_64-pc-windows-msvc
-                      rust_targets: x86_64-pc-windows-msvc
-                      node_dist: win-x64
-                    - runner: ubuntu-22.04
-                      platform: linux
-                      arch: x64
-                      target: x86_64-unknown-linux-gnu
-                      rust_targets: x86_64-unknown-linux-gnu
-                      node_dist: linux-x64
-                    - runner: ubuntu-22.04
-                      platform: linux
-                      arch: arm64
-                      target: aarch64-unknown-linux-gnu
-                      rust_targets: aarch64-unknown-linux-gnu
-                      node_dist: linux-arm64
-
-        steps:
-            - uses: actions/checkout@v6
-              with:
-                  ref: ${{ env.RELEASE_TAG }}
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v6
-              with:
-                  node-version: 22
-
-            - name: Setup Rust toolchain
-              uses: ./.github/actions/setup-rust
-              with:
-                  targets: ${{ matrix.rust_targets }}
-
-            - name: Install Linux build dependencies
-              if: matrix.platform == 'linux'
-              shell: bash
-              run: |
-                  if [[ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]]; then
-                    # GitHub's amd64 Ubuntu runners may use mirrorlist or
-                    # deb822 sources. Replace only Ubuntu's default sources so
-                    # apt never requests arm64 indexes from non-ports mirrors.
-                    while IFS= read -r source_file; do
-                      if sudo grep -Eq 'ubuntu\.com|apt-mirrors' "$source_file"; then
-                        sudo mv "$source_file" "${source_file}.disabled"
-                      fi
-                    done < <(sudo find /etc/apt -maxdepth 2 -type f \( -name '*.list' -o -name '*.sources' \))
-                    sudo dpkg --add-architecture arm64
-                    sudo tee /etc/apt/sources.list.d/ubuntu-amd64.list >/dev/null <<'EOF'
-                  deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy main restricted universe multiverse
-                  deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy-updates main restricted universe multiverse
-                  deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy-backports main restricted universe multiverse
-                  deb [arch=amd64] http://security.ubuntu.com/ubuntu jammy-security main restricted universe multiverse
-                  EOF
-                    sudo tee /etc/apt/sources.list.d/ubuntu-ports-arm64.list >/dev/null <<'EOF'
-                  deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main restricted universe multiverse
-                  deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main restricted universe multiverse
-                  deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-backports main restricted universe multiverse
-                  deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main restricted universe multiverse
-                  EOF
-                  fi
-                  sudo apt-get update
-                  sudo apt-get install -y pkg-config libcap-dev gnupg rpm
-                  if [[ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]]; then
-                    sudo apt-get install -y gcc-aarch64-linux-gnu libcap-dev:arm64 libssl-dev:arm64
-                    echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> "$GITHUB_ENV"
-                    echo "PKG_CONFIG_ALLOW_CROSS=1" >> "$GITHUB_ENV"
-                    echo "PKG_CONFIG_LIBDIR=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig" >> "$GITHUB_ENV"
-                  fi
-
-            - name: Install desktop dependencies
-              working-directory: apps/desktop
-              run: npm ci
-
-            - name: Build target-specific Codex sidecar
-              shell: bash
-              run: |
-                  if [[ "${{ matrix.target }}" == "universal-apple-darwin" ]]; then
-                    node apps/desktop/scripts/run-with-codex-v8.mjs --target aarch64-apple-darwin --require-verified-artifacts -- cargo build --quiet --locked --manifest-path vendor/codex-acp/Cargo.toml --release --target aarch64-apple-darwin --bins
-                    node apps/desktop/scripts/run-with-codex-v8.mjs --target x86_64-apple-darwin --require-verified-artifacts -- cargo build --quiet --locked --manifest-path vendor/codex-acp/Cargo.toml --release --target x86_64-apple-darwin --bins
-                  else
-                    node apps/desktop/scripts/run-with-codex-v8.mjs --target ${{ matrix.target }} --require-verified-artifacts -- cargo build --quiet --locked --manifest-path vendor/codex-acp/Cargo.toml --release --target ${{ matrix.target }} --bins
-                  fi
-
-            - name: Download embedded Node runtime
-              shell: bash
-              run: |
-                  NODE_VERSION="$(node -p "process.version.replace(/^v/, '')")"
-                  DEST="$RUNNER_TEMP/node-dist"
-                  mkdir -p "$DEST"
-
-                  if [[ "${{ matrix.target }}" == "universal-apple-darwin" ]]; then
-                    for NODE_DIST in "${{ matrix.node_dist_arm64 }}" "${{ matrix.node_dist_x64 }}"; do
-                      DIST="node-v${NODE_VERSION}-${NODE_DIST}"
-                      curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/${DIST}.tar.gz" -o "$RUNNER_TEMP/${NODE_DIST}.tar.gz"
-                      tar -xzf "$RUNNER_TEMP/${NODE_DIST}.tar.gz" -C "$DEST"
-                    done
-                    echo "NEVERWRITE_EMBEDDED_NODE_BIN_ARM64=$DEST/node-v${NODE_VERSION}-${{ matrix.node_dist_arm64 }}/bin/node" >> "$GITHUB_ENV"
-                    echo "NEVERWRITE_EMBEDDED_NODE_BIN_X64=$DEST/node-v${NODE_VERSION}-${{ matrix.node_dist_x64 }}/bin/node" >> "$GITHUB_ENV"
-                  elif [[ "${{ runner.os }}" == "Windows" ]]; then
-                    DIST="node-v${NODE_VERSION}-${{ matrix.node_dist }}"
-                    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/${DIST}.zip" -o "$RUNNER_TEMP/node.zip"
-                    powershell -NoProfile -Command "Expand-Archive -Path (Join-Path \$env:RUNNER_TEMP 'node.zip') -DestinationPath (Join-Path \$env:RUNNER_TEMP 'node-dist') -Force"
-                    echo "NEVERWRITE_EMBEDDED_NODE_BIN=$DEST/${DIST}/node.exe" >> "$GITHUB_ENV"
-                  else
-                    DIST="node-v${NODE_VERSION}-${{ matrix.node_dist }}"
-                    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/${DIST}.tar.gz" -o "$RUNNER_TEMP/node.tar.gz"
-                    tar -xzf "$RUNNER_TEMP/node.tar.gz" -C "$DEST"
-                    echo "NEVERWRITE_EMBEDDED_NODE_BIN=$DEST/${DIST}/bin/node" >> "$GITHUB_ENV"
-                  fi
-
-            - name: Export build environment
-              shell: bash
-              run: |
-                  if [[ "${{ matrix.target }}" == "universal-apple-darwin" ]]; then
-                    echo "NEVERWRITE_CODEX_ACP_BUNDLE_BIN_ARM64=$GITHUB_WORKSPACE/vendor/codex-acp/target/aarch64-apple-darwin/release/codex-acp" >> "$GITHUB_ENV"
-                    echo "NEVERWRITE_CODEX_ACP_BUNDLE_BIN_X64=$GITHUB_WORKSPACE/vendor/codex-acp/target/x86_64-apple-darwin/release/codex-acp" >> "$GITHUB_ENV"
-                    echo "NEVERWRITE_CODEX_CODE_MODE_HOST_BUNDLE_BIN_ARM64=$GITHUB_WORKSPACE/vendor/codex-acp/target/aarch64-apple-darwin/release/codex-code-mode-host" >> "$GITHUB_ENV"
-                    echo "NEVERWRITE_CODEX_CODE_MODE_HOST_BUNDLE_BIN_X64=$GITHUB_WORKSPACE/vendor/codex-acp/target/x86_64-apple-darwin/release/codex-code-mode-host" >> "$GITHUB_ENV"
-                  elif [[ "${{ runner.os }}" == "Windows" ]]; then
-                    CODEX_BIN="$GITHUB_WORKSPACE/vendor/codex-acp/target/${{ matrix.target }}/release/codex-acp.exe"
-                    CODEX_CODE_MODE_HOST_BIN="$GITHUB_WORKSPACE/vendor/codex-acp/target/${{ matrix.target }}/release/codex-code-mode-host.exe"
-                    echo "NEVERWRITE_CODEX_ACP_BUNDLE_BIN=$CODEX_BIN" >> "$GITHUB_ENV"
-                    echo "NEVERWRITE_CODEX_CODE_MODE_HOST_BUNDLE_BIN=$CODEX_CODE_MODE_HOST_BIN" >> "$GITHUB_ENV"
-                  else
-                    CODEX_BIN="$GITHUB_WORKSPACE/vendor/codex-acp/target/${{ matrix.target }}/release/codex-acp"
-                    CODEX_CODE_MODE_HOST_BIN="$GITHUB_WORKSPACE/vendor/codex-acp/target/${{ matrix.target }}/release/codex-code-mode-host"
-                    echo "NEVERWRITE_CODEX_ACP_BUNDLE_BIN=$CODEX_BIN" >> "$GITHUB_ENV"
-                    echo "NEVERWRITE_CODEX_CODE_MODE_HOST_BUNDLE_BIN=$CODEX_CODE_MODE_HOST_BIN" >> "$GITHUB_ENV"
-                  fi
-
-                  echo "NEVERWRITE_ELECTRON_OUTPUT_DIR=$RUNNER_TEMP/electron-dist" >> "$GITHUB_ENV"
-
-            - name: Validate macOS signing configuration
-              if: runner.os == 'macOS'
-              shell: bash
-              env:
-                  CSC_LINK: ${{ secrets.CSC_LINK }}
-                  CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-                  APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-                  APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-                  APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-                  APPLE_ID: ${{ secrets.APPLE_ID }}
-                  APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-                  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-              run: |
-                  if [[ -z "$CSC_LINK" || -z "$CSC_KEY_PASSWORD" ]]; then
-                    echo "macOS releases require CSC_LINK and CSC_KEY_PASSWORD." >&2
-                    exit 1
-                  fi
-
-                  if [[ -n "$APPLE_API_KEY" || -n "$APPLE_API_KEY_ID" || -n "$APPLE_API_ISSUER" ]]; then
-                    if [[ -z "$APPLE_API_KEY" || -z "$APPLE_API_KEY_ID" || -z "$APPLE_API_ISSUER" ]]; then
-                      echo "APPLE_API_KEY, APPLE_API_KEY_ID, and APPLE_API_ISSUER must be provided together." >&2
-                      exit 1
-                    fi
-                    exit 0
-                  fi
-
-                  if [[ -z "$APPLE_ID" || -z "$APPLE_APP_SPECIFIC_PASSWORD" || -z "$APPLE_TEAM_ID" ]]; then
-                    echo "macOS notarization requires either the App Store Connect API key trio or APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, and APPLE_TEAM_ID." >&2
-                    exit 1
-                  fi
-
-            - name: Build signed macOS desktop release
-              if: runner.os == 'macOS'
-              working-directory: apps/desktop
-              shell: bash
-              env:
-                  CSC_LINK: ${{ secrets.CSC_LINK }}
-                  CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-                  APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-                  APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-                  APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-                  APPLE_ID: ${{ secrets.APPLE_ID }}
-                  APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-                  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-              run: npm run electron:release:local -- --platform ${{ matrix.platform }} --arch ${{ matrix.arch }}
-
-            - name: Build unsigned Windows desktop release
-              if: runner.os == 'Windows'
-              working-directory: apps/desktop
-              shell: bash
-              env:
-                  CSC_IDENTITY_AUTO_DISCOVERY: "false"
-              run: npm run electron:release:local -- --platform ${{ matrix.platform }} --arch ${{ matrix.arch }} --unsigned
-
-            - name: Build Linux desktop release
-              if: runner.os == 'Linux'
-              working-directory: apps/desktop
-              shell: bash
-              env:
-                  CSC_IDENTITY_AUTO_DISCOVERY: "false"
-              run: npm run electron:release:local -- --platform ${{ matrix.platform }} --arch ${{ matrix.arch }} --unsigned
-
-            - name: Smoke packaged sidecar
-              if: matrix.target != 'aarch64-unknown-linux-gnu'
-              working-directory: apps/desktop
-              env:
-                  NEVERWRITE_ELECTRON_OUTPUT_DIR: ${{ runner.temp }}/electron-dist
-                  NEVERWRITE_ELECTRON_DIST_ARCH: ${{ matrix.arch }}
-              run: npm run electron:sidecar:smoke:packaged
-
-            - name: Smoke packaged app executable
-              if: runner.os == 'macOS' || (runner.os == 'Linux' && matrix.arch == 'x64')
-              working-directory: apps/desktop
-              env:
-                  NEVERWRITE_ELECTRON_OUTPUT_DIR: ${{ runner.temp }}/electron-dist
-                  NEVERWRITE_ELECTRON_DIST_ARCH: ${{ matrix.arch }}
-              run: npm run electron:app:smoke:packaged
-
-            - name: Verify signed macOS Codex runtime
-              if: matrix.target == 'universal-apple-darwin'
-              shell: bash
-              env:
-                  NEVERWRITE_ELECTRON_OUTPUT_DIR: ${{ runner.temp }}/electron-dist
-              run: |
-                  APP_PATH=""
-                  for candidate in \
-                    "$NEVERWRITE_ELECTRON_OUTPUT_DIR/mac-universal/NeverWrite.app" \
-                    "$NEVERWRITE_ELECTRON_OUTPUT_DIR/mac/NeverWrite.app"; do
-                    if [[ -d "$candidate" ]]; then
-                      APP_PATH="$candidate"
-                      break
-                    fi
-                  done
-
-                  if [[ -z "$APP_PATH" ]]; then
-                    echo "Could not find packaged NeverWrite.app in $NEVERWRITE_ELECTRON_OUTPUT_DIR." >&2
-                    exit 1
-                  fi
-
-                  for binary in codex-acp codex-code-mode-host; do
-                    codesign --verify --strict --verbose=2 \
-                      "$APP_PATH/Contents/Resources/native-backend/binaries/$binary"
-                  done
-                  codesign --verify --deep --strict --verbose=2 "$APP_PATH"
-
-            - name: Verify macOS universal runtime binaries
-              if: matrix.target == 'universal-apple-darwin'
-              shell: bash
-              env:
-                  NEVERWRITE_ELECTRON_OUTPUT_DIR: ${{ runner.temp }}/electron-dist
-              run: |
-                  APP_PATH=""
-                  for candidate in \
-                    "$NEVERWRITE_ELECTRON_OUTPUT_DIR/mac-universal/NeverWrite.app" \
-                    "$NEVERWRITE_ELECTRON_OUTPUT_DIR/mac/NeverWrite.app"; do
-                    if [[ -d "$candidate" ]]; then
-                      APP_PATH="$candidate"
-                      break
-                    fi
-                  done
-
-                  if [[ -z "$APP_PATH" ]]; then
-                    echo "Could not find packaged NeverWrite.app in $NEVERWRITE_ELECTRON_OUTPUT_DIR." >&2
-                    exit 1
-                  fi
-
-                  verify_universal() {
-                    local binary_path="$1"
-                    local archs
-                    archs="$(lipo -archs "$binary_path")"
-                    echo "$binary_path: $archs"
-                    if [[ "$archs" != "arm64 x86_64" && "$archs" != "x86_64 arm64" ]]; then
-                      echo "Expected universal arm64/x86_64 binary: $binary_path" >&2
-                      exit 1
-                    fi
-                  }
-
-                  verify_universal "$APP_PATH/Contents/Resources/native-backend/neverwrite-native-backend"
-                  verify_universal "$APP_PATH/Contents/Resources/native-backend/binaries/codex-acp"
-                  verify_universal "$APP_PATH/Contents/Resources/native-backend/binaries/codex-code-mode-host"
-                  verify_universal "$APP_PATH/Contents/Resources/native-backend/embedded/node/bin/node"
-
-            - name: Sign Linux RPM package
-              if: matrix.platform == 'linux'
-              shell: bash
-              env:
-                  APT_REPO_GPG_PRIVATE_KEY: ${{ secrets.APT_REPO_GPG_PRIVATE_KEY }}
-                  APT_REPO_GPG_PASSPHRASE: ${{ secrets.APT_REPO_GPG_PASSPHRASE }}
-                  APT_REPO_GPG_KEY_ID: ${{ secrets.APT_REPO_GPG_KEY_ID }}
-              run: |
-                  for name in APT_REPO_GPG_PRIVATE_KEY APT_REPO_GPG_PASSPHRASE APT_REPO_GPG_KEY_ID; do
-                    if [[ -z "${!name}" ]]; then
-                      echo "Missing required GitHub Actions secret: ${name}" >&2
-                      exit 1
-                    fi
-                  done
-
-                  export GNUPGHOME
-                  GNUPGHOME="$(mktemp -d)"
-                  trap 'rm -rf "$GNUPGHOME"' EXIT
-                  chmod 700 "$GNUPGHOME"
-                  printf '%s' "$APT_REPO_GPG_PRIVATE_KEY" | gpg --batch --import
-                  gpg --batch --armor --export "$APT_REPO_GPG_KEY_ID" > "$RUNNER_TEMP/neverwrite-rpm-signing-key.asc"
-
-                  node scripts/sign-rpm-packages.mjs \
-                    --rpm-dir "$RUNNER_TEMP/electron-dist" \
-                    --key-id "$APT_REPO_GPG_KEY_ID" \
-                    --public-key "$RUNNER_TEMP/neverwrite-rpm-signing-key.asc"
-
-            - name: Stage release assets and target metadata
-              shell: bash
-              run: |
-                  mkdir -p "$RUNNER_TEMP/release-assets" "$RUNNER_TEMP/target-metadata"
-                  node apps/desktop/scripts/stage-electron-release-assets.mjs \
-                    --dist-dir "$RUNNER_TEMP/electron-dist" \
-                    --target ${{ matrix.target }} \
-                    --version "${{ needs.prepare.outputs.version }}" \
-                    --tag "${{ needs.prepare.outputs.tag }}" \
-                    --repo "${{ needs.prepare.outputs.repo_slug }}" \
-                    --output-dir "$RUNNER_TEMP/release-assets" \
-                    --metadata-out "$RUNNER_TEMP/target-metadata/${{ matrix.target }}.json"
-
-            - name: Validate Linux Debian package
-              if: matrix.platform == 'linux'
-              shell: bash
-              run: |
-                  node apps/desktop/scripts/validate-linux-deb-package.mjs \
-                    --staged-assets-dir "$RUNNER_TEMP/release-assets" \
-                    --target ${{ matrix.target }} \
-                    --version "${{ needs.prepare.outputs.version }}" \
-                    --install
-
-            - name: Validate Linux RPM package
-              if: matrix.platform == 'linux'
-              shell: bash
-              run: |
-                  node apps/desktop/scripts/validate-linux-rpm-package.mjs \
-                    --staged-assets-dir "$RUNNER_TEMP/release-assets" \
-                    --target ${{ matrix.target }} \
-                    --version "${{ needs.prepare.outputs.version }}" \
-                    --require-signature
-
-            - name: Upload release asset artifact
-              uses: actions/upload-artifact@v7
-              with:
-                  name: release-assets-${{ matrix.target }}
-                  path: ${{ runner.temp }}/release-assets
-                  if-no-files-found: error
-
-            - name: Upload target metadata artifact
-              uses: actions/upload-artifact@v7
-              with:
-                  name: release-target-metadata-${{ matrix.target }}
-                  path: ${{ runner.temp }}/target-metadata/${{ matrix.target }}.json
-                  if-no-files-found: error
-
-            - name: Upload target feed artifact
-              uses: actions/upload-artifact@v7
-              with:
-                  name: release-target-feeds-${{ matrix.target }}
-                  path: ${{ runner.temp }}/release-assets/feeds
-                  if-no-files-found: error
-
-    build-web-clipper:
-        name: Build Browser Extensions
-        needs: prepare
-        runs-on: ubuntu-latest
-
-        steps:
-            - uses: actions/checkout@v6
-              with:
-                  ref: ${{ env.RELEASE_TAG }}
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v6
-              with:
-                  node-version: 22
-
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v6
-              with:
-                  version: 10.33.0
-
-            - name: Install web clipper dependencies
-              working-directory: apps/web-clipper
-              run: pnpm install --frozen-lockfile
-
-            - name: Validate web clipper
-              working-directory: apps/web-clipper
-              run: |
-                  pnpm run compile
-                  pnpm run test:run
-
-            - name: Build browser extension zips
-              working-directory: apps/web-clipper
-              run: |
-                  pnpm run build:chrome
-                  pnpm run build:firefox
-                  pnpm run zip:chrome
-                  pnpm run zip:firefox
-
-            - name: Stage browser extension release assets
-              shell: bash
-              run: |
-                  mkdir -p "$RUNNER_TEMP/web-clipper-assets"
-
-                  find_single_zip() {
-                    local browser="$1"
-                    local matches
-                    local match_count
-
-                    matches="$(find apps/web-clipper/.output -maxdepth 1 -type f -name "*-${browser}.zip" | sort)"
-                    match_count="$(printf '%s\n' "$matches" | sed '/^$/d' | wc -l | tr -d ' ')"
-                    if [[ "$match_count" != "1" ]]; then
-                      echo "Expected exactly one ${browser} extension zip, found ${match_count}." >&2
-                      exit 1
-                    fi
-                    printf '%s\n' "$matches"
-                  }
-
-                  validate_extension_zip() {
-                    local source_zip="$1"
-                    local browser="$2"
-
-                    unzip -l "$source_zip" | tee "$RUNNER_TEMP/${browser}-extension-zip.txt"
-                    unzip -l "$source_zip" | grep -q 'manifest.json'
-                    unzip -l "$source_zip" | grep -q 'background.js'
-                    MANIFEST_JSON="$(unzip -p "$source_zip" manifest.json)" ZIP_ENTRIES="$(unzip -Z1 "$source_zip")" BROWSER="$browser" node --input-type=module <<'EOF'
-                  const manifest = JSON.parse(process.env.MANIFEST_JSON);
-                  const zipEntries = new Set(process.env.ZIP_ENTRIES.split("\n").filter(Boolean));
-                  const normalizePath = (value) => value.replace(/^\/+/, "");
-                  const assertZipEntry = (value, description) => {
-                    if (!value) {
-                      return;
-                    }
-                    const normalized = normalizePath(value);
-                    if (!zipEntries.has(normalized)) {
-                      throw new Error(`${process.env.BROWSER} manifest references missing ${description}: ${value}`);
-                    }
-                  };
-
-                  if (manifest.manifest_version !== 3) {
-                    throw new Error(`Expected ${process.env.BROWSER} MV3 manifest, got ${manifest.manifest_version}`);
-                  }
-                  if (!manifest.name || !manifest.version) {
-                    throw new Error("Manifest must include name and version.");
-                  }
-                  assertZipEntry(manifest.action?.default_popup, "action popup");
-                  assertZipEntry(manifest.side_panel?.default_path, "side panel");
-                  assertZipEntry(manifest.background?.service_worker, "background service worker");
-                  for (const script of manifest.background?.scripts ?? []) {
-                    assertZipEntry(script, "background script");
-                  }
-                  for (const [index, contentScript] of (manifest.content_scripts ?? []).entries()) {
-                    for (const script of contentScript.js ?? []) {
-                      assertZipEntry(script, `content script ${index} JS`);
-                    }
-                    for (const stylesheet of contentScript.css ?? []) {
-                      assertZipEntry(stylesheet, `content script ${index} CSS`);
-                    }
-                  }
-                  EOF
-                  }
-
-                  chrome_zip="$(find_single_zip chrome)"
-                  firefox_zip="$(find_single_zip firefox)"
-
-                  validate_extension_zip "$chrome_zip" chrome
-                  validate_extension_zip "$firefox_zip" firefox
-
-                  cp "$chrome_zip" "$RUNNER_TEMP/web-clipper-assets/NeverWrite-Web-Clipper-${{ needs.prepare.outputs.tag }}-chrome-mv3.zip"
-                  cp "$firefox_zip" "$RUNNER_TEMP/web-clipper-assets/NeverWrite-Web-Clipper-${{ needs.prepare.outputs.tag }}-firefox-mv3.zip"
-
-            - name: Upload browser extension release assets
-              uses: actions/upload-artifact@v7
-              with:
-                  name: release-assets-web-clipper
-                  path: ${{ runner.temp }}/web-clipper-assets
-                  if-no-files-found: error
-
-    apt-repository-preflight:
-        name: Validate APT Repository Secrets
-        needs: prepare
-        runs-on: ubuntu-latest
-
-        steps:
-            - name: Validate APT signing configuration
-              shell: bash
-              env:
-                  APT_REPO_GPG_PRIVATE_KEY: ${{ secrets.APT_REPO_GPG_PRIVATE_KEY }}
-                  APT_REPO_GPG_PASSPHRASE: ${{ secrets.APT_REPO_GPG_PASSPHRASE }}
-                  APT_REPO_GPG_KEY_ID: ${{ secrets.APT_REPO_GPG_KEY_ID }}
-              run: |
-                  for name in APT_REPO_GPG_PRIVATE_KEY APT_REPO_GPG_PASSPHRASE APT_REPO_GPG_KEY_ID; do
-                    if [[ -z "${!name}" ]]; then
-                      echo "Missing required GitHub Actions secret: ${name}" >&2
-                      exit 1
-                    fi
-                  done
-
-                  export GNUPGHOME
-                  GNUPGHOME="$(mktemp -d)"
-                  trap 'rm -rf "$GNUPGHOME"' EXIT
-                  chmod 700 "$GNUPGHOME"
-
-                  printf '%s' "$APT_REPO_GPG_PRIVATE_KEY" | gpg --batch --import
-                  gpg --batch --list-secret-keys "$APT_REPO_GPG_KEY_ID" >/dev/null
-
-    publish-release:
-        name: Publish GitHub Release
-        needs:
-            - prepare
-            - build-target
-            - build-web-clipper
-            - apt-repository-preflight
-        runs-on: ubuntu-latest
-
-        steps:
-            - uses: actions/checkout@v6
-              with:
-                  fetch-depth: 0
-                  ref: ${{ env.RELEASE_TAG }}
-
-            - name: Download release body
-              uses: actions/download-artifact@v8
-              with:
-                  name: release-body-${{ needs.prepare.outputs.tag }}
-                  path: .artifacts/release-body
-
-            - name: Download staged release assets
-              uses: actions/download-artifact@v8
-              with:
-                  pattern: release-assets-*
-                  path: .artifacts/release-assets
-                  merge-multiple: true
-
-            - name: Download target metadata
-              uses: actions/download-artifact@v8
-              with:
-                  pattern: release-target-metadata-*
-                  path: .artifacts/release-targets
-                  merge-multiple: true
-
-            - name: Validate release target coverage
-              run: |
-                  node --input-type=module <<'EOF'
-                  import {
-                    loadTargetMetadataEntries,
-                    validateTargetMetadataEntries,
-                  } from "./scripts/platform-validation-lib.mjs";
-
-                  const entries = loadTargetMetadataEntries(".artifacts/release-targets");
-                  validateTargetMetadataEntries(entries);
-                  EOF
-
-            - name: Create or update GitHub release
-              env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: |
-                  VERSION="${{ needs.prepare.outputs.version }}"
-                  TAG="${{ needs.prepare.outputs.tag }}"
-                  TITLE="NeverWrite v${VERSION}"
-                  NOTES_FILE=".artifacts/release-body/release-body.md"
-                  if gh release view "$TAG" >/dev/null 2>&1; then
-                    gh release edit "$TAG" --title "$TITLE" --notes-file "$NOTES_FILE"
-                  else
-                    gh release create "$TAG" --title "$TITLE" --notes-file "$NOTES_FILE" --verify-tag
-                  fi
-
-            - name: Upload release assets
-              shell: bash
-              env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: |
-                  mapfile -d '' files < <(find ".artifacts/release-assets" -type f ! -path "*/feeds/*" -print0)
-                  if [[ "${#files[@]}" -eq 0 ]]; then
-                    echo "No staged release files found to upload." >&2
-                    exit 1
-                  fi
-                  gh release upload "${{ needs.prepare.outputs.tag }}" "${files[@]}" --clobber
-
-    publish-feeds:
-        name: Publish Release Pages Artifacts
-        needs:
-            - prepare
-            - build-target
-            - publish-release
-        runs-on: ubuntu-latest
-
-        steps:
-            - uses: actions/checkout@v6
-              with:
-                  fetch-depth: 0
-                  ref: ${{ env.RELEASE_TAG }}
-
-            - name: Download target metadata
-              uses: actions/download-artifact@v8
-              with:
-                  pattern: release-target-metadata-*
-                  path: .artifacts/release-targets
-                  merge-multiple: true
-
-            - name: Download target feeds
-              uses: actions/download-artifact@v8
-              with:
-                  pattern: release-target-feeds-*
-                  path: .artifacts/feeds
-                  merge-multiple: true
-
-            - name: Download staged release assets
-              uses: actions/download-artifact@v8
-              with:
-                  pattern: release-assets-*
-                  path: .artifacts/release-assets
-                  merge-multiple: true
-
-            - name: Build platform validation pack
-              run: |
-                  node scripts/build-platform-validation-pack.mjs \
-                    --version "${{ needs.prepare.outputs.version }}" \
-                    --tag "${{ needs.prepare.outputs.tag }}" \
-                    --channel "${{ needs.prepare.outputs.channel }}" \
-                    --feeds-dir .artifacts/feeds \
-                    --metadata-dir .artifacts/release-targets \
-                    --pages-base-url "${{ needs.prepare.outputs.pages_base_url }}" \
-                    --output-dir dist/platform-validation/${{ needs.prepare.outputs.tag }}
-
-            - name: Build release asset size report
-              shell: bash
-              run: |
-                  mkdir -p "dist/release-asset-sizes/${{ needs.prepare.outputs.tag }}"
-                  node --input-type=module <<'EOF'
-                  import fs from "node:fs";
-                  import path from "node:path";
-
-                  const metadataDir = path.resolve(".artifacts/release-targets");
-                  const outputDir = path.resolve("dist/release-asset-sizes/${{ needs.prepare.outputs.tag }}");
-                  const entries = fs
-                    .readdirSync(metadataDir)
-                    .filter((fileName) => fileName.endsWith(".json"))
-                    .sort()
-                    .map((fileName) =>
-                      JSON.parse(fs.readFileSync(path.join(metadataDir, fileName), "utf8")),
-                    );
-
-                  const toMiB = (bytes) => `${(bytes / (1024 * 1024)).toFixed(2)} MiB`;
-                  const formatAdditionalManualAssets = (entry) => {
-                    const assets = entry.additionalManualAssets ?? [];
-                    if (assets.length === 0) {
-                      return "None";
-                    }
-                    return assets
-                      .map((asset) => `${asset.assetName}: ${toMiB(asset.sizeBytes)}`)
-                      .join("<br>");
-                  };
-
-                  const markdown = [
-                    "# Electron Release Asset Sizes",
-                    "",
-                    `Release: ${{ needs.prepare.outputs.tag }}`,
-                    "",
-                    "| Build target | Manual installer | Additional manual assets | Updater asset | Blockmap |",
-                    "| --- | --- | --- | --- | --- |",
-                    ...entries.map(
-                      (entry) =>
-                        `| \`${entry.buildTarget}\` | ${toMiB(entry.manualAssetSizeBytes)} | ${formatAdditionalManualAssets(entry)} | ${toMiB(entry.updaterAssetSizeBytes)} | ${toMiB(entry.updaterBlockmapSizeBytes)} |`,
-                    ),
-                    "",
-                  ].join("\n");
-
-                  fs.writeFileSync(
-                    path.join(outputDir, "sizes.json"),
-                    `${JSON.stringify(entries, null, 2)}\n`,
-                    "utf8",
-                  );
-                  fs.writeFileSync(
-                    path.join(outputDir, "sizes.md"),
-                    `${markdown}\n`,
-                    "utf8",
-                  );
-                  EOF
-
-            - name: Upload platform validation pack
-              uses: actions/upload-artifact@v7
-              with:
-                  name: platform-validation-pack-${{ needs.prepare.outputs.tag }}
-                  path: dist/platform-validation/${{ needs.prepare.outputs.tag }}
-                  if-no-files-found: error
-
-            - name: Upload release asset size report
-              uses: actions/upload-artifact@v7
-              with:
-                  name: electron-release-asset-sizes-${{ needs.prepare.outputs.tag }}
-                  path: dist/release-asset-sizes/${{ needs.prepare.outputs.tag }}
-                  if-no-files-found: error
-
-            - name: Prepare gh-pages worktree
-              shell: bash
-              env:
-                  PAGES_DIR: ${{ runner.temp }}/gh-pages
-              run: |
-                  git fetch origin gh-pages || true
-
-                  if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
-                    git worktree add "$PAGES_DIR" refs/remotes/origin/gh-pages
-                  else
-                    git worktree add -B gh-pages "$PAGES_DIR" HEAD
-                    (
-                      cd "$PAGES_DIR"
-                      git rm -rf . >/dev/null 2>&1 || true
-                      find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-                    )
-                  fi
-
-                  touch "$PAGES_DIR/.nojekyll"
-
-            - name: Stage feeds in gh-pages worktree
-              shell: bash
-              env:
-                  CHANNEL: ${{ needs.prepare.outputs.channel }}
-                  FEEDS_DIR: .artifacts/feeds
-                  METADATA_DIR: .artifacts/release-targets
-                  PAGES_DIR: ${{ runner.temp }}/gh-pages
-              run: |
-                  node --input-type=module <<'EOF'
-                  import fs from "node:fs";
-                  import path from "node:path";
-
-                  const feedsDir = path.resolve(process.env.FEEDS_DIR);
-                  const metadataDir = path.resolve(process.env.METADATA_DIR);
-                  const pagesDir = path.resolve(process.env.PAGES_DIR);
-                  const channel = process.env.CHANNEL;
-
-                  for (const fileName of fs.readdirSync(metadataDir).filter((file) => file.endsWith(".json")).sort()) {
-                    const metadata = JSON.parse(
-                      fs.readFileSync(path.join(metadataDir, fileName), "utf8"),
-                    );
-                    const feedRelativePaths = [
-                      metadata.feedRelativePath,
-                      ...(metadata.feedAliasRelativePaths ?? []),
-                    ];
-                    const source = path.join(feedsDir, metadata.feedRelativePath);
-                    for (const relativePath of feedRelativePaths) {
-                      const destination = path.join(pagesDir, channel, relativePath);
-                      fs.mkdirSync(path.dirname(destination), { recursive: true });
-                      fs.copyFileSync(source, destination);
-                    }
-                  }
-                  EOF
-
-            - name: Publish updater feeds to gh-pages
-              shell: bash
-              env:
-                  CHANNEL: ${{ needs.prepare.outputs.channel }}
-                  PAGES_DIR: ${{ runner.temp }}/gh-pages
-              run: |
-                  (
-                    cd "$PAGES_DIR"
-                    git config user.name "github-actions[bot]"
-                    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-                    git add "${CHANNEL}" .nojekyll
-                    if git diff --cached --quiet; then
-                      echo "No updater feed changes to publish."
-                    else
-                      git commit -m "Publish updater feeds for ${{ needs.prepare.outputs.tag }}"
-                      git push origin HEAD:gh-pages
-                    fi
-                  )
-
-            - name: Print published feed URLs
-              shell: bash
-              run: |
-                  node --input-type=module <<'EOF'
-                  import fs from "node:fs";
-                  import path from "node:path";
-
-                  const baseUrl = "${{ needs.prepare.outputs.pages_base_url }}".replace(/\/+$/, "");
-                  const channel = "${{ needs.prepare.outputs.channel }}";
-                  const metadataDir = path.resolve(".artifacts/release-targets");
-
-                  for (const fileName of fs.readdirSync(metadataDir).filter((file) => file.endsWith(".json")).sort()) {
-                    const metadata = JSON.parse(
-                      fs.readFileSync(path.join(metadataDir, fileName), "utf8"),
-                    );
-                    console.log(`${baseUrl}/${channel}/${metadata.feedRelativePath}`);
-                  }
-                  EOF
-
-            - name: Install Linux repository tools
-              run: sudo apt-get update && sudo apt-get install -y createrepo-c dpkg gnupg gzip rpm
-
-            - name: Build APT repository
-              shell: bash
-              env:
-                  APT_RELEASE_DIR: ${{ runner.temp }}/apt-release
-              run: |
-                  node scripts/build-apt-repository.mjs \
-                    --layout flat-release \
-                    --version "${{ needs.prepare.outputs.version }}" \
-                    --release-assets-dir .artifacts/release-assets \
-                    --output-dir "$APT_RELEASE_DIR" \
-                    --repo-slug "${{ needs.prepare.outputs.repo_slug }}" \
-                    --suite stable \
-                    --component main
-
-            - name: Build DNF repository
-              shell: bash
-              env:
-                  PAGES_DIR: ${{ runner.temp }}/gh-pages
-              run: |
-                  node scripts/build-dnf-repository.mjs \
-                    --version "${{ needs.prepare.outputs.version }}" \
-                    --tag "${{ needs.prepare.outputs.tag }}" \
-                    --release-assets-dir .artifacts/release-assets \
-                    --pages-dir "$PAGES_DIR" \
-                    --repo-slug "${{ needs.prepare.outputs.repo_slug }}"
-
-            - name: Sign APT repository
-              shell: bash
-              env:
-                  APT_REPO_GPG_PRIVATE_KEY: ${{ secrets.APT_REPO_GPG_PRIVATE_KEY }}
-                  APT_REPO_GPG_PASSPHRASE: ${{ secrets.APT_REPO_GPG_PASSPHRASE }}
-                  APT_REPO_GPG_KEY_ID: ${{ secrets.APT_REPO_GPG_KEY_ID }}
-                  APT_RELEASE_DIR: ${{ runner.temp }}/apt-release
-              run: |
-                  for name in APT_REPO_GPG_PRIVATE_KEY APT_REPO_GPG_PASSPHRASE APT_REPO_GPG_KEY_ID; do
-                    if [[ -z "${!name}" ]]; then
-                      echo "Missing required GitHub Actions secret: ${name}" >&2
-                      exit 1
-                    fi
-                  done
-
-                  export GNUPGHOME
-                  GNUPGHOME="$(mktemp -d)"
-                  trap 'rm -rf "$GNUPGHOME"' EXIT
-                  chmod 700 "$GNUPGHOME"
-                  printf '%s' "$APT_REPO_GPG_PRIVATE_KEY" | gpg --batch --import
-
-                  node scripts/sign-apt-repository.mjs \
-                    --layout flat-release \
-                    --apt-dir "$APT_RELEASE_DIR" \
-                    --key-id "$APT_REPO_GPG_KEY_ID" \
-                    --suite stable
-
-            - name: Sign DNF repository
-              shell: bash
-              env:
-                  APT_REPO_GPG_PRIVATE_KEY: ${{ secrets.APT_REPO_GPG_PRIVATE_KEY }}
-                  APT_REPO_GPG_PASSPHRASE: ${{ secrets.APT_REPO_GPG_PASSPHRASE }}
-                  APT_REPO_GPG_KEY_ID: ${{ secrets.APT_REPO_GPG_KEY_ID }}
-                  PAGES_DIR: ${{ runner.temp }}/gh-pages
-              run: |
-                  for name in APT_REPO_GPG_PRIVATE_KEY APT_REPO_GPG_PASSPHRASE APT_REPO_GPG_KEY_ID; do
-                    if [[ -z "${!name}" ]]; then
-                      echo "Missing required GitHub Actions secret: ${name}" >&2
-                      exit 1
-                    fi
-                  done
-
-                  export GNUPGHOME
-                  GNUPGHOME="$(mktemp -d)"
-                  trap 'rm -rf "$GNUPGHOME"' EXIT
-                  chmod 700 "$GNUPGHOME"
-                  printf '%s' "$APT_REPO_GPG_PRIVATE_KEY" | gpg --batch --import
-                  node scripts/sign-dnf-repository.mjs \
-                    --dnf-dir "$PAGES_DIR/dnf" \
-                    --key-id "$APT_REPO_GPG_KEY_ID"
-
-            - name: Validate APT repository
-              shell: bash
-              env:
-                  APT_RELEASE_DIR: ${{ runner.temp }}/apt-release
-              run: |
-                  node scripts/validate-apt-repository.mjs \
-                    --layout flat-release \
-                    --apt-dir "$APT_RELEASE_DIR" \
-                    --package-assets-dir .artifacts/release-assets \
-                    --version "${{ needs.prepare.outputs.version }}" \
-                    --suite stable \
-                    --component main
-
-            - name: Validate DNF repository
-              shell: bash
-              env:
-                  PAGES_DIR: ${{ runner.temp }}/gh-pages
-              run: |
-                  node scripts/validate-dnf-repository.mjs \
-                    --dnf-dir "$PAGES_DIR/dnf" \
-                    --version "${{ needs.prepare.outputs.version }}"
-
-            - name: Validate APT repository with apt
-              shell: bash
-              env:
-                  APT_RELEASE_DIR: ${{ runner.temp }}/apt-release
-                  VERSION: ${{ needs.prepare.outputs.version }}
-              run: |
-                  APT_SMOKE_DIR="$RUNNER_TEMP/apt-smoke"
-                  mkdir -p "$APT_SMOKE_DIR"
-                  cp "$APT_RELEASE_DIR"/InRelease \
-                    "$APT_RELEASE_DIR"/Release \
-                    "$APT_RELEASE_DIR"/Release.gpg \
-                    "$APT_RELEASE_DIR"/Packages \
-                    "$APT_RELEASE_DIR"/Packages.gz \
-                    "$APT_RELEASE_DIR"/neverwrite-archive-keyring.asc \
-                    "$APT_RELEASE_DIR"/neverwrite.sources.example \
-                    "$APT_SMOKE_DIR"/
-                  find .artifacts/release-assets -type f -name '*.deb' -exec cp {} "$APT_SMOKE_DIR"/ \;
-
-                  docker run --rm \
-                    -e VERSION="$VERSION" \
-                    -v "$APT_SMOKE_DIR:/repo:ro" \
-                    ubuntu:24.04 \
-                    bash -lc '
-                      set -euo pipefail
-                      apt-get update
-                      apt-get install -y ca-certificates gnupg
-                      install -d -m 0755 /etc/apt/keyrings
-                      cp /repo/neverwrite-archive-keyring.asc /etc/apt/keyrings/neverwrite.asc
-                      chmod 0644 /etc/apt/keyrings/neverwrite.asc
-                      sed "s|^URIs: .*|URIs: file:///repo|" \
-                        /repo/neverwrite.sources.example \
-                        >/etc/apt/sources.list.d/neverwrite.sources
-                      apt-get update
-                      apt-cache policy neverwrite
-                      apt-cache policy neverwrite | grep -F "$VERSION"
-                      apt-get --print-uris install "neverwrite=$VERSION"
-                      apt-get install -y --download-only "neverwrite=$VERSION"
-                    '
-
-            - name: Validate DNF repository with dnf
-              shell: bash
-              env:
-                  PAGES_DIR: ${{ runner.temp }}/gh-pages
-                  VERSION: ${{ needs.prepare.outputs.version }}
-              run: |
-                  docker run --rm \
-                    -e VERSION="$VERSION" \
-                    -v "$PAGES_DIR/dnf:/repo:ro" \
-                    fedora:latest \
-                    bash -lc '
-                      set -euo pipefail
-                      cp /repo/neverwrite-archive-keyring.asc /etc/pki/rpm-gpg/
-                      rpm --import /repo/neverwrite-archive-keyring.asc
-                      cp /repo/neverwrite.repo.example /etc/yum.repos.d/neverwrite.repo
-                      sed -i "s|baseurl=.*|baseurl=file:///repo|" /etc/yum.repos.d/neverwrite.repo
-                      sed -i "s|gpgkey=.*|gpgkey=file:///repo/neverwrite-archive-keyring.asc|" /etc/yum.repos.d/neverwrite.repo
-                      dnf -y makecache
-                      dnf info neverwrite
-                      dnf info neverwrite | grep -F "$VERSION"
-                      dnf install -y --downloadonly neverwrite
-                      echo "DNF repository validated successfully."
-                    '
-
-            - name: Upload APT repository metadata to GitHub release
-              shell: bash
-              env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  APT_RELEASE_DIR: ${{ runner.temp }}/apt-release
-              run: |
-                  gh release upload "${{ needs.prepare.outputs.tag }}" \
-                    "$APT_RELEASE_DIR/InRelease" \
-                    "$APT_RELEASE_DIR/Release" \
-                    "$APT_RELEASE_DIR/Release.gpg" \
-                    "$APT_RELEASE_DIR/Packages" \
-                    "$APT_RELEASE_DIR/Packages.gz" \
-                    "$APT_RELEASE_DIR/neverwrite-archive-keyring.asc" \
-                    "$APT_RELEASE_DIR/neverwrite.sources.example" \
-                    --clobber
-
-            - name: Validate published APT release endpoint
-              shell: bash
-              env:
-                  APT_RELEASE_DIR: ${{ runner.temp }}/apt-release
-                  REPO_SLUG: ${{ needs.prepare.outputs.repo_slug }}
-                  RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
-                  VERSION: ${{ needs.prepare.outputs.version }}
-              run: |
-                  docker run --rm \
-                    -e REPO_SLUG="$REPO_SLUG" \
-                    -e RELEASE_TAG="$RELEASE_TAG" \
-                    -e VERSION="$VERSION" \
-                    -v "$APT_RELEASE_DIR:/repo:ro" \
-                    ubuntu:24.04 \
-                    bash -lc '
-                      set -euo pipefail
-                      apt-get update
-                      apt-get install -y ca-certificates gnupg
-                      install -d -m 0755 /etc/apt/keyrings
-                      cp /repo/neverwrite-archive-keyring.asc /etc/apt/keyrings/neverwrite.asc
-                      chmod 0644 /etc/apt/keyrings/neverwrite.asc
-                      sed "s|^URIs: .*|URIs: https://github.com/${REPO_SLUG}/releases/download/${RELEASE_TAG}|" \
-                        /repo/neverwrite.sources.example \
-                        >/etc/apt/sources.list.d/neverwrite.sources
-                      apt-get update
-                      apt-cache policy neverwrite | grep -F "$VERSION"
-                      apt-get --print-uris install "neverwrite=$VERSION" | tee /tmp/neverwrite-uris.txt
-                      grep -F "https://github.com/${REPO_SLUG}/releases/download/${RELEASE_TAG}" /tmp/neverwrite-uris.txt
-                      grep -F "NeverWrite-${VERSION}-amd64.deb" /tmp/neverwrite-uris.txt
-                    '
-
-            - name: Publish Linux repository entrypoints to gh-pages
-              shell: bash
-              env:
-                  PAGES_DIR: ${{ runner.temp }}/gh-pages
-                  APT_RELEASE_DIR: ${{ runner.temp }}/apt-release
-              run: |
-                  mkdir -p "$PAGES_DIR/apt"
-                  rm -rf "$PAGES_DIR/apt/dists" "$PAGES_DIR/apt/pool"
-                  cp "$APT_RELEASE_DIR/neverwrite-archive-keyring.asc" "$PAGES_DIR/apt/"
-                  cp "$APT_RELEASE_DIR/neverwrite.sources.example" "$PAGES_DIR/apt/"
-                  package_asset="$(find "$PAGES_DIR/apt" "$PAGES_DIR/dnf" -type f \( -name '*.deb' -o -name '*.rpm' \) -print -quit)"
-                  if [[ -n "$package_asset" ]]; then
-                    echo "Package asset must stay on GitHub Releases, not gh-pages: $package_asset" >&2
-                    exit 1
-                  fi
-                  (
-                    cd "$PAGES_DIR"
-                    git config user.name "github-actions[bot]"
-                    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-                    git add apt dnf .nojekyll
-                    if git diff --cached --quiet; then
-                      echo "No Linux repository entrypoint changes to publish."
-                    else
-                      git commit -m "Publish Linux repository entrypoints for ${{ needs.prepare.outputs.tag }}"
-                      git push origin HEAD:gh-pages
-                    fi
-                  )
+  prepare:
+    name: Prepare release
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ env.RELEASE_TAG }}
+
+      - id: release
+        name: Validate version metadata
+        shell: bash
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Release tag must look like vX.Y.Z" >&2
+            exit 1
+          fi
+          VERSION="${RELEASE_TAG#v}"
+          node scripts/sync-tauri-version.mjs --check "$VERSION"
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  build-macos:
+    name: Build macOS (${{ matrix.target }})
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            target: aarch64-apple-darwin
+          - runner: macos-15-intel
+            target: x86_64-apple-darwin
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: bifrostwrite-${{ matrix.target }}
+
+      - name: Install desktop dependencies
+        working-directory: apps/desktop
+        run: npm ci
+
+      - name: Build and stage native runtime
+        working-directory: apps/desktop
+        run: node scripts/stage-tauri-sidecar.mjs --target ${{ matrix.target }}
+
+      - name: Build Tauri DMG
+        working-directory: apps/desktop
+        env:
+          APPLE_SIGNING_IDENTITY: "-"
+        run: npx tauri build --config src-tauri/tauri.conf.json --target ${{ matrix.target }} --bundles dmg
+
+      - name: Verify native app bundle
+        working-directory: apps/desktop
+        shell: bash
+        run: |
+          APP_PATH=$(find "src-tauri/target/${{ matrix.target }}/release/bundle/macos" -maxdepth 1 -type d -name 'BifrostWrite.app' | head -n 1)
+          test -n "$APP_PATH"
+          test -x "$APP_PATH/Contents/MacOS/bifrostwrite"
+          test -x "$APP_PATH/Contents/Resources/native-backend/neverwrite-native-backend"
+          test ! -e "$APP_PATH/Contents/Frameworks/Electron Framework.framework"
+          codesign --verify --deep --strict "$APP_PATH"
+          du -sh "$APP_PATH"
+
+      - name: Smoke packaged native runtimes
+        working-directory: apps/desktop
+        env:
+          BIFROSTWRITE_TAURI_RELEASE_TARGET: ${{ matrix.target }}
+        run: node scripts/smoke-packaged-sidecar.mjs
+
+      - name: Package release asset
+        working-directory: apps/desktop
+        shell: bash
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          TARGET="${{ matrix.target }}"
+          SOURCE=$(find "src-tauri/target/${TARGET}/release/bundle/dmg" -maxdepth 1 -name '*.dmg' -type f | head -n 1)
+          test -n "$SOURCE"
+          mkdir -p dist
+          ASSET="BifrostWrite-v${VERSION}-${TARGET}.dmg"
+          cp "$SOURCE" "dist/$ASSET"
+          shasum -a 256 "dist/$ASSET" > "dist/$ASSET.sha256"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: bifrostwrite-${{ matrix.target }}
+          path: |
+            apps/desktop/dist/*.dmg
+            apps/desktop/dist/*.sha256
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub release
+    needs: [prepare, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: bifrostwrite-*
+          path: release
+          merge-multiple: true
+
+      - name: Create checksums file
+        shell: bash
+        run: |
+          cd release
+          cat *.sha256 > "BifrostWrite-${{ needs.prepare.outputs.tag }}-checksums.txt"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          name: BifrostWrite ${{ needs.prepare.outputs.tag }}
+          prerelease: ${{ contains(needs.prepare.outputs.version, '-') }}
+          generate_release_notes: true
+          files: release/*
+          body: |
+            ## Install with Homebrew
+
+            ```bash
+            brew tap bifrost-proxy/bifrost
+            brew install --cask bifrostwrite
+            ```

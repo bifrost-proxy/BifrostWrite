@@ -6,7 +6,7 @@ import {
     type MouseEvent,
     type ReactElement,
 } from "react";
-import { openPath, revealItemInDir } from "@neverwrite/runtime";
+import { openPath, revealItemInDir } from "@bifrostwrite/runtime";
 import {
     ContextMenu,
     type ContextMenuState,

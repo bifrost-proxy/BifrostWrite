@@ -1,6 +1,6 @@
 # AI Change Control
 
-NeverWrite's AI change control system is the safety layer between agent-authored
+BifrostWrite's AI change control system is the safety layer between agent-authored
 file edits and the user's vault. It tracks what the agent changed, lets the user
 accept or reject all or part of those changes, and protects against stale writes
 when the file changed outside the tracked agent flow.

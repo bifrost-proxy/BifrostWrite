@@ -63,7 +63,7 @@ knows the Claude Code startup action failed and can retry from the same context.
 
 **What:** The binary check verifies that `claude` exists, but does not validate
 that it is the expected Claude Code CLI or that the version supports the flags
-NeverWrite sends.
+BifrostWrite sends.
 
 **Fix:** Consider a lightweight `claude --version` probe when diagnosing setup or
 before enabling version-sensitive flags. Avoid doing this on every startup unless

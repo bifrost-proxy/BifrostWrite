@@ -18,7 +18,7 @@ import {
     useState,
     type ReactNode,
 } from "react";
-import { open as runtimeOpen } from "@neverwrite/runtime";
+import { open as runtimeOpen } from "@bifrostwrite/runtime";
 import { useShallow } from "zustand/react/shallow";
 import {
     isChatTab,

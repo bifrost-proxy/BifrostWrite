@@ -6,7 +6,7 @@ import {
     type ViewUpdate,
 } from "@codemirror/view";
 import { RangeSetBuilder } from "@codemirror/state";
-import { openUrl } from "@neverwrite/runtime";
+import { openUrl } from "@bifrostwrite/runtime";
 
 const URL_RE = /https?:\/\/[^\s<>()"\]]+/g;
 const EMAIL_RE = /(?:^|[\s<(])([^\s<>()"\],;:]+@[^\s<>()"\],;:]+\.[^\s<>()"\],;:]+)(?=$|[\s>)])/g;

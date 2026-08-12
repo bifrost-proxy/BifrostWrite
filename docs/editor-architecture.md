@@ -1,6 +1,6 @@
 # Editor Architecture
 
-This document is a maintainer guide for changing NeverWrite's editor without
+This document is a maintainer guide for changing BifrostWrite's editor without
 breaking the power-user experience. It focuses on the desktop editor stack:
 CodeMirror 6, live preview, Mermaid rendering, wikilinks,
 frontmatter/properties, autosave/dirty state, inline review/merge view, and
@@ -268,7 +268,7 @@ calls `flushCurrentSave()` during cleanup; note tab closing routes through
 ## Merge View And Inline Review
 
 Inline review is built on CodeMirror's `@codemirror/merge` package plus
-NeverWrite review projection metadata.
+BifrostWrite review projection metadata.
 
 The main pieces are:
 
@@ -386,7 +386,7 @@ boundaries, follow the smoke-test guidance in [Testing and Validation](./testing
 ```bash
 cargo build -p neverwrite-native-backend
 cd apps/desktop
-npm run electron:vault-editor:smoke
+npm run tauri:vault-editor:smoke
 ```
 
 ## Pitfalls

@@ -4,7 +4,7 @@ import {
     useState,
     type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
-import { invoke } from "@neverwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
 import type {
     ShortcutBinding,
     ShortcutModifier,
@@ -163,7 +163,7 @@ export function ShortcutRecorder({
                 active: true,
             }),
         ).catch(() => {
-            // Browser development does not expose Electron's application menu.
+            // Browser development does not expose the native application menu.
         });
 
         return () => {
@@ -172,7 +172,7 @@ export function ShortcutRecorder({
                     active: false,
                 }),
             ).catch(() => {
-                // Browser development does not expose Electron's application menu.
+                // Browser development does not expose the native application menu.
             });
         };
     }, [platform, recording]);

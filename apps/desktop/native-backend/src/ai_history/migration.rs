@@ -2892,9 +2892,9 @@ mod tests {
 
     #[test]
     fn real_process_aborts_across_durable_boundaries_recover_idempotently() {
-        const CHILD_ENV: &str = "NEVERWRITE_MIGRATION_ABORT_CHILD";
-        const ROOT_ENV: &str = "NEVERWRITE_MIGRATION_ABORT_ROOT";
-        const POINT_ENV: &str = "NEVERWRITE_MIGRATION_ABORT_POINT";
+        const CHILD_ENV: &str = "BIFROSTWRITE_MIGRATION_ABORT_CHILD";
+        const ROOT_ENV: &str = "BIFROSTWRITE_MIGRATION_ABORT_ROOT";
+        const POINT_ENV: &str = "BIFROSTWRITE_MIGRATION_ABORT_POINT";
         if std::env::var_os(CHILD_ENV).is_some() {
             let root = PathBuf::from(std::env::var_os(ROOT_ENV).unwrap());
             let source = layout(&root, "source");

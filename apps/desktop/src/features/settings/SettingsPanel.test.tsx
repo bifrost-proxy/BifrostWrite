@@ -1,5 +1,5 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
-import { getAllWebviewWindows, listen, openUrl } from "@neverwrite/runtime";
+import { getAllWebviewWindows, listen, openUrl } from "@bifrostwrite/runtime";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useSettingsStore } from "../../app/store/settingsStore";
 import { useChatStore } from "../ai/store/chatStore";
@@ -64,7 +64,7 @@ const aiApiMocks = vi.hoisted(() => ({
                           id: "gateway",
                           name: "Custom gateway",
                           description:
-                              "Use a custom Anthropic-compatible gateway just for NeverWrite.",
+                              "Use a custom Anthropic-compatible gateway just for BifrostWrite.",
                       },
                   ],
                   onboardingRequired: true,
@@ -87,7 +87,7 @@ const aiApiMocks = vi.hoisted(() => ({
                           id: "openai-api-key",
                           name: "API key",
                           description:
-                              "Use an OpenAI API key stored locally in NeverWrite.",
+                              "Use an OpenAI API key stored locally in BifrostWrite.",
                       },
                   ],
                   onboardingRequired: false,
@@ -329,11 +329,11 @@ describe("SettingsPanel", () => {
 
     it("filters recent vaults in a scrollable list", () => {
         localStorage.setItem(
-            "neverwrite:recentVaults",
+            "bifrostwrite:recentVaults",
             JSON.stringify([
                 {
-                    path: "/home/user/projects/NeverWrite",
-                    name: "NeverWrite",
+                    path: "/home/user/projects/BifrostWrite",
+                    name: "BifrostWrite",
                 },
                 {
                     path: "/home/user/notes/Work 2026",
@@ -356,13 +356,13 @@ describe("SettingsPanel", () => {
             overflowY: "auto",
         });
         expect(screen.getByText("2/2")).toBeInTheDocument();
-        expect(screen.getByText("NeverWrite")).toBeInTheDocument();
+        expect(screen.getByText("BifrostWrite")).toBeInTheDocument();
         expect(screen.getByText("Work 2026")).toBeInTheDocument();
 
         fireEvent.change(search, { target: { value: "work" } });
 
         expect(screen.getByText("1/2")).toBeInTheDocument();
-        expect(screen.queryByText("NeverWrite")).not.toBeInTheDocument();
+        expect(screen.queryByText("BifrostWrite")).not.toBeInTheDocument();
         expect(screen.getByText("Work 2026")).toBeInTheDocument();
 
         fireEvent.change(search, { target: { value: "missing" } });
@@ -375,7 +375,7 @@ describe("SettingsPanel", () => {
 
     it("disables destructive Recent cleanup for the active vault", () => {
         localStorage.setItem(
-            "neverwrite:recentVaults",
+            "bifrostwrite:recentVaults",
             JSON.stringify([{ path: "/vault", name: "Current Vault" }]),
         );
         useVaultStore.setState({ vaultPath: "/vault" });
@@ -433,32 +433,34 @@ describe("SettingsPanel", () => {
         );
 
         expect(vi.mocked(openUrl)).toHaveBeenCalledWith(
-            "https://github.com/jsgrrchg/NeverWrite/issues",
+            "https://github.com/bifrost-proxy/BifrostWrite/issues",
         );
         expect(vi.mocked(openUrl)).toHaveBeenCalledWith(
-            "https://github.com/jsgrrchg/NeverWrite/discussions",
+            "https://github.com/bifrost-proxy/BifrostWrite/discussions",
         );
         expect(vi.mocked(openUrl)).toHaveBeenCalledWith(
-            "https://github.com/jsgrrchg/NeverWrite/issues/new",
+            "https://github.com/bifrost-proxy/BifrostWrite/issues/new",
         );
         expect(vi.mocked(openUrl)).toHaveBeenCalledWith(
-            "https://github.com/jsgrrchg/NeverWrite/discussions/new/choose",
+            "https://github.com/bifrost-proxy/BifrostWrite/discussions/new/choose",
         );
     });
 
-    it("opens sponsor links from the sponsors settings panel", () => {
+    it("opens project links from the project settings panel", () => {
         renderComponent(<SettingsPanel onClose={() => {}} />);
 
-        fireEvent.click(screen.getByRole("button", { name: "Sponsors" }));
+        fireEvent.click(screen.getByRole("button", { name: "Project" }));
 
-        fireEvent.click(screen.getByRole("button", { name: "buy coffee" }));
-        fireEvent.click(screen.getByRole("button", { name: "sponsor" }));
+        fireEvent.click(screen.getByRole("button", { name: "open project" }));
+        fireEvent.click(
+            screen.getByRole("button", { name: "open organization" }),
+        );
 
         expect(vi.mocked(openUrl)).toHaveBeenCalledWith(
-            "https://buymeacoffee.com/jsgrrchg",
+            "https://github.com/bifrost-proxy/BifrostWrite",
         );
         expect(vi.mocked(openUrl)).toHaveBeenCalledWith(
-            "https://github.com/sponsors/jsgrrchg",
+            "https://github.com/bifrost-proxy",
         );
     });
 
@@ -1014,7 +1016,7 @@ describe("SettingsPanel", () => {
     });
 
     it("hides the inline close button in standalone Windows settings", () => {
-        // Standalone Windows settings rely on Electron's native
+        // Standalone Windows settings rely on native
         // titleBarOverlay for min/max/close, so the React-level "Close
         // settings (Esc)" affordance must not appear — it would double up
         // with the OS-drawn buttons on the right.
@@ -1029,7 +1031,7 @@ describe("SettingsPanel", () => {
         expect(
             screen.queryByTitle("Close settings (Esc)"),
         ).not.toBeInTheDocument();
-        // The native caption buttons are painted by Electron, not React, so
+        // The native caption buttons are painted by the OS, not React, so
         // nothing about them should appear in the DOM either.
         expect(
             screen.queryByLabelText("Close window"),
@@ -1390,7 +1392,7 @@ describe("SettingsPanel", () => {
                         rawJson: {},
                         target: "darwin-universal",
                         downloadUrl:
-                            "https://github.com/example/neverwrite/releases/download/v0.2.0/NeverWrite_0.2.0_macOS_Universal.zip",
+                            "https://github.com/example/neverwrite/releases/download/v0.2.0/BifrostWrite_0.2.0_macOS_Universal.zip",
                     },
                 };
             }
@@ -1423,19 +1425,19 @@ describe("SettingsPanel", () => {
             { label: "note-1" },
         ] as Awaited<ReturnType<typeof getAllWebviewWindows>>);
         localStorage.setItem(
-            "neverwrite:window-operational-state:main",
+            "bifrostwrite:window-operational-state:main",
             JSON.stringify({
                 label: "main",
                 windowMode: "main",
                 windowRole: "main",
-                windowTitle: "NeverWrite",
+                windowTitle: "BifrostWrite",
                 dirtyTabs: ["Draft note"],
                 pendingReviewSessions: ["Refactor updater"],
                 activeAgentSessions: ["Release cleanup · Streaming response"],
             }),
         );
         localStorage.setItem(
-            "neverwrite:window-operational-state:note-1",
+            "bifrostwrite:window-operational-state:note-1",
             JSON.stringify({
                 label: "note-1",
                 windowMode: "note",
@@ -1475,7 +1477,7 @@ describe("SettingsPanel", () => {
                         rawJson: {},
                         target: "darwin-universal",
                         downloadUrl:
-                            "https://github.com/example/neverwrite/releases/download/v0.2.0/NeverWrite_0.2.0_macOS_Universal.zip",
+                            "https://github.com/example/neverwrite/releases/download/v0.2.0/BifrostWrite_0.2.0_macOS_Universal.zip",
                     },
                 };
             }
@@ -1559,7 +1561,7 @@ describe("SettingsPanel", () => {
                         rawJson: {},
                         target: "darwin-universal",
                         downloadUrl:
-                            "https://github.com/example/neverwrite/releases/download/v0.2.0/NeverWrite_0.2.0_macOS_Universal.zip",
+                            "https://github.com/example/neverwrite/releases/download/v0.2.0/BifrostWrite_0.2.0_macOS_Universal.zip",
                     },
                 };
             }
@@ -1578,12 +1580,12 @@ describe("SettingsPanel", () => {
         expect(await screen.findByText("v0.2.0")).toBeInTheDocument();
 
         localStorage.setItem(
-            "neverwrite:window-operational-state:main",
+            "bifrostwrite:window-operational-state:main",
             JSON.stringify({
                 label: "main",
                 windowMode: "main",
                 windowRole: "main",
-                windowTitle: "NeverWrite",
+                windowTitle: "BifrostWrite",
                 dirtyTabs: ["Draft note"],
                 pendingReviewSessions: [],
                 activeAgentSessions: [],

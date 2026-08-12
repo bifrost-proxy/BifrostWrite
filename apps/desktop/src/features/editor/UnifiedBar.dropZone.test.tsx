@@ -11,7 +11,7 @@ const innerPositionMock = vi.fn();
 const scaleFactorMock = vi.fn();
 
 vi.mock("../../app/detachedWindows", () => ({
-    ATTACH_EXTERNAL_TAB_EVENT: "neverwrite:attach-external-tab",
+    ATTACH_EXTERNAL_TAB_EVENT: "bifrostwrite:attach-external-tab",
     createDetachedWindowPayload: vi.fn(),
     createGhostWindow: vi.fn(),
     destroyGhostWindow: vi.fn(),

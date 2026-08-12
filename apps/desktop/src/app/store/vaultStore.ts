@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { invoke } from "@neverwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
 import { perfCount, perfMeasure, perfNow } from "../utils/perfInstrumentation";
 import { getPathBaseName } from "../utils/path";
 import {
@@ -177,8 +177,8 @@ function hasMarkdownExtension(path: string) {
     return path.toLowerCase().endsWith(".md");
 }
 
-const LAST_VAULT_KEY = "neverwrite:lastVaultPath";
-const RECENT_VAULTS_KEY = "neverwrite:recentVaults";
+const LAST_VAULT_KEY = "bifrostwrite:lastVaultPath";
+const RECENT_VAULTS_KEY = "bifrostwrite:recentVaults";
 const MAX_RECENT_VAULTS = 100;
 const OPEN_STATE_POLL_MS = 120;
 
@@ -409,10 +409,10 @@ export async function removeVaultFromList(path: string) {
 
     // Clear all per-vault localStorage data
     safeStorageRemoveItem(`neverwrite.session.tabs:${path}`);
-    safeStorageRemoveItem(`neverwrite:theme:${path}`);
-    safeStorageRemoveItem(`neverwrite:settings:${path}`);
+    safeStorageRemoveItem(`bifrostwrite:theme:${path}`);
+    safeStorageRemoveItem(`bifrostwrite:settings:${path}`);
     safeStorageRemoveItem(`neverwrite.chat.tabs:${path}`);
-    safeStorageRemoveItem(`neverwrite:bookmarks:${path}`);
+    safeStorageRemoveItem(`bifrostwrite:bookmarks:${path}`);
 
     // Delete vault index snapshot from disk
     try {

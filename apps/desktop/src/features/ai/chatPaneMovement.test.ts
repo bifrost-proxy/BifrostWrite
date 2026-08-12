@@ -1,4 +1,4 @@
-import { invoke } from "@neverwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
 import { waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -141,7 +141,7 @@ const claudeTerminalRuntimeDescriptor = {
 const setupStatusPayload = {
     runtime_id: "codex-acp",
     binary_ready: true,
-    binary_path: "/Applications/NeverWrite/codex-acp",
+    binary_path: "/Applications/BifrostWrite/codex-acp",
     binary_source: "bundled" as const,
     auth_ready: true,
     auth_method: "openai-api-key",
@@ -153,7 +153,7 @@ const setupStatusPayload = {
 const readySetupStatusState: AIRuntimeSetupStatus = {
     runtimeId: "codex-acp",
     binaryReady: true,
-    binaryPath: "/Applications/NeverWrite/codex-acp",
+    binaryPath: "/Applications/BifrostWrite/codex-acp",
     binarySource: "bundled",
     authReady: true,
     authMethod: "openai-api-key",

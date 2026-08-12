@@ -1,6 +1,6 @@
-# Contributing to NeverWrite
+# Contributing to BifrostWrite
 
-Thanks for your interest in contributing to NeverWrite. This guide covers everything you need to get started.
+Thanks for your interest in contributing to BifrostWrite. This guide covers everything you need to get started.
 
 ## Prerequisites
 
@@ -219,10 +219,10 @@ For development, these optional variables can override default runtime paths:
 
 | Variable | Purpose |
 | ---------- | --------- |
-| `NEVERWRITE_CODEX_ACP_BIN` | Override Codex ACP runtime binary |
-| `NEVERWRITE_CLAUDE_ACP_BIN` | Override Claude ACP runtime binary |
-| `NEVERWRITE_KILO_ACP_BIN` | Override Kilo ACP runtime binary |
-| `NEVERWRITE_WEB_CLIPPER_DEV_ORIGINS` | Allow unpacked extension origins |
+| `BIFROSTWRITE_CODEX_ACP_BIN` | Override Codex ACP runtime binary |
+| `BIFROSTWRITE_CLAUDE_ACP_BIN` | Override Claude ACP runtime binary |
+| `BIFROSTWRITE_KILO_ACP_BIN` | Override Kilo ACP runtime binary |
+| `BIFROSTWRITE_WEB_CLIPPER_DEV_ORIGINS` | Allow unpacked extension origins |
 
 ## Versioning
 

@@ -1,4 +1,4 @@
-import { emitTo, getAllWebviewWindows } from "@neverwrite/runtime";
+import { emitTo, getAllWebviewWindows } from "@bifrostwrite/runtime";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
     createDetachedWindowPayload,
@@ -374,7 +374,7 @@ describe("detachedWindows", () => {
         expect(existingWindow.setFocus).toHaveBeenCalled();
         expect(emitTo).toHaveBeenCalledWith(
             "settings",
-            "neverwrite:settings-open-section",
+            "bifrostwrite:settings-open-section",
             { section: "updates" },
         );
     });

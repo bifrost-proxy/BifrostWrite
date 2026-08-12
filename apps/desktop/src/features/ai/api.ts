@@ -1,5 +1,5 @@
-import { invoke } from "@neverwrite/runtime";
-import { listen, type UnlistenFn } from "@neverwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
+import { listen, type UnlistenFn } from "@bifrostwrite/runtime";
 import type { VaultNoteChange } from "../../app/store/vaultStore";
 import { toVaultRelativePath } from "../../app/utils/vaultPaths";
 import type {

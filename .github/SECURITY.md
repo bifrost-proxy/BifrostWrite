@@ -1,6 +1,6 @@
 # Security Policy
 
-NeverWrite is a desktop application for power users, and we take security reports seriously. If you believe you have found a vulnerability, please report it privately so we can investigate and coordinate a fix before details become public.
+BifrostWrite is a desktop application for power users, and we take security reports seriously. If you believe you have found a vulnerability, please report it privately so we can investigate and coordinate a fix before details become public.
 
 ## Reporting a Vulnerability
 
@@ -27,10 +27,10 @@ Helpful reports usually include:
 
 This policy applies to the code, packaging, release artifacts, and project-maintained integrations in this repository.
 
-For vulnerabilities in third-party dependencies, please report the issue to the upstream project first unless NeverWrite's use of that dependency introduces a separate vulnerability.
+For vulnerabilities in third-party dependencies, please report the issue to the upstream project first unless BifrostWrite's use of that dependency introduces a separate vulnerability.
 
 ## Response Expectations
 
 We will review private vulnerability reports as promptly as we can, ask follow-up questions when needed, and coordinate remediation and disclosure through GitHub Security Advisories when appropriate.
 
-Thank you for helping keep NeverWrite and its users safe.
+Thank you for helping keep BifrostWrite and its users safe.

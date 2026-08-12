@@ -5,7 +5,7 @@ import {
     useState,
     type CSSProperties,
 } from "react";
-import { openPath, revealItemInDir } from "@neverwrite/runtime";
+import { openPath, revealItemInDir } from "@bifrostwrite/runtime";
 import { redo, undo } from "@codemirror/commands";
 import { Compartment, EditorSelection, EditorState } from "@codemirror/state";
 import {

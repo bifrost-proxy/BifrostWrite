@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { confirm, openUrl } from "@neverwrite/runtime";
+import { confirm, openUrl } from "@bifrostwrite/runtime";
 import {
     normalizeEditorFontFamily,
     readSettingsForVault,
@@ -202,11 +202,11 @@ const AI_AUTO_CONTEXT_GLOBAL_SCOPE = "__global__";
 const TRANSCRIPT_PAGE_SIZE = 60;
 const TRACKED_PERSISTED_RECONCILE_DELAY_MS = 260;
 const SAVED_CHAT_RECONNECTING_STATUS_EVENT_ID =
-    "neverwrite:recovery:reconnecting-saved-chat";
+    "bifrostwrite:recovery:reconnecting-saved-chat";
 const RUNTIME_CONTEXT_RECOVERY_STATUS_EVENT_ID =
-    "neverwrite:recovery:runtime-context";
+    "bifrostwrite:recovery:runtime-context";
 const CLOSED_SUBAGENT_QUEUE_CANCELLED_STATUS_EVENT_ID =
-    "neverwrite:subagent:queue-cancelled";
+    "bifrostwrite:subagent:queue-cancelled";
 const SAVED_CHAT_RECONNECTING_STATUS_TITLE = "Reconnecting saved chat...";
 const RUNTIME_CONTEXT_RECOVERY_STATUS_TITLE =
     "The AI runtime lost its connection. Reconnecting with saved context...";
@@ -219,7 +219,7 @@ const SAVED_CHAT_RECONNECT_FAILURE_PREFIX =
 const RUNTIME_CONFIGURATION_INVALID_DIAGNOSTIC =
     "The AI runtime configuration is invalid.";
 const CUSTOM_RUNTIME_CONTINUATION_STATUS_EVENT_ID =
-    "neverwrite:recovery:custom-runtime-continuation";
+    "bifrostwrite:recovery:custom-runtime-continuation";
 const CUSTOM_RUNTIME_UNAVAILABLE_MESSAGE =
     "This custom ACP runtime is no longer available. Restore it in Settings or start a new chat with another runtime.";
 const CUSTOM_RUNTIME_NO_CONTINUATION_MESSAGE =

@@ -1,10 +1,10 @@
-import { emitTo } from "@neverwrite/runtime";
+import { emitTo } from "@bifrostwrite/runtime";
 import {
     WebviewWindow,
     getAllWebviewWindows,
     getCurrentWebviewWindow,
-} from "@neverwrite/runtime";
-import { LogicalPosition } from "@neverwrite/runtime";
+} from "@bifrostwrite/runtime";
+import { LogicalPosition } from "@bifrostwrite/runtime";
 import { waitForWindowReady } from "./runtime/windowLifecycle";
 import type { Tab, TabInput } from "./store/editorStore";
 import type { WorkspaceDropTarget } from "./store/workspaceContracts";
@@ -28,15 +28,15 @@ import {
 import type { AIChatSession } from "../features/ai/types";
 
 const DETACHED_WINDOW_PREFIX = "note";
-const DETACHED_WINDOW_STORAGE_PREFIX = "neverwrite:detached-window:";
-const WINDOW_TAB_DROP_ZONE_STORAGE_PREFIX = "neverwrite:window-tab-drop-zone:";
+const DETACHED_WINDOW_STORAGE_PREFIX = "bifrostwrite:detached-window:";
+const WINDOW_TAB_DROP_ZONE_STORAGE_PREFIX = "bifrostwrite:window-tab-drop-zone:";
 const DETACH_WINDOW_WIDTH = 960;
 const DETACH_WINDOW_HEIGHT = 720;
 const DETACH_OUTSIDE_MARGIN = 30;
 const DETACHED_WINDOW_CURSOR_OFFSET_X = 120;
 const DETACHED_WINDOW_CURSOR_OFFSET_Y = 18;
-export const ATTACH_EXTERNAL_TAB_EVENT = "neverwrite:attach-external-tab";
-export const SETTINGS_OPEN_SECTION_EVENT = "neverwrite:settings-open-section";
+export const ATTACH_EXTERNAL_TAB_EVENT = "bifrostwrite:attach-external-tab";
+export const SETTINGS_OPEN_SECTION_EVENT = "bifrostwrite:settings-open-section";
 
 /**
  * Purge stale localStorage entries left behind by closed/crashed windows.

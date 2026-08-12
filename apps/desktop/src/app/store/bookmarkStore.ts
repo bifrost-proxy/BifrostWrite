@@ -67,7 +67,7 @@ export interface BookmarkStore extends BookmarkState {
 // Persistence helpers
 // ---------------------------------------------------------------------------
 
-const BOOKMARKS_KEY_PREFIX = "neverwrite:bookmarks:";
+const BOOKMARKS_KEY_PREFIX = "bifrostwrite:bookmarks:";
 
 let _currentVaultPath: string | null = null;
 

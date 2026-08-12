@@ -8,10 +8,10 @@ import {
     type MouseEvent as ReactMouseEvent,
 } from "react";
 import { createPortal } from "react-dom";
-import { confirm } from "@neverwrite/runtime";
-import { getCurrentWindow } from "@neverwrite/runtime";
-import { getCurrentWebview } from "@neverwrite/runtime";
-import { openPath, revealItemInDir } from "@neverwrite/runtime";
+import { confirm } from "@bifrostwrite/runtime";
+import { getCurrentWindow } from "@bifrostwrite/runtime";
+import { getCurrentWebview } from "@bifrostwrite/runtime";
+import { openPath, revealItemInDir } from "@bifrostwrite/runtime";
 import {
     getCurrentWindowLabel,
     publishWindowTabDropZone,

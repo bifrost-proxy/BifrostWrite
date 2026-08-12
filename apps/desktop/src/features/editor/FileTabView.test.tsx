@@ -3,7 +3,7 @@ import { getChunks, getOriginalDoc } from "@codemirror/merge";
 import { EditorState } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import userEvent from "@testing-library/user-event";
-import { openPath } from "@neverwrite/runtime";
+import { openPath } from "@bifrostwrite/runtime";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useEditorStore } from "../../app/store/editorStore";
 import { useSettingsStore } from "../../app/store/settingsStore";
@@ -217,7 +217,7 @@ describe("FileTabView", () => {
                 path: "/vault/src/config.toml",
                 mimeType: "application/toml",
                 viewer: "text",
-                content: 'name = "NeverWrite"',
+                content: 'name = "BifrostWrite"',
             },
         ]);
 
@@ -227,7 +227,7 @@ describe("FileTabView", () => {
         expect(editorElement).not.toBeNull();
         expect(document.querySelector(".cm-lineNumbers")).not.toBeNull();
         expect(editorElement).toHaveAttribute("data-live-preview", "false");
-        expect(screen.getByText('name = "NeverWrite"')).toBeInTheDocument();
+        expect(screen.getByText('name = "BifrostWrite"')).toBeInTheDocument();
         expect(
             screen.queryByRole("button", { name: "Fit" }),
         ).not.toBeInTheDocument();
@@ -238,7 +238,7 @@ describe("FileTabView", () => {
         mockInvoke().mockResolvedValue({
             relative_path: "src/config.toml",
             file_name: "config.toml",
-            content: 'name = "NeverWrite"\nversion = "1.0.0"',
+            content: 'name = "BifrostWrite"\nversion = "1.0.0"',
         });
 
         act(() => {
@@ -269,7 +269,7 @@ describe("FileTabView", () => {
         expect(mockInvoke()).toHaveBeenCalledWith("save_vault_file", {
             vaultPath: "/vault",
             relativePath: "src/config.toml",
-            content: 'name = "NeverWrite"\nversion = "1.0.0"',
+            content: 'name = "BifrostWrite"\nversion = "1.0.0"',
             opId: expect.any(String),
         });
 
@@ -609,7 +609,7 @@ describe("FileTabView", () => {
                 path: "/vault/src/config.toml",
                 mimeType: "application/toml",
                 viewer: "text",
-                content: 'name = "NeverWrite"',
+                content: 'name = "BifrostWrite"',
             },
         ]);
 
@@ -653,7 +653,7 @@ describe("FileTabView", () => {
                 path: "/vault/src/config.toml",
                 mimeType: "application/toml",
                 viewer: "text",
-                content: 'name = "NeverWrite"',
+                content: 'name = "BifrostWrite"',
             },
         ]);
         useSettingsStore.getState().setSetting("editorFontSize", 14);
@@ -696,7 +696,7 @@ describe("FileTabView", () => {
                 path: "/vault/src/config.toml",
                 mimeType: "application/toml",
                 viewer: "text",
-                content: 'name = "NeverWrite"',
+                content: 'name = "BifrostWrite"',
             },
         ]);
 
@@ -744,7 +744,7 @@ describe("FileTabView", () => {
                 path: "/vault/src/config.toml",
                 mimeType: "application/toml",
                 viewer: "text",
-                content: 'name = "NeverWrite"',
+                content: 'name = "BifrostWrite"',
             },
         ]);
 
@@ -761,7 +761,7 @@ describe("FileTabView", () => {
             view!.dispatch({
                 selection: {
                     anchor: 0,
-                    head: 19,
+                    head: 21,
                 },
             });
         });
@@ -777,7 +777,7 @@ describe("FileTabView", () => {
         expect(useEditorStore.getState().currentSelection).toMatchObject({
             noteId: null,
             path: "/vault/src/config.toml",
-            text: 'name = "NeverWrite"',
+            text: 'name = "BifrostWrite"',
             startLine: 1,
             endLine: 1,
         });
@@ -792,7 +792,7 @@ describe("FileTabView", () => {
             type: "selection_mention",
             noteId: null,
             path: "/vault/src/config.toml",
-            selectedText: 'name = "NeverWrite"',
+            selectedText: 'name = "BifrostWrite"',
         });
     });
 
@@ -845,7 +845,7 @@ describe("FileTabView", () => {
                             path: "/vault/src/config.toml",
                             mimeType: "application/toml",
                             viewer: "text" as const,
-                            content: 'name = "NeverWrite"',
+                            content: 'name = "BifrostWrite"',
                             history: [
                                 {
                                     kind: "file" as const,
@@ -854,7 +854,7 @@ describe("FileTabView", () => {
                                     path: "/vault/src/config.toml",
                                     mimeType: "application/toml",
                                     viewer: "text" as const,
-                                    content: 'name = "NeverWrite"',
+                                    content: 'name = "BifrostWrite"',
                                 },
                             ],
                             historyIndex: 0,
@@ -899,7 +899,7 @@ describe("FileTabView", () => {
             view!.dispatch({
                 selection: {
                     anchor: 0,
-                    head: 19,
+                    head: 21,
                 },
             });
         });
@@ -939,7 +939,7 @@ describe("FileTabView", () => {
                 path: "/vault/src/config.toml",
                 mimeType: "application/toml",
                 viewer: "text",
-                content: 'name = "NeverWrite"',
+                content: 'name = "BifrostWrite"',
             },
         ]);
 
@@ -968,7 +968,7 @@ describe("FileTabView", () => {
                 path: "/vault/src/config.toml",
                 mimeType: "application/toml",
                 viewer: "text",
-                content: 'name = "NeverWrite"',
+                content: 'name = "BifrostWrite"',
             },
         ]);
 
@@ -1019,7 +1019,7 @@ describe("FileTabView", () => {
                     path: "/vault/src/config.toml",
                     mimeType: "application/toml",
                     viewer: "text",
-                    content: 'name = "NeverWrite"',
+                    content: 'name = "BifrostWrite"',
                 },
                 {
                     id: "text-tab-2",
@@ -1041,7 +1041,7 @@ describe("FileTabView", () => {
         expect(firstEditor).not.toBeNull();
         const firstView = EditorView.findFromDOM(firstEditor as HTMLElement);
         expect(firstView).not.toBeNull();
-        expect(firstView!.state.doc.toString()).toBe('name = "NeverWrite"');
+        expect(firstView!.state.doc.toString()).toBe('name = "BifrostWrite"');
 
         await act(async () => {
             useEditorStore.getState().switchTab("text-tab-2");
@@ -1067,7 +1067,7 @@ describe("FileTabView", () => {
                     path: "/vault/src/config.toml",
                     mimeType: "application/toml",
                     viewer: "text",
-                    content: 'name = "NeverWrite"',
+                    content: 'name = "BifrostWrite"',
                 },
                 {
                     id: "text-tab-2",
@@ -1085,7 +1085,7 @@ describe("FileTabView", () => {
         seedTrackedDiff(
             "/vault/src/config.toml",
             'name = "Old"',
-            'name = "NeverWrite"',
+            'name = "BifrostWrite"',
         );
 
         renderComponent(<FileTabView />);
@@ -1137,7 +1137,7 @@ describe("FileTabView", () => {
                     path: "/vault/src/config.toml",
                     mimeType: "application/toml",
                     viewer: "text",
-                    content: 'name = "NeverWrite"',
+                    content: 'name = "BifrostWrite"',
                 },
             ],
             "text-tab-1",
@@ -1146,7 +1146,7 @@ describe("FileTabView", () => {
         seedTrackedDiff(
             "/vault/src/config.toml",
             'name = "Old"',
-            'name = "NeverWrite"',
+            'name = "BifrostWrite"',
         );
 
         await act(async () => {
@@ -1171,7 +1171,7 @@ describe("FileTabView", () => {
                     path: "/vault/src/config.toml",
                     mimeType: "application/toml",
                     viewer: "text",
-                    content: 'name = "NeverWrite"',
+                    content: 'name = "BifrostWrite"',
                 },
                 {
                     id: "text-tab-2",
@@ -1190,7 +1190,7 @@ describe("FileTabView", () => {
         seedTrackedDiff(
             "/vault/src/config.toml",
             'name = "Old"',
-            'name = "NeverWrite"',
+            'name = "BifrostWrite"',
         );
 
         await act(async () => {
@@ -1203,7 +1203,7 @@ describe("FileTabView", () => {
         );
         expect(view).not.toBeNull();
         expect(getChunks(view!.state)).toBeNull();
-        expect(view!.state.doc.toString()).toBe('name = "NeverWrite"');
+        expect(view!.state.doc.toString()).toBe('name = "BifrostWrite"');
 
         await act(async () => {
             useEditorStore.getState().switchTab("text-tab-2");
@@ -1227,7 +1227,7 @@ describe("FileTabView", () => {
         );
         expect(view).not.toBeNull();
         expect(getChunks(view!.state)).toBeNull();
-        expect(view!.state.doc.toString()).toBe('name = "NeverWrite"');
+        expect(view!.state.doc.toString()).toBe('name = "BifrostWrite"');
     });
 
     it("clears merge view for text files when inline review is turned off", async () => {
@@ -1241,7 +1241,7 @@ describe("FileTabView", () => {
                     path: "/vault/src/config.toml",
                     mimeType: "application/toml",
                     viewer: "text",
-                    content: 'name = "NeverWrite"',
+                    content: 'name = "BifrostWrite"',
                 },
             ],
             "text-tab-1",
@@ -1249,7 +1249,7 @@ describe("FileTabView", () => {
         seedTrackedDiff(
             "/vault/src/config.toml",
             'name = "Old"',
-            'name = "NeverWrite"',
+            'name = "BifrostWrite"',
         );
 
         await act(async () => {
@@ -1261,7 +1261,7 @@ describe("FileTabView", () => {
         );
         expect(view).not.toBeNull();
         expect(getChunks(view!.state)?.chunks.length).toBe(1);
-        expect(view!.state.doc.toString()).toBe('name = "NeverWrite"');
+        expect(view!.state.doc.toString()).toBe('name = "BifrostWrite"');
 
         await act(async () => {
             useSettingsStore
@@ -1275,7 +1275,7 @@ describe("FileTabView", () => {
         );
         expect(view).not.toBeNull();
         expect(getChunks(view!.state)).toBeNull();
-        expect(view!.state.doc.toString()).toBe('name = "NeverWrite"');
+        expect(view!.state.doc.toString()).toBe('name = "BifrostWrite"');
     });
 
     it("clears merge view for text files when AI change review is turned off", async () => {
@@ -1289,7 +1289,7 @@ describe("FileTabView", () => {
                     path: "/vault/src/config.toml",
                     mimeType: "application/toml",
                     viewer: "text",
-                    content: 'name = "NeverWrite"',
+                    content: 'name = "BifrostWrite"',
                 },
             ],
             "text-tab-1",
@@ -1297,7 +1297,7 @@ describe("FileTabView", () => {
         seedTrackedDiff(
             "/vault/src/config.toml",
             'name = "Old"',
-            'name = "NeverWrite"',
+            'name = "BifrostWrite"',
         );
 
         await act(async () => {
@@ -1320,7 +1320,7 @@ describe("FileTabView", () => {
         );
         expect(view).not.toBeNull();
         expect(getChunks(view!.state)).toBeNull();
-        expect(view!.state.doc.toString()).toBe('name = "NeverWrite"');
+        expect(view!.state.doc.toString()).toBe('name = "BifrostWrite"');
     });
 
     it("does not leak edits from one text file tab into a different text file tab", async () => {

@@ -9,21 +9,23 @@ import {
     logWarn,
     resetRuntimeLogStateForTests,
 } from "./runtimeLog";
-import type { ElectronPreloadApi } from "../runtime/types";
-
-type TestElectronLogBridge = Pick<ElectronPreloadApi, "log">;
-type TestWindowWithLogBridge = Omit<Window, "neverwriteElectron"> & {
-    neverwriteElectron?: TestElectronLogBridge;
+type TestRuntimeLogBridge = {
+    log: (
+        level: "debug" | "warn" | "error",
+        scope: string,
+        message: string,
+        detail?: unknown,
+    ) => Promise<void>;
 };
 
-function installElectronLogBridge(log: TestElectronLogBridge["log"]) {
-    (window as unknown as TestWindowWithLogBridge).neverwriteElectron = { log };
+function installRuntimeLogBridge(log: TestRuntimeLogBridge["log"]) {
+    window.bifrostwriteRuntimeLog = { log };
 }
 
 describe("runtimeLog", () => {
     afterEach(() => {
         resetRuntimeLogStateForTests();
-        delete window.neverwriteElectron;
+        delete window.bifrostwriteRuntimeLog;
         vi.restoreAllMocks();
     });
 
@@ -35,7 +37,7 @@ describe("runtimeLog", () => {
         logDebug("review", "should stay silent");
         expect(debugSpy).not.toHaveBeenCalled();
 
-        expect(window.__neverwriteLogs?.enable("review")).toEqual(["review"]);
+        expect(window.__bifrostwriteLogs?.enable("review")).toEqual(["review"]);
         expect(isDebugLogEnabled("review")).toBe(true);
 
         logDebug("review", "enabled debug log", { ok: true });
@@ -71,9 +73,9 @@ describe("runtimeLog", () => {
         });
     });
 
-    it("forwards warn and error logs to the Electron log bridge", () => {
+    it("forwards warn and error logs to the desktop log bridge", () => {
         const log = vi.fn().mockResolvedValue(undefined);
-        installElectronLogBridge(log);
+        installRuntimeLogBridge(log);
         vi.spyOn(console, "warn").mockImplementation(() => {});
         vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -98,15 +100,15 @@ describe("runtimeLog", () => {
         );
     });
 
-    it("forwards enabled debug logs to the Electron log bridge", () => {
+    it("forwards enabled debug logs to the desktop log bridge", () => {
         const log = vi.fn().mockResolvedValue(undefined);
-        installElectronLogBridge(log);
+        installRuntimeLogBridge(log);
         vi.spyOn(console, "debug").mockImplementation(() => {});
 
         logDebug("review", "hidden debug log");
         expect(log).not.toHaveBeenCalled();
 
-        window.__neverwriteLogs?.enable("review");
+        window.__bifrostwriteLogs?.enable("review");
         logDebug("review", "enabled debug log", { ok: true });
 
         expect(log).toHaveBeenCalledWith("debug", "review", "enabled debug log", {

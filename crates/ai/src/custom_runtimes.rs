@@ -112,7 +112,7 @@ pub fn validate_custom_acp_runtime_input(
         }
         if matches!(key.to_ascii_uppercase().as_str(), "PATH" | "PATHEXT") {
             return Err(format!(
-                "Environment variable \"{key}\" is controlled by NeverWrite."
+                "Environment variable \"{key}\" is controlled by BifrostWrite."
             ));
         }
         if is_secret_like_env_key(key) {

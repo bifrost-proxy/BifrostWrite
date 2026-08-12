@@ -1,4 +1,4 @@
-import { getAllWebviewWindows } from "@neverwrite/runtime";
+import { getAllWebviewWindows } from "@bifrostwrite/runtime";
 import { getPathBaseName } from "../../app/utils/path";
 import {
     safeStorageGetItem,
@@ -14,7 +14,7 @@ import {
 import { isAgentSessionActive } from "../ai/agentSessionActivity";
 import type { AIChatSession } from "../ai/types";
 
-const WINDOW_OPERATIONAL_STATE_PREFIX = "neverwrite:window-operational-state:";
+const WINDOW_OPERATIONAL_STATE_PREFIX = "bifrostwrite:window-operational-state:";
 export const WINDOW_OPERATIONAL_STATE_PUBLISH_DEBOUNCE_MS = 200;
 const WINDOW_OPERATIONAL_STATE_SETTLE_BUFFER_MS = 25;
 

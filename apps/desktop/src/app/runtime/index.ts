@@ -1,7 +1,7 @@
-import { electronRuntime } from "./electronRuntime";
+import { tauriRuntime } from "./tauriRuntime";
 import type {
     ConfirmDialogOptions,
-    NeverWriteRuntime,
+    BifrostWriteRuntime,
     OpenDialogOptions,
     RuntimeEventHandler,
     RuntimeLogicalPosition,
@@ -13,7 +13,7 @@ import type {
 
 export type {
     ConfirmDialogOptions,
-    NeverWriteRuntime,
+    BifrostWriteRuntime,
     OpenDialogOptions,
     RuntimeDragDropEvent,
     RuntimeDragDropPayload,
@@ -30,25 +30,32 @@ export { createTestRuntime } from "./testRuntime";
 
 declare global {
     interface Window {
-        neverwriteElectron?: import("./types").ElectronPreloadApi;
-        neverwriteWindowLabel?: string;
+        __TAURI_INTERNALS__?: unknown;
+        bifrostwriteRuntimeLog?: {
+            log?: (
+                level: "debug" | "warn" | "error",
+                scope: string,
+                message: string,
+                detail?: unknown,
+            ) => Promise<void>;
+        };
     }
 }
 
-function selectRuntime(): NeverWriteRuntime {
+function selectRuntime(): BifrostWriteRuntime {
     if (typeof window === "undefined") {
         throw new Error(
-            "NeverWrite desktop runtime is only available in a browser window.",
+            "BifrostWrite desktop runtime is only available in a browser window.",
         );
     }
 
-    if (!window.neverwriteElectron) {
+    if (!window.__TAURI_INTERNALS__) {
         throw new Error(
-            'NeverWrite now runs desktop flows through Electron only. Start the app with "npm run dev" or use "npm run renderer:dev" only for renderer-focused work.',
+            'BifrostWrite desktop APIs are only available inside Tauri. Start the app with "npm run dev" or use "npm run renderer:dev" only for renderer-focused work.',
         );
     }
 
-    return electronRuntime;
+    return tauriRuntime;
 }
 
 export const runtime = selectRuntime();

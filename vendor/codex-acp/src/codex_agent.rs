@@ -136,7 +136,7 @@ impl CodexAgent {
         mut config: Config,
         codex_linux_sandbox_exe: Option<PathBuf>,
     ) -> std::io::Result<Self> {
-        // The modern MCP protocol remains outside NeverWrite's ACP 0.14 contract.
+        // The modern MCP protocol remains outside BifrostWrite's ACP 0.14 contract.
         apply_runtime_feature_contracts(&mut config)?;
         let auth_manager =
             AuthManager::shared_from_config(&config, /*enable_codex_api_key_env*/ false).await;

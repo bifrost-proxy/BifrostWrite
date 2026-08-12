@@ -1,14 +1,14 @@
-# RPM/Fedora Support for NeverWrite Desktop
+# RPM/Fedora Support for BifrostWrite Desktop
 
 ## Problem
 
-NeverWrite desktop publishes `.deb` packages and hosts an APT repository for
+BifrostWrite desktop publishes `.deb` packages and hosts an APT repository for
 Ubuntu/Debian users, but has no support for Fedora/RHEL users who need `.rpm`
 packages.
 
 ## Scope
 
-Add full Fedora/RHEL support to the NeverWrite release pipeline:
+Add full Fedora/RHEL support to the BifrostWrite release pipeline:
 
 1. Build `.rpm` packages for `x86_64` and `aarch64` architectures
 2. Publish RPMs as GitHub Release assets
@@ -21,8 +21,8 @@ Add full Fedora/RHEL support to the NeverWrite release pipeline:
 
 Same convention as the Debian packages, using RPM architecture names:
 
-- `NeverWrite-{version}-x86_64.rpm` (amd64 host)
-- `NeverWrite-{version}-aarch64.rpm` (arm64 host)
+- `BifrostWrite-{version}-x86_64.rpm` (amd64 host)
+- `BifrostWrite-{version}-aarch64.rpm` (arm64 host)
 
 No distribution tag (`.fc40`, `.el10`) for cross-distro compatibility.
 
@@ -46,18 +46,18 @@ dnf/
 The `<location href>` in `primary.xml` for each package is an absolute GitHub
 Release download URL:
 ```
-https://github.com/jsgrrchg/NeverWrite/releases/download/vX.Y.Z/NeverWrite-X.Y.Z-x86_64.rpm
+https://github.com/jsgrrchg/BifrostWrite/releases/download/vX.Y.Z/BifrostWrite-X.Y.Z-x86_64.rpm
 ```
 
 ### User repository configuration
 
 ```ini
 [neverwrite]
-name=NeverWrite
-baseurl=https://jsgrrchg.github.io/NeverWrite/dnf
+name=BifrostWrite
+baseurl=https://jsgrrchg.github.io/BifrostWrite/dnf
 enabled=1
 gpgcheck=1
-gpgkey=https://jsgrrchg.github.io/NeverWrite/dnf/neverwrite-archive-keyring.asc
+gpgkey=https://jsgrrchg.github.io/BifrostWrite/dnf/neverwrite-archive-keyring.asc
 ```
 
 ### GPG signing

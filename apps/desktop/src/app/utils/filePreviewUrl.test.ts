@@ -11,7 +11,7 @@ import {
 describe("filePreviewUrl", () => {
     it("builds a stable vault preview URL from a relative path", () => {
         expect(buildVaultPreviewUrl("/vault", "docs/spec.pdf")).toContain(
-            "neverwrite-file://localhost/vault/",
+            "bifrostwrite-file://localhost/vault/",
         );
     });
 
@@ -21,7 +21,7 @@ describe("filePreviewUrl", () => {
                 "/vault/assets/image.png",
                 "/vault",
             ),
-        ).toContain("neverwrite-file://localhost/vault/");
+        ).toContain("bifrostwrite-file://localhost/vault/");
     });
 
     it("builds managed attachment previews without a physical path", () => {
@@ -29,7 +29,7 @@ describe("filePreviewUrl", () => {
             "/vault",
             "ma_0123456789abcdef0123456789abcdef",
         );
-        expect(url).toContain("neverwrite-file://localhost/ai-attachment/");
+        expect(url).toContain("bifrostwrite-file://localhost/ai-attachment/");
         expect(url).not.toContain("assets/chat");
     });
 
@@ -59,7 +59,7 @@ describe("filePreviewUrl", () => {
             buildCodexGeneratedImagePreviewUrl(
                 "/Users/test/.codex/generated_images/session/ig_1.png",
             ),
-        ).toContain("neverwrite-file://localhost/codex-image/");
+        ).toContain("bifrostwrite-file://localhost/codex-image/");
     });
 
     it("detects Codex generated image paths", () => {

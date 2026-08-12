@@ -23,7 +23,7 @@ export interface CrossPaneTabDropPreview {
 }
 
 export const CROSS_PANE_TAB_DROP_PREVIEW_EVENT =
-    "neverwrite:cross-pane-tab-drop-preview";
+    "bifrostwrite:cross-pane-tab-drop-preview";
 
 const EDGE_DROP_ZONE_RATIO = 0.22;
 const MIN_EDGE_DROP_ZONE_SIZE = 56;

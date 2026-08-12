@@ -1,8 +1,8 @@
 import type { AIChatNoteSummary } from "./types";
 
-export const FILE_TREE_NOTE_DRAG_EVENT = "neverwrite:file-tree-note-drag";
+export const FILE_TREE_NOTE_DRAG_EVENT = "bifrostwrite:file-tree-note-drag";
 export const FILE_TREE_ATTACH_TO_NEW_CHAT_EVENT =
-    "neverwrite:file-tree-attach-to-new-chat";
+    "bifrostwrite:file-tree-attach-to-new-chat";
 
 // "attach" skips the position check — used by context menu "Add to Chat"
 export type FileTreeNoteDragPhase =
@@ -59,7 +59,7 @@ export function emitFileTreeAttachToNewChat(detail: FileTreeNoteDragDetail) {
 }
 
 export const EXTERNAL_FILE_TREE_DRAG_EVENT =
-    "neverwrite:external-file-tree-drag";
+    "bifrostwrite:external-file-tree-drag";
 
 export interface ExternalFileTreeDragDetail {
     phase: "over" | "cancel";

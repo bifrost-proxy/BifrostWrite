@@ -1,5 +1,5 @@
-import { invoke } from "@neverwrite/runtime";
-import type { Update } from "@neverwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
+import type { Update } from "@bifrostwrite/runtime";
 
 export interface AvailableAppUpdate extends Pick<
     Update,

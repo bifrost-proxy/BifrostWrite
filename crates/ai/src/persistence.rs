@@ -23,7 +23,7 @@ const DEFAULT_TRANSCRIPT_COMPACTION_POLICY: TranscriptCompactionPolicy =
     };
 
 /// Finder writes this regular file to directories it has inspected. It is not
-/// part of NeverWrite's history format and must not affect storage ownership
+/// part of BifrostWrite's history format and must not affect storage ownership
 /// or transaction safety decisions.
 pub fn is_incidental_filesystem_metadata(path: &Path, metadata: &fs::Metadata) -> bool {
     metadata.file_type().is_file() && path.file_name().is_some_and(|name| name == ".DS_Store")

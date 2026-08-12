@@ -64,9 +64,9 @@ interface SettingsStore extends Settings {
     reset: () => void;
 }
 
-const SETTINGS_KEY_PREFIX = "neverwrite:settings:";
-const SETTINGS_KEY_FALLBACK = "neverwrite:settings";
-const LAST_VAULT_KEY = "neverwrite:lastVaultPath";
+const SETTINGS_KEY_PREFIX = "bifrostwrite:settings:";
+const SETTINGS_KEY_FALLBACK = "bifrostwrite:settings";
+const LAST_VAULT_KEY = "bifrostwrite:lastVaultPath";
 const GLOBAL_SETTING_KEYS = [
     "vimModeEnabled",
     "vimRelativeLineNumbers",

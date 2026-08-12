@@ -1,4 +1,4 @@
-import { getAllWebviewWindows } from "@neverwrite/runtime";
+import { getAllWebviewWindows } from "@bifrostwrite/runtime";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { subscribeSafeStorage } from "../../app/utils/safeStorage";
 import {
@@ -23,7 +23,7 @@ describe("sensitiveState", () => {
             label: "main",
             windowMode: "main" as const,
             windowRole: "main" as const,
-            windowTitle: "NeverWrite",
+            windowTitle: "BifrostWrite",
             dirtyTabs: ["Draft"],
             pendingReviewSessions: ["Review"],
             activeAgentSessions: ["Agent · Streaming response"],
@@ -37,7 +37,7 @@ describe("sensitiveState", () => {
         expect(
             events.filter(
                 (event) =>
-                    event.key === "neverwrite:window-operational-state:main",
+                    event.key === "bifrostwrite:window-operational-state:main",
             ),
         ).toHaveLength(1);
     });
@@ -52,7 +52,7 @@ describe("sensitiveState", () => {
             label: "main",
             windowMode: "main",
             windowRole: "main",
-            windowTitle: "NeverWrite",
+            windowTitle: "BifrostWrite",
             dirtyTabs: ["Draft note"],
             pendingReviewSessions: ["Inline review"],
             activeAgentSessions: [],
@@ -73,7 +73,7 @@ describe("sensitiveState", () => {
                 {
                     key: "dirty-tabs",
                     title: "Unsaved editor tabs",
-                    details: ["NeverWrite: Draft note"],
+                    details: ["BifrostWrite: Draft note"],
                 },
                 {
                     key: "pending-review",

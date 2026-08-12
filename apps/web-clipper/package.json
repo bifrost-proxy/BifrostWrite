@@ -1,6 +1,6 @@
 {
-    "name": "neverwrite-web-clipper",
-    "description": "NeverWrite browser extension built as an isolated WXT app inside the monorepo.",
+    "name": "bifrostwrite-web-clipper",
+    "description": "BifrostWrite browser extension built as an isolated WXT app inside the monorepo.",
     "private": true,
     "version": "0.7.1",
     "type": "module",

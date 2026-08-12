@@ -2226,7 +2226,7 @@ describe("editorStore tab history mode", () => {
                 "config/app.toml",
                 "app.toml",
                 "/vault/config/app.toml",
-                "name = 'NeverWrite'",
+                "name = 'BifrostWrite'",
                 "application/toml",
                 "text",
             );
@@ -2250,7 +2250,7 @@ describe("editorStore tab history mode", () => {
                 relativePath: "config/app.toml",
                 title: "app.toml",
                 path: "/vault/config/app.toml",
-                content: "name = 'NeverWrite'",
+                content: "name = 'BifrostWrite'",
                 mimeType: "application/toml",
                 viewer: "text",
             },

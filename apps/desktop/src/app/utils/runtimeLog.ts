@@ -102,8 +102,9 @@ function sendRendererLog(
     if (typeof window === "undefined") {
         return;
     }
-    const bridge = (window as Window & { neverwriteElectron?: RendererLogBridge })
-        .neverwriteElectron;
+    const bridge = (
+        window as Window & { bifrostwriteRuntimeLog?: RendererLogBridge }
+    ).bifrostwriteRuntimeLog;
     if (!bridge?.log) {
         return;
     }
@@ -256,6 +257,6 @@ export function resetRuntimeLogStateForTests() {
 
 declare global {
     interface Window {
-        __neverwriteLogs?: RuntimeLogApi;
+        __bifrostwriteLogs?: RuntimeLogApi;
     }
 }

@@ -9,7 +9,7 @@
         "ignoreDeprecations": "6.0",
         "baseUrl": ".",
         "paths": {
-            "@neverwrite/runtime": ["src/app/runtime/index.ts"]
+            "@bifrostwrite/runtime": ["src/app/runtime/index.ts"]
         },
         "skipLibCheck": true,
 

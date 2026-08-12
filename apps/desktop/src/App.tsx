@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { getCurrentWindow } from "@neverwrite/runtime";
-import { listen } from "@neverwrite/runtime";
-import { getCurrentWebview } from "@neverwrite/runtime";
-import { open } from "@neverwrite/runtime";
-import { invoke } from "@neverwrite/runtime";
+import { getCurrentWindow } from "@bifrostwrite/runtime";
+import { listen } from "@bifrostwrite/runtime";
+import { getCurrentWebview } from "@bifrostwrite/runtime";
+import { open } from "@bifrostwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
 import { resolveDeferredUnlisten } from "./app/utils/deferredUnlisten";
 import { vaultInvoke } from "./app/utils/vaultInvoke";
 import { AppLayout } from "./components/layout/AppLayout";
@@ -137,9 +137,9 @@ interface WebClipperSavedPayload {
     content: string;
 }
 
-const WEB_CLIPPER_CLIP_SAVED_EVENT = "neverwrite:web-clipper/clip-saved";
-const WEB_CLIPPER_ROUTE_CLIP_EVENT = "neverwrite:web-clipper/route-clip";
-const DEEP_LINK_OPEN_FILE_EVENT = "neverwrite:deep-link/open-file";
+const WEB_CLIPPER_CLIP_SAVED_EVENT = "bifrostwrite:web-clipper/clip-saved";
+const WEB_CLIPPER_ROUTE_CLIP_EVENT = "bifrostwrite:web-clipper/route-clip";
+const DEEP_LINK_OPEN_FILE_EVENT = "bifrostwrite:deep-link/open-file";
 const MENU_ACTION_EVENT = "menu-action";
 const DOCK_OPEN_VAULT_EVENT = "dock-open-vault";
 const EXCALIDRAW_RUNTIME_SUPPORTED = canUseExcalidrawRuntime();

@@ -30,7 +30,7 @@ describe("native menu shortcut accelerators", () => {
         ).toBe("Command+Alt+Y");
     });
 
-    it("returns no native accelerator for keys Electron cannot represent", () => {
+    it("returns no native accelerator for keys the native menu cannot represent", () => {
         expect(
             formatNativeMenuAccelerator({
                 key: "AudioVolumeUp",
@@ -45,7 +45,7 @@ describe("native menu shortcut accelerators", () => {
         ).toBeNull();
     });
 
-    it("uses Electron's Plus key name instead of an empty accelerator token", () => {
+    it("uses the native Plus key name instead of an empty accelerator token", () => {
         expect(
             formatNativeMenuAccelerator({
                 key: "+",

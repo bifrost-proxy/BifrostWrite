@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getCurrentWebview } from "@neverwrite/runtime";
+import { getCurrentWebview } from "@bifrostwrite/runtime";
 import {
     useSettingsStore,
     type EditorFontFamily,

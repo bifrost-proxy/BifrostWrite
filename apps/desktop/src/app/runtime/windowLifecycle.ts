@@ -1,7 +1,7 @@
 import type { RuntimeWebviewWindow } from "./types";
 
-export const DESKTOP_WINDOW_CREATED_EVENT = "neverwrite:window-created";
-export const DESKTOP_WINDOW_ERROR_EVENT = "neverwrite:window-error";
+export const DESKTOP_WINDOW_CREATED_EVENT = "tauri://created";
+export const DESKTOP_WINDOW_ERROR_EVENT = "tauri://error";
 
 function toWindowCreationError(payload: unknown) {
     if (payload instanceof Error) {
