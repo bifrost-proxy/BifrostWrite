@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { open } from "@neverwrite/runtime";
+import { open } from "@bifrostwrite/runtime";
 import {
     useVaultStore,
     getRecentVaults,

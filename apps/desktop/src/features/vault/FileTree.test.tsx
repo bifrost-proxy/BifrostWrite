@@ -6,7 +6,7 @@ import {
     within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { confirm, invoke } from "@neverwrite/runtime";
+import { confirm, invoke } from "@bifrostwrite/runtime";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
     useEditorStore,
@@ -188,7 +188,7 @@ describe("FileTree", () => {
     });
 
     it("keeps restored scroll position even when reveal active is enabled", async () => {
-        safeStorageSetItem("neverwrite:reveal-active", "true");
+        safeStorageSetItem("bifrostwrite:reveal-active", "true");
         setVaultNotes(
             Array.from({ length: 80 }, (_, index) => {
                 const paddedIndex = String(index).padStart(2, "0");
@@ -2760,7 +2760,7 @@ describe("FileTree", () => {
     });
 
     it("reveals the active pdf tab in nested folders", async () => {
-        localStorage.setItem("neverwrite:reveal-active", "true");
+        localStorage.setItem("bifrostwrite:reveal-active", "true");
 
         setVaultNotes([]);
         setVaultEntries([
@@ -2804,7 +2804,7 @@ describe("FileTree", () => {
     });
 
     it("reveals the active generic file tab in nested folders", async () => {
-        localStorage.setItem("neverwrite:reveal-active", "true");
+        localStorage.setItem("bifrostwrite:reveal-active", "true");
 
         setVaultNotes([]);
         setVaultEntries([

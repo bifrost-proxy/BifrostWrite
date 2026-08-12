@@ -73,7 +73,7 @@ use crate::{
 
 static SESSION_COUNTER: AtomicU64 = AtomicU64::new(1);
 static ACP_PROCESS_COUNTER: AtomicU64 = AtomicU64::new(1);
-const ELECTRON_AI_INTERACTIVE_AUTH_UNAVAILABLE: &str = "Interactive AI authentication is not available in Electron yet. Use an existing CLI login, an environment/API key, or a custom gateway.";
+const ELECTRON_AI_INTERACTIVE_AUTH_UNAVAILABLE: &str = "Interactive AI authentication is not available in the desktop shell yet. Use an existing CLI login, an environment/API key, or a custom gateway.";
 const GROK_LOGIN_INVALIDATED_MESSAGE: &str =
     "Grok login looks invalid or expired. Run Grok login again to reconnect.";
 const GROK_STORED_XAI_API_KEY_INVALID_MESSAGE: &str =
@@ -92,9 +92,9 @@ const ACP_STATUS_EVENT_TYPE_KEY: &str = "neverwriteEventType";
 const ACP_STATUS_KIND_KEY: &str = "neverwriteStatusKind";
 const ACP_STATUS_EMPHASIS_KEY: &str = "neverwriteStatusEmphasis";
 const ACP_IMAGE_GENERATION_EVENT_TYPE: &str = "image_generation";
-const NEVERWRITE_ACTIVITY_STARTED_AT_MS_KEY: &str = "neverwriteActivityStartedAtMs";
-const NEVERWRITE_STATUS_EVENT_ID_PREFIX: &str = "neverwrite:status:";
-const NEVERWRITE_STATUS_TURN_EVENT_ID_PREFIX: &str = "neverwrite:status:turn:";
+const BIFROSTWRITE_ACTIVITY_STARTED_AT_MS_KEY: &str = "neverwriteActivityStartedAtMs";
+const BIFROSTWRITE_STATUS_EVENT_ID_PREFIX: &str = "bifrostwrite:status:";
+const BIFROSTWRITE_STATUS_TURN_EVENT_ID_PREFIX: &str = "bifrostwrite:status:turn:";
 const CODEX_ACP_EVENT_TYPE_KEY: &str = "codexAcpEventType";
 const CODEX_ACP_PARENT_SESSION_ID_KEY: &str = "codexAcpParentSessionId";
 const CODEX_ACP_PARENT_THREAD_ID_KEY: &str = "codexAcpParentThreadId";
@@ -121,8 +121,8 @@ const CODEX_ACP_SHUTDOWN_COMPLETE_EVENT_TYPE: &str = "shutdown_complete";
 fn neverwrite_acp_client_capabilities(_runtime_id: &str) -> ClientCapabilities {
     // Capability matrix for this integration stage:
     // - fs: supported and advertised.
-    // - elicitation.form: supported by NeverWrite's user-input bridge.
-    // - elicitation.url: supported by NeverWrite's URL completion bridge.
+    // - elicitation.form: supported by BifrostWrite's user-input bridge.
+    // - elicitation.url: supported by BifrostWrite's URL completion bridge.
     ClientCapabilities::new()
         .fs(FileSystemCapabilities::new())
         .elicitation(
@@ -145,13 +145,13 @@ const ACP_RUNTIME_CONFIGURATION_ERROR_MARKER: &[u8] = b"error loading config:";
 const ACP_RUNTIME_CONFIGURATION_INVALID_DIAGNOSTIC: &str =
     "The AI runtime configuration is invalid.";
 const RUNTIME_SETUP_STORE_VERSION: u32 = 2;
-const RUNTIME_SECRET_SERVICE: &str = "NeverWrite AI Provider Secrets";
-const RUNTIME_SECRET_SERVICE_ENV: &str = "NEVERWRITE_AI_SECRET_SERVICE";
-const RUNTIME_SECRET_STORE_MODE_ENV: &str = "NEVERWRITE_AI_SECRET_STORE";
+const RUNTIME_SECRET_SERVICE: &str = "BifrostWrite AI Provider Secrets";
+const RUNTIME_SECRET_SERVICE_ENV: &str = "BIFROSTWRITE_AI_SECRET_SERVICE";
+const RUNTIME_SECRET_STORE_MODE_ENV: &str = "BIFROSTWRITE_AI_SECRET_STORE";
 const LEGACY_GEMINI_RUNTIME_ID: &str = "gemini-acp";
 const LEGACY_GEMINI_SECRET_ENV_KEYS: &[&str] = &["GEMINI_API_KEY", "GOOGLE_API_KEY"];
 const RUNTIME_SETUP_LOAD_ERROR_MESSAGE: &str = "Secure credential storage is unavailable. Reconnect this AI provider or configure an environment variable before starting a session.";
-const OPENCODE_AUTH_UNVERIFIED_MESSAGE: &str = "OpenCode auth is managed by the OpenCode CLI. NeverWrite could not verify local OpenCode credentials, but OpenCode may still use /connect, environment variables, or a project .env.";
+const OPENCODE_AUTH_UNVERIFIED_MESSAGE: &str = "OpenCode auth is managed by the OpenCode CLI. BifrostWrite could not verify local OpenCode credentials, but OpenCode may still use /connect, environment variables, or a project .env.";
 const CLAUDE_PROVIDER_ROUTING_ENV_KEYS: &[&str] = &[
     "ANTHROPIC_BASE_URL",
     "ANTHROPIC_BEDROCK_BASE_URL",
@@ -2201,6 +2201,49 @@ impl NativeAi {
             handle.shutdown()?;
         }
         Ok(json!(null))
+    }
+
+    pub(crate) fn shutdown_all_runtime_processes(&self) {
+        cancel_user_input_waiters_matching(&self.user_input_waiters, |_| true);
+        cancel_url_elicitation_waiters_matching(&self.url_elicitation_waiters, |_| true);
+
+        let shutdown_handles = match self.inner.lock() {
+            Ok(mut state) => {
+                let mut handles = HashMap::new();
+                for (_, managed) in state.sessions.drain() {
+                    if let Some(handle) = managed.runtime_handle {
+                        handles.entry(handle.process_id).or_insert(handle);
+                    }
+                }
+                state.session_order.clear();
+                handles
+            }
+            Err(error) => {
+                eprintln!("Failed to lock AI state during shutdown: {error}");
+                HashMap::new()
+            }
+        };
+
+        for handle in shutdown_handles.into_values() {
+            if let Err(error) = handle.shutdown() {
+                eprintln!("Failed to shut down AI runtime during backend exit: {error}");
+            }
+        }
+
+        let auth_terminal_handles = match self.auth_terminal_sessions.lock() {
+            Ok(mut sessions) => sessions
+                .drain()
+                .map(|(_, handle)| handle)
+                .collect::<Vec<_>>(),
+            Err(error) => {
+                eprintln!("Failed to lock AI auth terminals during shutdown: {error}");
+                Vec::new()
+            }
+        };
+        for handle in auth_terminal_handles {
+            handle.closed.store(true, Ordering::Relaxed);
+            handle.release_runtime_resources(true);
+        }
     }
 
     pub(crate) fn register_file_baseline(&self, args: &Value) -> Result<Value, String> {
@@ -4565,7 +4608,7 @@ async fn run_acp_auth_inner(
                                 ))
                                 .client_info(
                                     Implementation::new("neverwrite", env!("CARGO_PKG_VERSION"))
-                                        .title("NeverWrite"),
+                                        .title("BifrostWrite"),
                                 ),
                         )
                         .block_task()
@@ -4648,7 +4691,7 @@ async fn run_acp12_auth_inner(
                                         "neverwrite",
                                         env!("CARGO_PKG_VERSION"),
                                     )
-                                        .title("NeverWrite"),
+                                        .title("BifrostWrite"),
                                 ),
                         )
                         .block_task()
@@ -4777,7 +4820,7 @@ async fn capture_acp_stderr(
 
 fn append_acp_stderr_diagnostic(message: String, config_invalid: bool) -> String {
     // ACP stderr can contain arbitrary runtime output, including credentials. Only expose a
-    // fixed diagnostic that NeverWrite recognizes; never propagate the original text.
+    // fixed diagnostic that BifrostWrite recognizes; never propagate the original text.
     if config_invalid {
         format!("{message} {ACP_RUNTIME_CONFIGURATION_INVALID_DIAGNOSTIC}")
     } else {
@@ -4941,7 +4984,7 @@ async fn run_acp12_actor_inner(
                                         "neverwrite",
                                         env!("CARGO_PKG_VERSION"),
                                     )
-                                        .title("NeverWrite"),
+                                        .title("BifrostWrite"),
                                 ),
                         )
                         .block_task()
@@ -5205,7 +5248,7 @@ async fn run_acp_actor_inner(
                                 ))
                                 .client_info(
                                     Implementation::new("neverwrite", env!("CARGO_PKG_VERSION"))
-                                        .title("NeverWrite"),
+                                        .title("BifrostWrite"),
                                 ),
                         )
                         .block_task()
@@ -5650,7 +5693,7 @@ async fn start_acp12_runtime_session(
             })
         }
         AcpSessionStartMode::Resume { .. } => Err(acp12_internal_error(
-            "ACP 0.12 runtimes do not support session/resume in NeverWrite.".to_string(),
+            "ACP 0.12 runtimes do not support session/resume in BifrostWrite.".to_string(),
         )),
         AcpSessionStartMode::Load {
             session_id,
@@ -7303,7 +7346,7 @@ fn map_status_event(
 }
 
 fn activity_started_at_ms(meta: Option<&Meta>) -> Option<i64> {
-    meta.and_then(|meta| meta.get(NEVERWRITE_ACTIVITY_STARTED_AT_MS_KEY))
+    meta.and_then(|meta| meta.get(BIFROSTWRITE_ACTIVITY_STARTED_AT_MS_KEY))
         .and_then(Value::as_i64)
         .filter(|value| *value > 0)
 }
@@ -7313,8 +7356,8 @@ fn is_suppressed_status_title(title: &str) -> bool {
 }
 
 fn is_internal_status_activity_id(tool_call_id: &str) -> bool {
-    tool_call_id.starts_with(NEVERWRITE_STATUS_EVENT_ID_PREFIX)
-        && !tool_call_id.starts_with(NEVERWRITE_STATUS_TURN_EVENT_ID_PREFIX)
+    tool_call_id.starts_with(BIFROSTWRITE_STATUS_EVENT_ID_PREFIX)
+        && !tool_call_id.starts_with(BIFROSTWRITE_STATUS_TURN_EVENT_ID_PREFIX)
 }
 
 fn should_suppress_status_tool_call(tool_call: &ToolCall) -> bool {
@@ -7735,7 +7778,7 @@ fn default_config_options(
 
 fn new_session(runtime_id: &str) -> Result<AiSession, String> {
     let session_id = format!(
-        "electron-session-{}-{}",
+        "desktop-session-{}-{}",
         now_ms(),
         SESSION_COUNTER.fetch_add(1, Ordering::Relaxed)
     );
@@ -8175,7 +8218,7 @@ fn resolve_packaged_acp_command(runtime_id: &str) -> Option<ResolvedAcpCommand> 
 }
 
 fn acp_resource_dir() -> Option<PathBuf> {
-    std::env::var_os("NEVERWRITE_ELECTRON_ACP_RESOURCE_DIR")
+    std::env::var_os("BIFROSTWRITE_TAURI_ACP_RESOURCE_DIR")
         .map(PathBuf::from)
         .filter(|path| path.is_dir())
 }
@@ -8348,7 +8391,7 @@ fn home_dir() -> Option<PathBuf> {
 }
 
 pub(crate) fn app_data_dir() -> PathBuf {
-    if let Ok(path) = std::env::var("NEVERWRITE_APP_DATA_DIR") {
+    if let Ok(path) = std::env::var("BIFROSTWRITE_APP_DATA_DIR") {
         let trimmed = path.trim();
         if !trimmed.is_empty() {
             return PathBuf::from(trimmed);
@@ -8361,31 +8404,31 @@ pub(crate) fn app_data_dir() -> PathBuf {
             return PathBuf::from(home)
                 .join("Library")
                 .join("Application Support")
-                .join("NeverWrite");
+                .join("BifrostWrite");
         }
     }
 
     #[cfg(target_os = "windows")]
     {
         if let Some(appdata) = std::env::var_os("APPDATA") {
-            return PathBuf::from(appdata).join("NeverWrite");
+            return PathBuf::from(appdata).join("BifrostWrite");
         }
     }
 
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     {
         if let Some(xdg_data_home) = std::env::var_os("XDG_DATA_HOME") {
-            return PathBuf::from(xdg_data_home).join("NeverWrite");
+            return PathBuf::from(xdg_data_home).join("BifrostWrite");
         }
         if let Some(home) = std::env::var_os("HOME") {
             return PathBuf::from(home)
                 .join(".local")
                 .join("share")
-                .join("NeverWrite");
+                .join("BifrostWrite");
         }
     }
 
-    std::env::temp_dir().join("NeverWrite")
+    std::env::temp_dir().join("BifrostWrite")
 }
 
 fn resolve_command_candidate(raw: &str, source: AiRuntimeBinarySource) -> ResolvedAcpCommand {
@@ -8443,7 +8486,7 @@ fn runtime_bin_env_var(runtime_id: &str) -> &str {
     RUNTIME_CATALOG
         .definition(runtime_id)
         .and_then(|definition| definition.bin_env_var())
-        .unwrap_or("NEVERWRITE_AI_ACP_BIN")
+        .unwrap_or("BIFROSTWRITE_AI_ACP_BIN")
 }
 
 fn inherited_auth_method_for_setup(runtime_id: &str, setup: &RuntimeSetupState) -> Option<String> {
@@ -10079,7 +10122,7 @@ fn text_attachment_mime(attachment: &AiAttachmentInput) -> Option<String> {
 
 fn attachment_resource_uri(attachment: &AiAttachmentInput, fallback_kind: &str) -> String {
     if let Some(attachment_id) = attachment.managed_attachment_id.as_deref() {
-        return format!("neverwrite://ai-attachment/{attachment_id}");
+        return format!("bifrostwrite://ai-attachment/{attachment_id}");
     }
     let source = attachment
         .file_path
@@ -10093,7 +10136,7 @@ fn attachment_resource_uri(attachment: &AiAttachmentInput, fallback_kind: &str) 
         format!("file://{source}")
     } else {
         format!(
-            "neverwrite://{fallback_kind}/{}",
+            "bifrostwrite://{fallback_kind}/{}",
             source.replace(' ', "%20")
         )
     };
@@ -11652,6 +11695,47 @@ mod tests {
     }
 
     #[test]
+    fn backend_shutdown_shuts_down_each_runtime_process_once() {
+        let temp = tempfile::tempdir().unwrap();
+        let native_ai = test_native_ai_with_secret_store(
+            temp.path().join("runtime-setup.json"),
+            Arc::new(InMemoryRuntimeSecretStore::default()),
+        );
+        let (command_tx, mut command_rx) = tokio::sync::mpsc::unbounded_channel();
+        let handle = AcpSessionHandle {
+            process_id: 99,
+            command_tx,
+            prompt_capabilities: Arc::new(Mutex::new(AcpPromptCapabilities::default())),
+        };
+        let mut state = native_ai.inner.lock().unwrap();
+        for session_id in ["shutdown-session-1", "shutdown-session-2"] {
+            state.sessions.insert(
+                session_id.to_string(),
+                ManagedAiSession {
+                    session: new_session_with_id(CODEX_RUNTIME_ID, session_id.to_string()).unwrap(),
+                    vault_root: None,
+                    additional_roots: vec![],
+                    runtime_handle: Some(handle.clone()),
+                    active_turn_id: None,
+                },
+            );
+        }
+        drop(state);
+
+        let shutdown = thread::spawn(move || match command_rx.blocking_recv() {
+            Some(AcpCommand::Shutdown { response_tx }) => {
+                response_tx.send(Ok(())).unwrap();
+                assert!(command_rx.try_recv().is_err());
+            }
+            _ => panic!("expected one shutdown command for the shared process"),
+        });
+
+        native_ai.shutdown_all_runtime_processes();
+        shutdown.join().unwrap();
+        assert!(native_ai.inner.lock().unwrap().sessions.is_empty());
+    }
+
+    #[test]
     fn send_transport_disconnect_invalidates_the_affected_session_family() {
         let (event_tx, event_rx) = mpsc::channel();
         let native_ai =
@@ -12015,7 +12099,7 @@ mod tests {
         let definition = RUNTIME_CATALOG.definition(GROK_RUNTIME_ID).unwrap();
         assert_eq!(definition.name(), "Grok");
         assert_eq!(definition.default_executable(), "grok");
-        assert_eq!(definition.bin_env_var(), Some("NEVERWRITE_GROK_ACP_BIN"));
+        assert_eq!(definition.bin_env_var(), Some("BIFROSTWRITE_GROK_ACP_BIN"));
         assert_eq!(
             definition.acp_args(),
             ["--no-auto-update", "agent", "stdio"]
@@ -12051,7 +12135,7 @@ mod tests {
         let previous_path = std::env::var_os("PATH");
         let previous_home = std::env::var_os("HOME");
         let previous_userprofile = std::env::var_os("USERPROFILE");
-        let previous_override = std::env::var_os("NEVERWRITE_GROK_ACP_BIN");
+        let previous_override = std::env::var_os("BIFROSTWRITE_GROK_ACP_BIN");
         let temp = tempfile::tempdir().unwrap();
         let grok_bin = temp
             .path()
@@ -12064,7 +12148,7 @@ mod tests {
         std::env::set_var("PATH", "");
         std::env::set_var("HOME", temp.path());
         std::env::set_var("USERPROFILE", temp.path());
-        std::env::remove_var("NEVERWRITE_GROK_ACP_BIN");
+        std::env::remove_var("BIFROSTWRITE_GROK_ACP_BIN");
 
         let status = setup_status_for(GROK_RUNTIME_ID, RuntimeSetupState::default());
         let spec = acp_process_spec(
@@ -12086,8 +12170,8 @@ mod tests {
             None => std::env::remove_var("USERPROFILE"),
         }
         match previous_override {
-            Some(value) => std::env::set_var("NEVERWRITE_GROK_ACP_BIN", value),
-            None => std::env::remove_var("NEVERWRITE_GROK_ACP_BIN"),
+            Some(value) => std::env::set_var("BIFROSTWRITE_GROK_ACP_BIN", value),
+            None => std::env::remove_var("BIFROSTWRITE_GROK_ACP_BIN"),
         }
 
         let status = status.unwrap();
@@ -16963,14 +17047,14 @@ mod tests {
             .kind(ToolKind::Read)
             .status(ToolCallStatus::Completed)
             .meta(Meta::from_iter([(
-                NEVERWRITE_ACTIVITY_STARTED_AT_MS_KEY.to_string(),
+                BIFROSTWRITE_ACTIVITY_STARTED_AT_MS_KEY.to_string(),
                 json!(1_234_567_i64),
             )]));
         let tool_payload = map_tool_call("session-1", &tool_call, None, None, vec![]);
         assert_eq!(tool_payload.started_at_ms, Some(1_234_567));
 
         let status_call = ToolCall::new(
-            ToolCallId::from("neverwrite:status:item:sleep-restored"),
+            ToolCallId::from("bifrostwrite:status:item:sleep-restored"),
             "Waiting",
         )
         .kind(ToolKind::Other)
@@ -16979,7 +17063,7 @@ mod tests {
             (ACP_STATUS_EVENT_TYPE_KEY.to_string(), json!("status")),
             (ACP_STATUS_KIND_KEY.to_string(), json!("item_activity")),
             (
-                NEVERWRITE_ACTIVITY_STARTED_AT_MS_KEY.to_string(),
+                BIFROSTWRITE_ACTIVITY_STARTED_AT_MS_KEY.to_string(),
                 json!(2_345_678_i64),
             ),
         ]));
@@ -16989,7 +17073,7 @@ mod tests {
 
         assert_eq!(
             activity_started_at_ms(Some(&Meta::from_iter([(
-                NEVERWRITE_ACTIVITY_STARTED_AT_MS_KEY.to_string(),
+                BIFROSTWRITE_ACTIVITY_STARTED_AT_MS_KEY.to_string(),
                 json!(0),
             )]))),
             None
@@ -17099,7 +17183,7 @@ mod tests {
         let (event_tx, event_rx) = mpsc::channel();
         let client = test_client(event_tx);
 
-        let tool_call = ToolCall::new(ToolCallId::from("neverwrite:status:1"), "Review mode")
+        let tool_call = ToolCall::new(ToolCallId::from("bifrostwrite:status:1"), "Review mode")
             .kind(ToolKind::Other)
             .status(ToolCallStatus::Completed)
             .meta(Meta::from_iter([
@@ -17138,7 +17222,7 @@ mod tests {
         let client = test_client(event_tx);
 
         let tool_call = ToolCall::new(
-            ToolCallId::from("neverwrite:status:item:agent-msg-42"),
+            ToolCallId::from("bifrostwrite:status:item:agent-msg-42"),
             "Drafting response",
         )
         .kind(ToolKind::Other)
@@ -17163,7 +17247,7 @@ mod tests {
         let client = test_client(event_tx);
 
         let update = ToolCallUpdate::new(
-            "neverwrite:status:item:agent-msg-42",
+            "bifrostwrite:status:item:agent-msg-42",
             ToolCallUpdateFields::new()
                 .title("Drafting response")
                 .status(ToolCallStatus::Completed),
@@ -17193,7 +17277,7 @@ mod tests {
         while event_rx.try_recv().is_ok() {}
 
         let tool_call = ToolCall::new(
-            ToolCallId::from("neverwrite:status:item:agent-msg-42"),
+            ToolCallId::from("bifrostwrite:status:item:agent-msg-42"),
             "Drafting response",
         )
         .kind(ToolKind::Other)
@@ -17212,7 +17296,7 @@ mod tests {
         assert!(client.has_active_text_message("session-1", MessageRole::Assistant));
 
         let update = ToolCallUpdate::new(
-            "neverwrite:status:item:agent-msg-42",
+            "bifrostwrite:status:item:agent-msg-42",
             ToolCallUpdateFields::new().status(ToolCallStatus::Completed),
         );
 
@@ -17395,19 +17479,22 @@ mod tests {
         let (event_tx, event_rx) = mpsc::channel();
         let client = test_client(event_tx);
 
-        let tool_call = ToolCall::new(ToolCallId::from("neverwrite:image:ig-1"), "Generated image")
-            .kind(ToolKind::Other)
-            .status(ToolCallStatus::Completed)
-            .raw_input(json!({
-                "status": "completed",
-                "path": "/Users/test/.codex/generated_images/session/ig-1.png",
-                "revised_prompt": "A tiny blue square",
-                "result": "Zm9v",
-            }))
-            .meta(Meta::from_iter([(
-                ACP_STATUS_EVENT_TYPE_KEY.to_string(),
-                json!(ACP_IMAGE_GENERATION_EVENT_TYPE),
-            )]));
+        let tool_call = ToolCall::new(
+            ToolCallId::from("bifrostwrite:image:ig-1"),
+            "Generated image",
+        )
+        .kind(ToolKind::Other)
+        .status(ToolCallStatus::Completed)
+        .raw_input(json!({
+            "status": "completed",
+            "path": "/Users/test/.codex/generated_images/session/ig-1.png",
+            "revised_prompt": "A tiny blue square",
+            "result": "Zm9v",
+        }))
+        .meta(Meta::from_iter([(
+            ACP_STATUS_EVENT_TYPE_KEY.to_string(),
+            json!(ACP_IMAGE_GENERATION_EVENT_TYPE),
+        )]));
 
         run_client_future(client.session_notification(SessionNotification::new(
             "session-1",
@@ -17429,7 +17516,7 @@ mod tests {
         assert_eq!(event_name, AI_IMAGE_GENERATION_EVENT);
         assert_eq!(
             payload.get("image_id").and_then(Value::as_str),
-            Some("neverwrite:image:ig-1")
+            Some("bifrostwrite:image:ig-1")
         );
         assert_eq!(
             payload.get("mime_type").and_then(Value::as_str),
@@ -17447,7 +17534,7 @@ mod tests {
         let client = test_client(event_tx);
 
         let tool_call = ToolCall::new(
-            ToolCallId::from("neverwrite:status:item:ig-legacy"),
+            ToolCallId::from("bifrostwrite:status:item:ig-legacy"),
             "Generating image",
         )
         .kind(ToolKind::Other)
@@ -17481,7 +17568,7 @@ mod tests {
         assert_eq!(event_name, AI_IMAGE_GENERATION_EVENT);
         assert_eq!(
             payload.get("image_id").and_then(Value::as_str),
-            Some("neverwrite:status:item:ig-legacy")
+            Some("bifrostwrite:status:item:ig-legacy")
         );
         assert_eq!(
             payload.get("path").and_then(Value::as_str),
@@ -18155,19 +18242,19 @@ mod tests {
     fn runtime_secret_service_preserves_release_default_and_accepts_dev_namespace() {
         assert_eq!(
             runtime_secret_service_name(None),
-            "NeverWrite AI Provider Secrets"
+            "BifrostWrite AI Provider Secrets"
         );
         assert_eq!(
             runtime_secret_service_name(Some("")),
-            "NeverWrite AI Provider Secrets"
+            "BifrostWrite AI Provider Secrets"
         );
         assert_eq!(
-            runtime_secret_service_name(Some(" NeverWrite Dev AI Provider Secrets ")),
-            "NeverWrite Dev AI Provider Secrets"
+            runtime_secret_service_name(Some(" BifrostWrite Dev AI Provider Secrets ")),
+            "BifrostWrite Dev AI Provider Secrets"
         );
         assert_ne!(
             runtime_secret_service_name(None),
-            runtime_secret_service_name(Some("NeverWrite Dev AI Provider Secrets"))
+            runtime_secret_service_name(Some("BifrostWrite Dev AI Provider Secrets"))
         );
     }
 

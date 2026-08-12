@@ -221,7 +221,7 @@ function RuntimeForm({
                     lineHeight: 1.5,
                 }}
             >
-                Authentication managed by the runtime. NeverWrite does not
+                Authentication managed by the runtime. BifrostWrite does not
                 store custom runtime secrets.
             </div>
             {error && (
@@ -476,7 +476,7 @@ export function CustomAcpRuntimesSettings({
                     }}
                 >
                     Add ACP-compatible local runtimes. Authentication managed by
-                    the runtime; NeverWrite does not store custom runtime secrets.
+                    the runtime; BifrostWrite does not store custom runtime secrets.
                 </div>
                 <div style={{ padding: "0 14px 12px" }}>
                     <button type="button" onClick={startCreate} style={buttonStyle}>

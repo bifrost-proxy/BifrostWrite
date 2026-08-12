@@ -1,4 +1,4 @@
-import { invoke } from "@neverwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
 import {
     selectEditorWorkspaceTabs,
     useEditorStore,

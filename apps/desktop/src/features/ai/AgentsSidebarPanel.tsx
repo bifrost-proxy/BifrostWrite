@@ -8,7 +8,7 @@ import {
     type PointerEvent as ReactPointerEvent,
 } from "react";
 import { createPortal } from "react-dom";
-import { confirm } from "@neverwrite/runtime";
+import { confirm } from "@bifrostwrite/runtime";
 import { useShallow } from "zustand/react/shallow";
 import {
     ContextMenu,

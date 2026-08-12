@@ -4,7 +4,7 @@ import {
     subscribeSafeStorage,
 } from "./safeStorage";
 
-export const APP_ZOOM_STORAGE_KEY = "neverwrite:appZoom";
+export const APP_ZOOM_STORAGE_KEY = "bifrostwrite:appZoom";
 export const DEFAULT_APP_ZOOM = 1;
 export const MIN_APP_ZOOM = 0.8;
 export const MAX_APP_ZOOM = 2;

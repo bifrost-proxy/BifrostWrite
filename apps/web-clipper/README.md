@@ -1,6 +1,6 @@
-# NeverWrite Web Clipper
+# BifrostWrite Web Clipper
 
-This package is an isolated browser-extension project inside the NeverWrite monorepo.
+This package is an isolated browser-extension project inside the BifrostWrite monorepo.
 
 ## Development
 
@@ -35,11 +35,11 @@ pnpm build
 
 Chrome:
 
-Download `NeverWrite-Web-Clipper-vX.Y.Z-chrome-mv3.zip` from the GitHub Release, unzip it, then open `chrome://extensions`, enable Developer mode, and choose `Load unpacked`.
+Download `BifrostWrite-Web-Clipper-vX.Y.Z-chrome-mv3.zip` from the GitHub Release, unzip it, then open `chrome://extensions`, enable Developer mode, and choose `Load unpacked`.
 
 Firefox:
 
-`NeverWrite-Web-Clipper-vX.Y.Z-firefox-mv3.zip` is attached as a Firefox MV3 build artifact for testing and release traceability. Normal Firefox Release/Beta installation requires a Mozilla-signed package through AMO or self-distribution signing.
+`BifrostWrite-Web-Clipper-vX.Y.Z-firefox-mv3.zip` is attached as a Firefox MV3 build artifact for testing and release traceability. Normal Firefox Release/Beta installation requires a Mozilla-signed package through AMO or self-distribution signing.
 
 ## Unit Tests
 
@@ -74,7 +74,7 @@ To authorize a local unpacked build explicitly, launch the desktop app with:
 
 ```bash
 cd apps/desktop
-NEVERWRITE_WEB_CLIPPER_DEV_ORIGINS="chrome-extension://<dev-id>,moz-extension://<dev-id>" npm run dev
+BIFROSTWRITE_WEB_CLIPPER_DEV_ORIGINS="chrome-extension://<dev-id>,moz-extension://<dev-id>" npm run dev
 ```
 
 Use exact origins only. Wildcards are intentionally unsupported.
@@ -82,8 +82,8 @@ Use exact origins only. Wildcards are intentionally unsupported.
 ## Shortcuts
 
 - Toolbar click opens the dedicated clip window.
-- Context menu entry: `Save to NeverWrite`
-- Context menu entry: `Open NeverWrite Side Panel`
+- Context menu entry: `Save to BifrostWrite`
+- Context menu entry: `Open BifrostWrite Side Panel`
 - Keyboard shortcut: `Ctrl+Shift+S` on Windows/Linux, `Command+Shift+S` on macOS
 
 ## Current Features
@@ -95,7 +95,7 @@ Use exact origins only. Wildcards are intentionally unsupported.
 
 ## Desktop API
 
-When NeverWrite desktop is running, the extension also tries a direct local integration first:
+When BifrostWrite desktop is running, the extension also tries a direct local integration first:
 
 - Base URL: `http://127.0.0.1:32145/api/web-clipper`
 - Endpoints used by the extension:
@@ -118,7 +118,7 @@ requests must send both the extension identity and that token.
 
 If the local API is unavailable, the extension falls back to the deep-link handoff flow.
 
-On macOS, that deep-link fallback only works with an installed NeverWrite app bundle
-that has the `neverwrite://` scheme registered.
+On macOS, that deep-link fallback only works with an installed BifrostWrite app bundle
+that has the `bifrostwrite://` scheme registered.
 `npm run dev` does not register custom URI schemes with the OS, so the
 browser fallback cannot be validated end-to-end against a pure dev session there.

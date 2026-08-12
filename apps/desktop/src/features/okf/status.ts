@@ -1,7 +1,7 @@
 /**
  * OKF (Open Knowledge Format) document status.
  *
- * NeverWrite defines a `status` extension field in OKF frontmatter to signal
+ * BifrostWrite defines a `status` extension field in OKF frontmatter to signal
  * a document's publication/trust state. OKF is permissive on consumption:
  * unknown status values are normalized and shown, never rejected.
  *

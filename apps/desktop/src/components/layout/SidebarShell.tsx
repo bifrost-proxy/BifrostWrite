@@ -3,7 +3,7 @@ import {
     type CSSProperties,
     type MouseEvent as ReactMouseEvent,
 } from "react";
-import { getCurrentWindow } from "@neverwrite/runtime";
+import { getCurrentWindow } from "@bifrostwrite/runtime";
 import { useLayoutStore, type SidebarView } from "../../app/store/layoutStore";
 import {
     getDesktopPlatform,

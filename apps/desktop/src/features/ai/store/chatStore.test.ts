@@ -1,4 +1,4 @@
-import { confirm, invoke, listen, openUrl } from "@neverwrite/runtime";
+import { confirm, invoke, listen, openUrl } from "@bifrostwrite/runtime";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     isChatTab,
@@ -241,7 +241,7 @@ const sessionPayload = {
 const readySetupStatus = {
     runtime_id: "codex-acp",
     binary_ready: true,
-    binary_path: "/Applications/NeverWrite/codex-acp",
+    binary_path: "/Applications/BifrostWrite/codex-acp",
     binary_source: "bundled" as const,
     auth_ready: true,
     auth_method: "openai-api-key",
@@ -255,7 +255,7 @@ const readySetupStatus = {
         {
             id: "openai-api-key",
             name: "API key",
-            description: "Use an OpenAI API key stored locally in NeverWrite.",
+            description: "Use an OpenAI API key stored locally in BifrostWrite.",
         },
     ],
     onboarding_required: false,
@@ -594,7 +594,7 @@ describe("chatStore", () => {
         resetExternalReloadBaselinesForTests();
         vi.clearAllMocks();
         delete (globalThis as Record<string, unknown>)
-            .__NEVERWRITE_FORCE_RUST_LINE_DIFFS__;
+            .__BIFROSTWRITE_FORCE_RUST_LINE_DIFFS__;
         useVaultStore.setState({ vaultPath: null, notes: [] });
         useEditorStore.setState({
             tabs: [],
@@ -6439,7 +6439,7 @@ describe("chatStore", () => {
         });
         useChatStore.getState().applyStatusEvent({
             session_id: activeSessionId,
-            event_id: "neverwrite:status:item:sleep-restored",
+            event_id: "bifrostwrite:status:item:sleep-restored",
             kind: "item_activity",
             status: "in_progress",
             title: "Waiting",
@@ -6449,7 +6449,7 @@ describe("chatStore", () => {
         });
         useChatStore.getState().applyStatusEvent({
             session_id: activeSessionId,
-            event_id: "neverwrite:status:item:sleep-restored",
+            event_id: "bifrostwrite:status:item:sleep-restored",
             kind: "item_activity",
             status: "completed",
             title: "Waiting",
@@ -6467,7 +6467,7 @@ describe("chatStore", () => {
         const sleepMessages = messages.filter(
             (message) =>
                 message.id ===
-                "status:neverwrite:status:item:sleep-restored",
+                "status:bifrostwrite:status:item:sleep-restored",
         );
         expect(sleepMessages).toHaveLength(1);
         expect(sleepMessages[0]?.timestamp).toBe(2_345_678);
@@ -10551,7 +10551,7 @@ describe("chatStore", () => {
     it("starts a new work cycle without waiting for deprecated tracked-file precomputation", async () => {
         (
             globalThis as Record<string, unknown>
-        ).__NEVERWRITE_FORCE_RUST_LINE_DIFFS__ = true;
+        ).__BIFROSTWRITE_FORCE_RUST_LINE_DIFFS__ = true;
         await useChatStore.getState().initialize();
 
         invokeMock.mockImplementation(async (command) => {
@@ -10638,7 +10638,7 @@ describe("chatStore", () => {
     it("keeps accumulated hunks when Rust refinement reprocesses the same file in one cycle", async () => {
         (
             globalThis as Record<string, unknown>
-        ).__NEVERWRITE_FORCE_RUST_LINE_DIFFS__ = true;
+        ).__BIFROSTWRITE_FORCE_RUST_LINE_DIFFS__ = true;
         await useChatStore.getState().initialize();
         mockRustTrackedFilePatches((inputs) =>
             inputs.map((input) =>
@@ -10694,7 +10694,7 @@ describe("chatStore", () => {
     it("keeps accumulated hunks across cycles when Rust refinement revisits the same file", async () => {
         (
             globalThis as Record<string, unknown>
-        ).__NEVERWRITE_FORCE_RUST_LINE_DIFFS__ = true;
+        ).__BIFROSTWRITE_FORCE_RUST_LINE_DIFFS__ = true;
         await useChatStore.getState().initialize();
         mockRustTrackedFilePatches(
             (inputs) =>
@@ -10756,7 +10756,7 @@ describe("chatStore", () => {
     it("keeps earlier hunks after a user edit and a later Rust-refined agent edit", async () => {
         (
             globalThis as Record<string, unknown>
-        ).__NEVERWRITE_FORCE_RUST_LINE_DIFFS__ = true;
+        ).__BIFROSTWRITE_FORCE_RUST_LINE_DIFFS__ = true;
         await useChatStore.getState().initialize();
         mockRustTrackedFilePatches(
             (inputs) =>
@@ -10847,7 +10847,7 @@ describe("chatStore", () => {
     it("keeps accumulated hunks when a Rust-refined permission diff updates an already tracked file", async () => {
         (
             globalThis as Record<string, unknown>
-        ).__NEVERWRITE_FORCE_RUST_LINE_DIFFS__ = true;
+        ).__BIFROSTWRITE_FORCE_RUST_LINE_DIFFS__ = true;
         await useChatStore.getState().initialize();
         mockRustTrackedFilePatches((inputs) =>
             inputs.map((input) =>
@@ -10905,7 +10905,7 @@ describe("chatStore", () => {
     it("does not let a late Rust refinement collapse earlier hunks on an accumulated file", async () => {
         (
             globalThis as Record<string, unknown>
-        ).__NEVERWRITE_FORCE_RUST_LINE_DIFFS__ = true;
+        ).__BIFROSTWRITE_FORCE_RUST_LINE_DIFFS__ = true;
         await useChatStore.getState().initialize();
 
         const firstRefinement = createDeferred<MockTrackedFilePatch[]>();
@@ -11325,7 +11325,7 @@ describe("chatStore", () => {
     it("applies user edits immediately without deferred Rust replay", async () => {
         (
             globalThis as Record<string, unknown>
-        ).__NEVERWRITE_FORCE_RUST_LINE_DIFFS__ = true;
+        ).__BIFROSTWRITE_FORCE_RUST_LINE_DIFFS__ = true;
         await useChatStore.getState().initialize();
 
         invokeMock.mockImplementation(async (command) => {
@@ -13056,7 +13056,7 @@ describe("chatStore", () => {
 
         useChatStore.getState().applyStatusEvent({
             session_id: activeSessionId,
-            event_id: "neverwrite:status:item:plan-1",
+            event_id: "bifrostwrite:status:item:plan-1",
             kind: "item_activity",
             status: "in_progress",
             title: "Updating plan",
@@ -13066,7 +13066,7 @@ describe("chatStore", () => {
 
         useChatStore.getState().applyStatusEvent({
             session_id: activeSessionId,
-            event_id: "neverwrite:status:item:plan-1",
+            event_id: "bifrostwrite:status:item:plan-1",
             kind: "item_activity",
             status: "completed",
             title: "Updating plan",
@@ -13081,7 +13081,7 @@ describe("chatStore", () => {
 
         expect(statusMessages).toHaveLength(1);
         expect(statusMessages[0]).toMatchObject({
-            id: "status:neverwrite:status:item:plan-1",
+            id: "status:bifrostwrite:status:item:plan-1",
             role: "system",
             kind: "status",
             title: "Updating plan",
@@ -13101,14 +13101,14 @@ describe("chatStore", () => {
 
         useChatStore.getState().applyImageGeneration({
             session_id: activeSessionId,
-            image_id: "neverwrite:image:ig-1",
+            image_id: "bifrostwrite:image:ig-1",
             status: "in_progress",
             title: "Generating image",
         });
 
         useChatStore.getState().applyImageGeneration({
             session_id: activeSessionId,
-            image_id: "neverwrite:image:ig-1",
+            image_id: "bifrostwrite:image:ig-1",
             status: "completed",
             title: "Generated image",
             path: "/Users/test/.codex/generated_images/session/ig_1.png",
@@ -13124,7 +13124,7 @@ describe("chatStore", () => {
 
         expect(imageMessages).toHaveLength(1);
         expect(imageMessages[0]).toMatchObject({
-            id: "image:neverwrite:image:ig-1",
+            id: "image:bifrostwrite:image:ig-1",
             role: "assistant",
             kind: "image",
             title: "Generated image",
@@ -15644,7 +15644,7 @@ describe("chatStore", () => {
         const claudeSetupStatus = {
             ...readySetupStatus,
             runtime_id: "claude-acp",
-            binary_path: "/Applications/NeverWrite/claude-agent-acp",
+            binary_path: "/Applications/BifrostWrite/claude-agent-acp",
         };
         const claudeSessionPayload = {
             session_id: "claude-session-1",
@@ -15674,7 +15674,7 @@ describe("chatStore", () => {
         const replacementClaudeSessionPayload = {
             ...claudeSessionPayload,
             session_id: "claude-session-2",
-            additional_roots: ["/home/user/projects/NeverWrite"],
+            additional_roots: ["/home/user/projects/BifrostWrite"],
         };
 
         let createSessionCount = 0;
@@ -15707,7 +15707,7 @@ describe("chatStore", () => {
                     attachments: expect.arrayContaining([
                         expect.objectContaining({
                             filePath:
-                                "/home/user/projects/NeverWrite/README.md",
+                                "/home/user/projects/BifrostWrite/README.md",
                         }),
                         expect.objectContaining({
                             managedAttachmentId:
@@ -15734,7 +15734,7 @@ describe("chatStore", () => {
         useChatStore
             .getState()
             .attachFile(
-                "/home/user/projects/NeverWrite/README.md",
+                "/home/user/projects/BifrostWrite/README.md",
                 "README.md",
                 "text/markdown",
             );
@@ -15767,7 +15767,7 @@ describe("chatStore", () => {
         expect(invokeMock).toHaveBeenCalledWith("ai_create_session", {
             input: {
                 runtime_id: "claude-acp",
-                additional_roots: ["/home/user/projects/NeverWrite"],
+                additional_roots: ["/home/user/projects/BifrostWrite"],
             },
             vaultPath: "/vault",
         });
@@ -15783,7 +15783,7 @@ describe("chatStore", () => {
                 ([command, args]) =>
                     command === "ai_save_session_history" &&
                     JSON.stringify(args).includes(
-                        "\"additional_roots\":[\"/home/user/projects/NeverWrite\"]",
+                        "\"additional_roots\":[\"/home/user/projects/BifrostWrite\"]",
                     ),
             ),
         ).toBe(true);
@@ -15830,7 +15830,7 @@ describe("chatStore", () => {
                     historySessionId: "history-1",
                     status: "idle",
                     runtimeId: "claude-acp",
-                    additionalRoots: ["/home/user/projects/NeverWrite"],
+                    additionalRoots: ["/home/user/projects/BifrostWrite"],
                     modelId: "claude-sonnet",
                     modeId: "default",
                     models: [],
@@ -15864,7 +15864,7 @@ describe("chatStore", () => {
                 expect(args).toMatchObject({
                     input: {
                         runtime_id: "claude-acp",
-                        additional_roots: ["/home/user/projects/NeverWrite"],
+                        additional_roots: ["/home/user/projects/BifrostWrite"],
                     },
                     vaultPath: "/vault",
                 });
@@ -15874,7 +15874,7 @@ describe("chatStore", () => {
                     runtime_id: "claude-acp",
                     model_id: "claude-sonnet",
                     mode_id: "default",
-                    additional_roots: ["/home/user/projects/NeverWrite"],
+                    additional_roots: ["/home/user/projects/BifrostWrite"],
                 };
             }
             if (
@@ -15894,7 +15894,7 @@ describe("chatStore", () => {
         expect(
             useChatStore.getState().sessionsById["claude-session-resumed"]
                 ?.additionalRoots,
-        ).toEqual(["/home/user/projects/NeverWrite"]);
+        ).toEqual(["/home/user/projects/BifrostWrite"]);
     });
 
     it("surfaces discarded additional roots from the backend and lets the user dismiss them once", async () => {
@@ -16048,7 +16048,7 @@ describe("chatStore", () => {
         const claudeSetupStatus = {
             ...readySetupStatus,
             runtime_id: "claude-acp",
-            binary_path: "/Applications/NeverWrite/claude-agent-acp",
+            binary_path: "/Applications/BifrostWrite/claude-agent-acp",
         };
         const claudeSessionPayload = {
             session_id: "claude-session-1",
@@ -20119,9 +20119,9 @@ describe("chatStore", () => {
             currentSelection: {
                 noteId: null,
                 path: "/vault/src/config.toml",
-                text: 'name = "NeverWrite"',
+                text: 'name = "BifrostWrite"',
                 from: 0,
-                to: 16,
+                to: 21,
                 startLine: 1,
                 endLine: 1,
             },
@@ -20140,8 +20140,8 @@ describe("chatStore", () => {
             type: "selection_mention",
             noteId: null,
             path: "/vault/src/config.toml",
-            label: '(1)  name = "NeverWrite"',
-            selectedText: 'name = "NeverWrite"',
+            label: '(1)  name = "BifrostWrite...',
+            selectedText: 'name = "BifrostWrite"',
             startLine: 1,
             endLine: 1,
         });
@@ -20152,9 +20152,9 @@ describe("chatStore", () => {
             currentSelection: {
                 noteId: null,
                 path: "/vault/src/config.toml",
-                text: 'name = "NeverWrite"',
+                text: 'name = "BifrostWrite"',
                 from: 0,
-                to: 19,
+                to: 21,
                 startLine: 1,
                 endLine: 1,
             },
@@ -20190,7 +20190,7 @@ describe("chatStore", () => {
                             path: "/vault/src/config.toml",
                             mimeType: "application/toml",
                             viewer: "text" as const,
-                            content: 'name = "NeverWrite"',
+                            content: 'name = "BifrostWrite"',
                             history: [
                                 {
                                     kind: "file" as const,
@@ -20199,7 +20199,7 @@ describe("chatStore", () => {
                                     path: "/vault/src/config.toml",
                                     mimeType: "application/toml",
                                     viewer: "text" as const,
-                                    content: 'name = "NeverWrite"',
+                                    content: 'name = "BifrostWrite"',
                                 },
                             ],
                             historyIndex: 0,

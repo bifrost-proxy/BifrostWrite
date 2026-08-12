@@ -1,23 +1,23 @@
 # Deep Links
 
-NeverWrite registers the `neverwrite` custom URI scheme in packaged desktop
-builds. Deep links are handled by Electron main, then routed through renderer
+BifrostWrite registers the `bifrostwrite` custom URI scheme in packaged desktop
+builds. Deep links are handled by Tauri main, then routed through renderer
 runtime events so vault-aware behavior remains inside the app UI.
 
 ## Supported Actions
 
-### `neverwrite://open`
+### `bifrostwrite://open`
 
 Open an existing file in the currently open vault:
 
 ```text
-neverwrite://open?path=<url-encoded-vault-path>
+bifrostwrite://open?path=<url-encoded-vault-path>
 ```
 
-NeverWrite also accepts the authority-less form:
+BifrostWrite also accepts the authority-less form:
 
 ```text
-neverwrite:open?path=<url-encoded-vault-path>
+bifrostwrite:open?path=<url-encoded-vault-path>
 ```
 
 The `path` parameter can be:
@@ -28,16 +28,16 @@ The `path` parameter can be:
 This action is open/reveal only. It must not create files, write to the vault,
 launch shell commands, or open arbitrary external paths.
 
-### `neverwrite://clip`
+### `bifrostwrite://clip`
 
-The web clipper fallback uses `neverwrite://clip` when the loopback desktop API
+The web clipper fallback uses `bifrostwrite://clip` when the loopback desktop API
 is unavailable. The clipper flow keeps its existing required parameters and
 runtime behavior. Prefer the direct desktop API while debugging clip saving; use
 deep links to isolate fallback and OS registration issues.
 
 ## Line Fragments
 
-`neverwrite://open` supports optional line fragments for text notes:
+`bifrostwrite://open` supports optional line fragments for text notes:
 
 ```text
 #L10
@@ -45,20 +45,20 @@ deep links to isolate fallback and OS registration issues.
 #L10-20
 ```
 
-When the target is a note, NeverWrite opens the note, centers the start line,
+When the target is a note, BifrostWrite opens the note, centers the start line,
 selects the requested range when present, focuses the editor, and briefly
 flashes the line. Non-note files can still open, but line fragments are ignored.
 
 Line fragments are normally URL fragments:
 
 ```bash
-open 'neverwrite://open?path=notes/todo.md#L10-L20'
+open 'bifrostwrite://open?path=notes/todo.md#L10-L20'
 ```
 
-NeverWrite also tolerates a fragment percent-encoded into the `path` value:
+BifrostWrite also tolerates a fragment percent-encoded into the `path` value:
 
 ```bash
-open 'neverwrite://open?path=notes%2Ftodo.md%23L10'
+open 'bifrostwrite://open?path=notes%2Ftodo.md%23L10'
 ```
 
 Filenames that merely contain `#L<digit>` are not truncated unless the suffix is
@@ -77,37 +77,37 @@ Deep-link open requests are resolved against the currently open vault:
 Examples that should be blocked:
 
 ```bash
-open 'neverwrite://open?path=../secret.txt'
-open 'neverwrite://open?path=/etc/passwd'
-open 'neverwrite://open?path=/path/outside/vault/outside.md'
+open 'bifrostwrite://open?path=../secret.txt'
+open 'bifrostwrite://open?path=/etc/passwd'
+open 'bifrostwrite://open?path=/path/outside/vault/outside.md'
 ```
 
 Examples that can be valid when the resulting file stays inside the vault:
 
 ```bash
-open 'neverwrite://open?path=notes/../todo.md'
-open 'neverwrite://open?path=/path/to/vault/notes/todo.md#L5'
+open 'bifrostwrite://open?path=notes/../todo.md'
+open 'bifrostwrite://open?path=/path/to/vault/notes/todo.md#L5'
 ```
 
 ## Platform Delivery
 
-macOS delivers custom URI activations through Electron's `open-url` event.
+macOS delivers custom URI activations through Tauri's `open-url` event.
 Windows and Linux deliver activations through a second app instance and command
 line arguments. Both paths route through the same dispatcher.
 
 Packaged builds register the scheme with the OS. Pure development sessions do
 not reliably validate OS-level scheme handling on macOS because Launch Services
-may point `neverwrite://` at another installed build or at Electron itself. For
+may point `bifrostwrite://` at another installed build or at Tauri itself. For
 manual QA of a local packaged app, force the target app:
 
 ```bash
-open -a /path/to/NeverWrite.app 'neverwrite://open?path=notes/todo.md'
+open -a /path/to/BifrostWrite.app 'bifrostwrite://open?path=notes/todo.md'
 ```
 
 If Launch Services has stale registration data, re-register the build:
 
 ```bash
-/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f /path/to/NeverWrite.app
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f /path/to/BifrostWrite.app
 ```
 
 ## Manual Examples
@@ -115,17 +115,17 @@ If Launch Services has stale registration data, re-register the build:
 With a vault open:
 
 ```bash
-open 'neverwrite://open?path=notes/todo.md'
-open 'neverwrite://open?path=Daily%20Notes%2F2026-07-06.md'
-open 'neverwrite://open?path=notes/todo.md#L20'
-open 'neverwrite://open?path=notes/todo.md#L10-L20'
-open 'neverwrite:open?path=notes/todo.md'
+open 'bifrostwrite://open?path=notes/todo.md'
+open 'bifrostwrite://open?path=Daily%20Notes%2F2026-07-06.md'
+open 'bifrostwrite://open?path=notes/todo.md#L20'
+open 'bifrostwrite://open?path=notes/todo.md#L10-L20'
+open 'bifrostwrite:open?path=notes/todo.md'
 ```
 
 For a local QA build, prefer:
 
 ```bash
-open -a /path/to/NeverWrite.app 'neverwrite://open?path=notes/todo.md#L10-L20'
+open -a /path/to/BifrostWrite.app 'bifrostwrite://open?path=notes/todo.md#L10-L20'
 ```
 
 When a command succeeds, there is no success toast. The expected result is that

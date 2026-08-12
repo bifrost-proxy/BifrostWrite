@@ -707,6 +707,12 @@ impl NativeBackend {
     }
 }
 
+impl Drop for NativeBackend {
+    fn drop(&mut self) {
+        self.ai.shutdown_all_runtime_processes();
+    }
+}
+
 impl NativeBackend {
     fn invoke(
         &mut self,
@@ -2576,7 +2582,7 @@ fn resolve_web_clipper_vault_key_from_ready_keys(
     vault_name_hint: Option<&str>,
 ) -> Result<String, String> {
     if ready_keys.is_empty() {
-        return Err("No ready vault is available in NeverWrite.".to_string());
+        return Err("No ready vault is available in BifrostWrite.".to_string());
     }
 
     if let Some(path_hint) = vault_path_hint
@@ -2608,7 +2614,7 @@ fn resolve_web_clipper_vault_key_from_ready_keys(
         return Ok(ready_keys[0].clone());
     }
 
-    Err("NeverWrite has multiple open vaults. Provide a more specific vault hint.".to_string())
+    Err("BifrostWrite has multiple open vaults. Provide a more specific vault hint.".to_string())
 }
 
 fn normalize_web_clipper_folder(folder: &str) -> Result<String, String> {
@@ -3251,7 +3257,7 @@ mod tests {
     }
 
     #[test]
-    fn invokes_vault_editor_commands_without_electron() {
+    fn invokes_vault_editor_commands_without_desktop_shell() {
         let (event_tx, _event_rx) = mpsc::channel::<RpcOutput>();
         let backend = Arc::new(Mutex::new(NativeBackend::new(event_tx)));
         let vault_dir = tempfile::tempdir().unwrap();

@@ -88,7 +88,7 @@ describe("settingsStore", () => {
         expect(useSettingsStore.getState().vimModeEnabled).toBe(true);
         expect(useSettingsStore.getState().vimRelativeLineNumbers).toBe(true);
         expect(
-            JSON.parse(localStorage.getItem("neverwrite:settings") ?? ""),
+            JSON.parse(localStorage.getItem("bifrostwrite:settings") ?? ""),
         ).toMatchObject({
             state: {
                 vimModeEnabled: true,
@@ -97,7 +97,7 @@ describe("settingsStore", () => {
         });
         expect(
             JSON.parse(
-                localStorage.getItem("neverwrite:settings:/vaults/vim-one") ??
+                localStorage.getItem("bifrostwrite:settings:/vaults/vim-one") ??
                     "",
             ).state,
         ).not.toHaveProperty("vimModeEnabled");
@@ -117,7 +117,7 @@ describe("settingsStore", () => {
         expect(useSettingsStore.getState().hoverPreviewEnabled).toBe(false);
         expect(useSettingsStore.getState().hoverPreviewDelayMs).toBe(500);
         expect(
-            JSON.parse(localStorage.getItem("neverwrite:settings") ?? ""),
+            JSON.parse(localStorage.getItem("bifrostwrite:settings") ?? ""),
         ).toMatchObject({
             state: {
                 hoverPreviewEnabled: false,
@@ -127,7 +127,7 @@ describe("settingsStore", () => {
         expect(
             JSON.parse(
                 localStorage.getItem(
-                    "neverwrite:settings:/vaults/hover-one",
+                    "bifrostwrite:settings:/vaults/hover-one",
                 ) ?? "",
             ).state,
         ).not.toHaveProperty("hoverPreviewEnabled");
@@ -156,7 +156,7 @@ describe("settingsStore", () => {
         expect(useSettingsStore.getState().editorAutosaveDelayMs).toBe(750);
         expect(
             JSON.parse(
-                localStorage.getItem("neverwrite:settings:/vaults/devtools") ?? "",
+                localStorage.getItem("bifrostwrite:settings:/vaults/devtools") ?? "",
             ),
         ).toMatchObject({
             state: {
@@ -172,7 +172,7 @@ describe("settingsStore", () => {
 
     it("keeps AI change review enabled for older vault settings", () => {
         localStorage.setItem(
-            "neverwrite:settings:/vaults/legacy-review",
+            "bifrostwrite:settings:/vaults/legacy-review",
             JSON.stringify({ state: { inlineReviewEnabled: false } }),
         );
 
@@ -194,7 +194,7 @@ describe("settingsStore", () => {
         ).toBe(false);
         expect(
             JSON.parse(
-                localStorage.getItem("neverwrite:settings:/vaults/okf") ?? "",
+                localStorage.getItem("bifrostwrite:settings:/vaults/okf") ?? "",
             ),
         ).toMatchObject({
             state: { fileTreeShowDocumentStatus: false },
@@ -203,7 +203,7 @@ describe("settingsStore", () => {
 
     it("loads vim settings from global storage over vault storage", () => {
         localStorage.setItem(
-            "neverwrite:settings",
+            "bifrostwrite:settings",
             JSON.stringify({
                 state: {
                     vimModeEnabled: true,
@@ -212,7 +212,7 @@ describe("settingsStore", () => {
             }),
         );
         localStorage.setItem(
-            "neverwrite:settings:/vaults/vim-legacy",
+            "bifrostwrite:settings:/vaults/vim-legacy",
             JSON.stringify({
                 state: {
                     inlineReviewEnabled: false,
@@ -249,7 +249,7 @@ describe("settingsStore", () => {
 
         expect(
             JSON.parse(
-                localStorage.getItem("neverwrite:settings:/vaults/terminal") ??
+                localStorage.getItem("bifrostwrite:settings:/vaults/terminal") ??
                     "",
             ),
         ).toMatchObject({
@@ -264,7 +264,7 @@ describe("settingsStore", () => {
         });
         expect(
             JSON.parse(
-                localStorage.getItem("neverwrite:settings:/vaults/terminal") ??
+                localStorage.getItem("bifrostwrite:settings:/vaults/terminal") ??
                     "",
             ).state,
         ).not.toHaveProperty("claudeCodeMaxTurns");
@@ -272,7 +272,7 @@ describe("settingsStore", () => {
 
     it("normalizes persisted terminal numeric settings", () => {
         localStorage.setItem(
-            "neverwrite:settings",
+            "bifrostwrite:settings",
             JSON.stringify({
                 state: {
                     terminalFontSize: 99,
@@ -288,7 +288,7 @@ describe("settingsStore", () => {
 
     it("ignores legacy Claude Code max-turns settings", () => {
         localStorage.setItem(
-            "neverwrite:settings",
+            "bifrostwrite:settings",
             JSON.stringify({
                 state: {
                     terminalFontSize: 16,
@@ -306,7 +306,7 @@ describe("settingsStore", () => {
         );
         useSettingsStore.getState().setSetting("terminalFontSize", 17);
         expect(
-            JSON.parse(localStorage.getItem("neverwrite:settings") ?? "").state,
+            JSON.parse(localStorage.getItem("bifrostwrite:settings") ?? "").state,
         ).not.toHaveProperty("claudeCodeMaxTurns");
     });
 
@@ -325,7 +325,7 @@ describe("settingsStore", () => {
             "en-US",
         );
         expect(
-            JSON.parse(localStorage.getItem("neverwrite:settings") ?? ""),
+            JSON.parse(localStorage.getItem("bifrostwrite:settings") ?? ""),
         ).toMatchObject({
             state: {
                 spellcheckPrimaryLanguage: "fr-FR",
@@ -336,7 +336,7 @@ describe("settingsStore", () => {
 
     it("normalizes invalid persisted PDF filters to normal", () => {
         localStorage.setItem(
-            "neverwrite:settings",
+            "bifrostwrite:settings",
             JSON.stringify({
                 state: {
                     pdfFilter: "solarized",
@@ -352,7 +352,7 @@ describe("settingsStore", () => {
 
     it("normalizes persisted file tree extension filters", () => {
         localStorage.setItem(
-            "neverwrite:settings",
+            "bifrostwrite:settings",
             JSON.stringify({
                 state: {
                     fileTreeExtensionFilter: [
@@ -416,7 +416,7 @@ describe("settingsStore", () => {
 
     it("does not enable spellcheck for a new vault migrated from legacy global settings", () => {
         localStorage.setItem(
-            "neverwrite:settings",
+            "bifrostwrite:settings",
             JSON.stringify({
                 state: {
                     editorSpellcheck: true,
@@ -429,7 +429,7 @@ describe("settingsStore", () => {
 
         expect(useSettingsStore.getState().editorSpellcheck).toBe(false);
         const stored = JSON.parse(
-            localStorage.getItem("neverwrite:settings:/vaults/new") ?? "",
+            localStorage.getItem("bifrostwrite:settings:/vaults/new") ?? "",
         ) as { state: Record<string, unknown> };
         expect(stored.state.editorSpellcheck).toBe(false);
         expect(stored.state).not.toHaveProperty("developerModeEnabled");
@@ -437,7 +437,7 @@ describe("settingsStore", () => {
 
     it("migrates legacy global spellcheck settings into existing vault settings", () => {
         localStorage.setItem(
-            "neverwrite:settings",
+            "bifrostwrite:settings",
             JSON.stringify({
                 state: {
                     spellcheckPrimaryLanguage: "es-CL",
@@ -446,7 +446,7 @@ describe("settingsStore", () => {
             }),
         );
         localStorage.setItem(
-            "neverwrite:settings:/vaults/migrated",
+            "bifrostwrite:settings:/vaults/migrated",
             JSON.stringify({
                 state: {
                     inlineReviewEnabled: false,
@@ -465,7 +465,7 @@ describe("settingsStore", () => {
         expect(useSettingsStore.getState().inlineReviewEnabled).toBe(false);
         expect(
             JSON.parse(
-                localStorage.getItem("neverwrite:settings:/vaults/migrated") ?? "",
+                localStorage.getItem("bifrostwrite:settings:/vaults/migrated") ?? "",
             ),
         ).toMatchObject({
             state: {

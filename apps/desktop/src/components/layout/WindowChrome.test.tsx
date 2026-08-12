@@ -69,7 +69,7 @@ describe("WindowChrome", () => {
         expect(
             root?.querySelector('[data-window-chrome-leading-inset="true"]'),
         ).toBeNull();
-        // Caption buttons are painted by Electron's native titleBarOverlay,
+        // Caption buttons are painted by the native window chrome,
         // so no React-level min/max/close buttons should be in the DOM.
         expect(
             screen.queryByLabelText("Minimize window"),

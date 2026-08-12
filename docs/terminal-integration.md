@@ -15,16 +15,16 @@ folder moved.
 
 The PTY backend is the Rust sidecar in
 [`apps/desktop/native-backend/src/devtools.rs`](../apps/desktop/native-backend/src/devtools.rs).
-It uses `portable-pty`, not `node-pty`, and is reached through the Electron main
+It uses `portable-pty`, not `node-pty`, and is reached through the Tauri main
 process allowlist in
-[`nativeBackend.ts`](../apps/desktop/src-electron/main/nativeBackend.ts).
+[`nativeBackend.ts`](../apps/desktop/src-tauri/src/lib.rs).
 
 Terminal session creation flows through:
 
 ```text
 Terminal tab / runtime store
   -> invoke("devtools_create_terminal_session")
-  -> Electron main native backend bridge
+  -> Tauri main native backend bridge
   -> Rust devtools PTY session
   -> devtools://terminal-* events
   -> terminal runtime store
@@ -97,7 +97,7 @@ Claude Code is represented in two ways:
   [`claudeTerminalAgentSession.ts`](../apps/desktop/src/features/ai/claudeTerminalAgentSession.ts).
 
 When a Claude Code terminal is opened from file-tree or agent context,
-NeverWrite:
+BifrostWrite:
 
 1. Opens a terminal tab in the requested pane.
 2. Waits for the PTY to reach `running`.
@@ -155,13 +155,13 @@ npm test -- src/features/terminal src/features/ai/claudeTerminalAgentSession.tes
 ```
 
 When native commands or PTY behavior change, rebuild the sidecar and run the
-Electron smoke tests:
+Tauri smoke tests:
 
 ```bash
 cd apps/desktop
-npm run electron:sidecar:build
-npm run electron:vault-editor:smoke
-npm run electron:ai-runtime:smoke
+npm run tauri:sidecar:build
+npm run tauri:vault-editor:smoke
+npm run tauri:ai-runtime:smoke
 ```
 
 For packaging-sensitive terminal changes, also run the packaged app and sidecar

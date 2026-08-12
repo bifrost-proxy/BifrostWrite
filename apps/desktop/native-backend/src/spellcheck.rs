@@ -1324,7 +1324,7 @@ fn char_offset_to_utf16(text: &str, char_offset: usize) -> Option<usize> {
 }
 
 fn app_data_dir() -> PathBuf {
-    if let Ok(path) = std::env::var("NEVERWRITE_APP_DATA_DIR") {
+    if let Ok(path) = std::env::var("BIFROSTWRITE_APP_DATA_DIR") {
         let trimmed = path.trim();
         if !trimmed.is_empty() {
             return PathBuf::from(trimmed);
@@ -1337,31 +1337,31 @@ fn app_data_dir() -> PathBuf {
             return PathBuf::from(home)
                 .join("Library")
                 .join("Application Support")
-                .join("NeverWrite");
+                .join("BifrostWrite");
         }
     }
 
     #[cfg(target_os = "windows")]
     {
         if let Some(appdata) = std::env::var_os("APPDATA") {
-            return PathBuf::from(appdata).join("NeverWrite");
+            return PathBuf::from(appdata).join("BifrostWrite");
         }
     }
 
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     {
         if let Some(xdg_data_home) = std::env::var_os("XDG_DATA_HOME") {
-            return PathBuf::from(xdg_data_home).join("NeverWrite");
+            return PathBuf::from(xdg_data_home).join("BifrostWrite");
         }
         if let Some(home) = std::env::var_os("HOME") {
             return PathBuf::from(home)
                 .join(".local")
                 .join("share")
-                .join("NeverWrite");
+                .join("BifrostWrite");
         }
     }
 
-    std::env::temp_dir().join("NeverWrite")
+    std::env::temp_dir().join("BifrostWrite")
 }
 
 fn required_string(args: &Value, keys: &[&str]) -> Result<String, String> {

@@ -1,5 +1,5 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
-import { getCurrentWebview, invoke } from "@neverwrite/runtime";
+import { getCurrentWebview, invoke } from "@bifrostwrite/runtime";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useSettingsStore } from "../../../app/store/settingsStore";
@@ -120,7 +120,7 @@ function renderComposer({
     );
 
     const composer = screen.getByRole("textbox", {
-        name: "Message NeverWrite",
+        name: "Message BifrostWrite",
     });
     return {
         composer,
@@ -802,7 +802,7 @@ describe("AIChatComposer mention picker", () => {
         );
 
         const composer = screen.getByRole("textbox", {
-            name: "Message NeverWrite",
+            name: "Message BifrostWrite",
         });
         composer.textContent = "@alpha";
         setCaret(composer.firstChild as Text, 6);
@@ -846,7 +846,7 @@ describe("AIChatComposer mention picker", () => {
         );
 
         const composer = screen.getByRole("textbox", {
-            name: "Message NeverWrite",
+            name: "Message BifrostWrite",
         });
         composer.textContent = "@alpha";
         setCaret(composer.firstChild as Text, 6);
@@ -895,7 +895,7 @@ describe("AIChatComposer mention picker", () => {
         );
 
         const composer = screen.getByRole("textbox", {
-            name: "Message NeverWrite",
+            name: "Message BifrostWrite",
         });
         composer.textContent = "@main";
         setCaret(composer.firstChild as Text, 5);
@@ -943,7 +943,7 @@ describe("AIChatComposer mention picker", () => {
         );
 
         const composer = screen.getByRole("textbox", {
-            name: "Message NeverWrite",
+            name: "Message BifrostWrite",
         });
         composer.textContent = "@data";
         setCaret(composer.firstChild as Text, 5);
@@ -985,7 +985,7 @@ describe("AIChatComposer mention picker", () => {
         );
 
         const composer = screen.getByRole("textbox", {
-            name: "Message NeverWrite",
+            name: "Message BifrostWrite",
         });
         composer.textContent = "@";
         setCaret(composer.firstChild as Text, 1);
@@ -1031,7 +1031,7 @@ describe("AIChatComposer mention picker", () => {
         );
 
         const composer = screen.getByRole("textbox", {
-            name: "Message NeverWrite",
+            name: "Message BifrostWrite",
         });
         composer.textContent = "@sr";
         setCaret(composer.firstChild as Text, 3);

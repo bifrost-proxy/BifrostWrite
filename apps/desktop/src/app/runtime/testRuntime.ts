@@ -1,5 +1,5 @@
 import type {
-    NeverWriteRuntime,
+    BifrostWriteRuntime,
     RuntimeEventHandler,
     RuntimeLogicalPosition,
     RuntimeWebviewWindow,
@@ -107,11 +107,11 @@ class TestWindow implements RuntimeWebviewWindow {
 }
 
 export function createTestRuntime(
-    invokeHandler: NeverWriteRuntime["invoke"] = async () => undefined as never,
-): NeverWriteRuntime {
+    invokeHandler: BifrostWriteRuntime["invoke"] = async () => undefined as never,
+): BifrostWriteRuntime {
     const currentWindow = new TestWindow("main");
     return {
-        name: "electron",
+        name: "tauri",
         invoke: invokeHandler,
         listen: async () => () => {},
         emitTo: async () => {},

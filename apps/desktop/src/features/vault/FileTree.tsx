@@ -8,8 +8,8 @@ import {
     memo,
 } from "react";
 import { createPortal } from "react-dom";
-import { confirm, open } from "@neverwrite/runtime";
-import { openPath, revealItemInDir } from "@neverwrite/runtime";
+import { confirm, open } from "@bifrostwrite/runtime";
+import { openPath, revealItemInDir } from "@bifrostwrite/runtime";
 import { vaultInvoke } from "../../app/utils/vaultInvoke";
 import {
     canOpenVaultFileEntryInApp,
@@ -101,9 +101,9 @@ type SortMode =
     | "created_desc"
     | "created_asc";
 
-const SORT_KEY = "neverwrite:sort-mode";
-const REVEAL_KEY = "neverwrite:reveal-active";
-const EXPANDED_FOLDERS_KEY_PREFIX = "neverwrite:file-tree-expanded-folders:";
+const SORT_KEY = "bifrostwrite:sort-mode";
+const REVEAL_KEY = "bifrostwrite:reveal-active";
+const EXPANDED_FOLDERS_KEY_PREFIX = "bifrostwrite:file-tree-expanded-folders:";
 const VIRTUAL_OVERSCAN = 40;
 
 const SORT_OPTIONS: { id: SortMode; label: string }[] = [

@@ -6,9 +6,9 @@ import {
     type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { listen } from "@neverwrite/runtime";
-import { getCurrentWebviewWindow } from "@neverwrite/runtime";
-import { openPath, openUrl, revealItemInDir } from "@neverwrite/runtime";
+import { listen } from "@bifrostwrite/runtime";
+import { getCurrentWebviewWindow } from "@bifrostwrite/runtime";
+import { openPath, openUrl, revealItemInDir } from "@bifrostwrite/runtime";
 import {
     EDITOR_FONT_FAMILY_OPTIONS,
     PDF_DEFAULT_ZOOM_STEPS,
@@ -2680,16 +2680,17 @@ const MONO_FONT_STACK =
     'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace';
 
 const RELEASE_NOTES_URL =
-    "https://github.com/jsgrrchg/NeverWrite/releases/latest";
-const REPOSITORY_ISSUES_URL = "https://github.com/jsgrrchg/NeverWrite/issues";
+    "https://github.com/bifrost-proxy/BifrostWrite/releases/latest";
+const REPOSITORY_ISSUES_URL =
+    "https://github.com/bifrost-proxy/BifrostWrite/issues";
 const REPOSITORY_DISCUSSIONS_URL =
-    "https://github.com/jsgrrchg/NeverWrite/discussions";
+    "https://github.com/bifrost-proxy/BifrostWrite/discussions";
 const NEW_REPOSITORY_ISSUE_URL =
-    "https://github.com/jsgrrchg/NeverWrite/issues/new";
+    "https://github.com/bifrost-proxy/BifrostWrite/issues/new";
 const NEW_REPOSITORY_DISCUSSION_URL =
-    "https://github.com/jsgrrchg/NeverWrite/discussions/new/choose";
-const BUY_ME_A_COFFEE_URL = "https://buymeacoffee.com/jsgrrchg";
-const GITHUB_SPONSORS_URL = "https://github.com/sponsors/jsgrrchg";
+    "https://github.com/bifrost-proxy/BifrostWrite/discussions/new/choose";
+const PROJECT_HOME_URL = "https://github.com/bifrost-proxy/BifrostWrite";
+const ORGANIZATION_URL = "https://github.com/bifrost-proxy";
 
 function UpdatesSettings({
     searchQuery,
@@ -2751,7 +2752,7 @@ function UpdatesSettings({
     const effectiveError = error ?? null;
     const updaterConfigured = Boolean(status?.enabled);
     const automaticUpdatesDescription = updaterConfigured
-        ? "NeverWrite does not update automatically. It only downloads and installs updates when you choose it."
+        ? "BifrostWrite checks GitHub Releases automatically and installs a verified update after you confirm."
         : "Not available in this build.";
     const stateKind = resolveUpdateStateKind({
         checking,
@@ -2836,8 +2837,8 @@ function UpdatesSettings({
             [
                 "Automatic updates",
                 automaticUpdatesDescription,
-                "manual install",
-                "no automatic install",
+                "automatic check",
+                "verified install",
             ],
             [
                 "Update status",
@@ -2928,9 +2929,9 @@ function UpdatesSettings({
                 section="Version"
                 label="Automatic updates"
                 description={automaticUpdatesDescription}
-                keywords={["manual install", "no automatic install"]}
+                keywords={["automatic check", "verified install"]}
                 control={
-                    <VersionPill label={updaterConfigured ? "Manual" : "Off"} />
+                    <VersionPill label={updaterConfigured ? "On" : "Off"} />
                 }
             />
             <SearchableRow
@@ -3317,22 +3318,22 @@ function SponsorsSettings({
         "Support",
         [
             [
-                "Buy Me a Coffee",
-                "Support NeverWrite development with a one-time contribution.",
-                "coffee",
-                "donate",
-                "support",
+                "Project repository",
+                "View BifrostWrite source code, releases, and project activity.",
+                "source",
+                "repository",
+                "project",
             ],
             [
-                "GitHub Sponsors",
-                "Sponsor ongoing NeverWrite maintenance and development through GitHub.",
+                "Bifrost organization",
+                "Explore the Bifrost open-source organization on GitHub.",
                 "github",
-                "sponsor",
-                "funding",
+                "organization",
+                "bifrost",
             ],
             [
-                "AI tooling is moving fast, and NeverWrite moves with it.",
-                "Support helps fund weekly maintenance, expanded provider compatibility, runtime stability, security hardening, and safer agent review workflows.",
+                "BifrostWrite is developed as part of the Bifrost open-source ecosystem.",
+                "Issues, discussions, and code contributions are welcome through GitHub.",
                 "runtime stability",
                 "security hardening",
                 "provider compatibility",
@@ -3350,34 +3351,34 @@ function SponsorsSettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Support"
-                label="Buy Me a Coffee"
-                description="Support NeverWrite development with a one-time contribution."
-                keywords={["coffee", "donate", "support"]}
+                label="Project repository"
+                description="View BifrostWrite source code, releases, and project activity."
+                keywords={["source", "repository", "project"]}
                 control={
                     <SettingsActionButton
                         active
                         onClick={() => {
-                            void openUrl(BUY_ME_A_COFFEE_URL);
+                            void openUrl(PROJECT_HOME_URL);
                         }}
                     >
-                        buy coffee
+                        open project
                     </SettingsActionButton>
                 }
             />
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Support"
-                label="GitHub Sponsors"
-                description="Sponsor ongoing NeverWrite maintenance and development through GitHub."
-                keywords={["github", "sponsor", "funding"]}
+                label="Bifrost organization"
+                description="Explore the Bifrost open-source organization on GitHub."
+                keywords={["github", "organization", "bifrost"]}
                 control={
                     <SettingsActionButton
                         active
                         onClick={() => {
-                            void openUrl(GITHUB_SPONSORS_URL);
+                            void openUrl(ORGANIZATION_URL);
                         }}
                     >
-                        sponsor
+                        open organization
                     </SettingsActionButton>
                 }
             />
@@ -3395,11 +3396,10 @@ function SponsorsSettings({
                 }}
             >
                 <span style={{ fontWeight: 600 }}>
-                    AI tooling is moving fast, and NeverWrite moves with it.
+                    BifrostWrite is developed as part of the Bifrost open-source ecosystem.
                 </span>{" "}
-                Support helps fund weekly maintenance, expanded provider
-                compatibility, runtime stability, security hardening, and safer
-                agent review workflows.
+                Issues, discussions, and code contributions are welcome through
+                GitHub.
             </div>
         </div>
     );
@@ -5239,7 +5239,7 @@ const CATEGORIES: { id: Category; label: string; icon: React.ReactNode }[] = [
     },
     {
         id: "sponsors",
-        label: "Sponsors",
+        label: "Project",
         icon: (
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path
@@ -5259,7 +5259,7 @@ const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
     appearance: "Themes and visual preferences",
     editor: "Typography and text editing behavior",
     spellcheck: "Languages and dictionary management",
-    updates: "Manual update checks and appcast configuration",
+    updates: "Version information and verified in-app updates",
     terminal: "Font, size, and shell environment settings",
     developers: "Control which vault files appear in the file tree and pickers",
     vault: "Current vault and recent history",
@@ -5267,7 +5267,7 @@ const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
     ai_providers: "AI runtimes, authentication, and API keys",
     ai: "AI assistant chat preferences",
     feedback: "GitHub issues, discussions, and feedback links",
-    sponsors: "Ways to support NeverWrite development",
+    sponsors: "BifrostWrite source code and organization links",
 };
 
 const STATIC_CATEGORY_SEARCH_VALUES: Record<Category, readonly SearchValue[]> = {
@@ -5338,10 +5338,10 @@ const STATIC_CATEGORY_SEARCH_VALUES: Record<Category, readonly SearchValue[]> = 
         "Update status",
         "Available update",
         "Published",
-        "download and install",
-        "check for updates",
-        "appcast",
-        "release feed",
+        "verified download",
+        "SHA-256",
+        "restart and rollback",
+        "GitHub Release",
     ],
     feedback: [
         "Community",
@@ -5357,14 +5357,11 @@ const STATIC_CATEGORY_SEARCH_VALUES: Record<Category, readonly SearchValue[]> = 
         "Idea",
     ],
     sponsors: [
-        "Support",
-        "Sponsors",
-        "Buy Me a Coffee",
-        "GitHub Sponsors",
-        "Coffee",
-        "Donate",
-        "Funding",
-        "Support NeverWrite",
+        "Project",
+        "Project repository",
+        "Bifrost organization",
+        "Source code",
+        "GitHub",
     ],
     terminal: [
         "Terminal",

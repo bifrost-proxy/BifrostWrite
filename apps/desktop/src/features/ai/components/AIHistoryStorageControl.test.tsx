@@ -1,4 +1,4 @@
-import { confirm, invoke, revealItemInDir } from "@neverwrite/runtime";
+import { confirm, invoke, revealItemInDir } from "@bifrostwrite/runtime";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderComponent } from "../../../test/test-utils";
@@ -33,7 +33,7 @@ describe("AIHistoryStorageControl", () => {
 
         await waitFor(() => {
             expect(confirm).toHaveBeenCalledWith(
-                "This moves all saved AI chats and NeverWrite-managed pasted attachments. The storage setting changes only after the move succeeds.",
+                "This moves all saved AI chats and BifrostWrite-managed pasted attachments. The storage setting changes only after the move succeeds.",
                 {
                     title: "Move all AI chats into this vault?",
                     kind: "warning",

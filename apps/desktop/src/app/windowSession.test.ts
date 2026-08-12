@@ -1,4 +1,4 @@
-import { getAllWebviewWindows } from "@neverwrite/runtime";
+import { getAllWebviewWindows } from "@bifrostwrite/runtime";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
     buildWindowSessionEntry,
@@ -129,7 +129,7 @@ describe("windowSession", () => {
 
     it("restores the primary vault into the main window and reopens the rest", async () => {
         localStorage.setItem(
-            "neverwrite:window-session-snapshot",
+            "bifrostwrite:window-session-snapshot",
             JSON.stringify(["main", "vault-2", "note-1"]),
         );
         writeWindowSessionEntry("main", {

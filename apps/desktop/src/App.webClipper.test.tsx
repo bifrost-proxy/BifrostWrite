@@ -4,7 +4,7 @@ import {
     invoke,
     listen,
     type UnlistenFn,
-} from "@neverwrite/runtime";
+} from "@bifrostwrite/runtime";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
@@ -25,8 +25,8 @@ import { flushPromises, renderComponent, setEditorTabs } from "./test/test-utils
 
 const MENU_ACTION_EVENT = "menu-action";
 const DOCK_OPEN_VAULT_EVENT = "dock-open-vault";
-const WEB_CLIPPER_CLIP_SAVED_EVENT = "neverwrite:web-clipper/clip-saved";
-const WEB_CLIPPER_ROUTE_CLIP_EVENT = "neverwrite:web-clipper/route-clip";
+const WEB_CLIPPER_CLIP_SAVED_EVENT = "bifrostwrite:web-clipper/clip-saved";
+const WEB_CLIPPER_ROUTE_CLIP_EVENT = "bifrostwrite:web-clipper/route-clip";
 
 vi.mock("./components/layout/AppLayout", () => ({
     AppLayout: ({
@@ -122,7 +122,7 @@ vi.mock("./features/settings", () => ({
 }));
 
 vi.mock("./app/detachedWindows", () => ({
-    ATTACH_EXTERNAL_TAB_EVENT: "neverwrite:attach-external-tab",
+    ATTACH_EXTERNAL_TAB_EVENT: "bifrostwrite:attach-external-tab",
     getCurrentWindowLabel: () => "main",
     getWindowMode: () => "main",
     openDetachedNoteWindow: vi.fn(),
@@ -323,7 +323,7 @@ describe("App web clipper routing", () => {
         await flushPromises();
 
         const handler = windowEventHandlers.get(
-            "neverwrite:attach-external-tab",
+            "bifrostwrite:attach-external-tab",
         );
         expect(handler).toBeDefined();
 

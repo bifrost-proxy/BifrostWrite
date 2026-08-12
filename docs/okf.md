@@ -1,18 +1,18 @@
 # Open Knowledge Format (OKF)
 
-NeverWrite has partial support for the [Open Knowledge Format
+BifrostWrite has partial support for the [Open Knowledge Format
 (OKF)](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md),
 a convention for describing knowledge documents through Markdown frontmatter.
-This page documents the parts NeverWrite reads and surfaces: the `status`
+This page documents the parts BifrostWrite reads and surfaces: the `status`
 extension field, the `type` field, and OKF vault detection.
 
-OKF is permissive on consumption. NeverWrite never rejects a note for having an
+OKF is permissive on consumption. BifrostWrite never rejects a note for having an
 unknown or missing field. Everything below is additive: notes without OKF
 frontmatter render exactly as before.
 
 ## The `status` field
 
-`status` is a NeverWrite extension to OKF frontmatter that signals a document's
+`status` is a BifrostWrite extension to OKF frontmatter that signals a document's
 publication and trust state. It is a single string value:
 
 ```markdown
@@ -45,7 +45,7 @@ status.
 
 ### Status attribution (`status_by`)
 
-When a status is set or changed through the editor's status menu, NeverWrite
+When a status is set or changed through the editor's status menu, BifrostWrite
 also writes `status_by: <username>` directly after `status`, recording the
 operating system account name of the person who made the change. The username
 comes from the desktop session on macOS, Windows, and Linux alike; if it cannot
@@ -72,7 +72,7 @@ frontmatter keys keep their order and content.
 ## The `type` field
 
 `type` is the standard OKF field describing the kind of document (for example
-`runbook`, `reference`, `guide`). NeverWrite reads it as a plain string and
+`runbook`, `reference`, `guide`). BifrostWrite reads it as a plain string and
 shows it as a muted badge in the editor header, and in the file tree status
 dot's tooltip. Same string rules as `status`: only string scalars, trimmed;
 empty resolves to absent.
@@ -91,7 +91,7 @@ badge or banner.
 ## OKF vault detection (`okf_version`)
 
 A vault is treated as an OKF vault when its root `index.md` declares an OKF
-version in frontmatter. When detected, NeverWrite records the version
+version in frontmatter. When detected, BifrostWrite records the version
 (`okf_version`) and uses it for conformance hints. For example, in an OKF vault a
 note whose frontmatter has no non-empty `type` shows a muted "No OKF type" hint
 in the editor header; clicking it opens the Properties panel so the field can be

@@ -1,4 +1,4 @@
-import { invoke } from "@neverwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
 import { useEditorStore, isReviewTab } from "../../../app/store/editorStore";
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";

@@ -1,4 +1,4 @@
-export type RuntimeName = "electron";
+export type RuntimeName = "tauri";
 
 export type UnlistenFn = () => void;
 
@@ -63,10 +63,10 @@ export interface RuntimeWindow {
         toLogical?: (scaleFactor: number) => { x: number; y: number };
     }>;
     scaleFactor?: () => Promise<number>;
-    // macOS-only on Electron, so this remains optional and callers should treat
+    // macOS-only shell hook, so this remains optional and callers should treat
     // a missing method as a no-op.
     setTrafficLightsVisible?: (visible: boolean) => Promise<void>;
-    // Windows-only on Electron: retint the native titleBarOverlay caption
+    // Windows-only shell hook: retint the native caption
     // buttons so they stay legible against the current theme. Optional so
     // other runtimes (and other platforms) can silently ignore it.
     setTitleBarOverlay?: (options: {
@@ -116,7 +116,7 @@ export interface Update {
     rawJson?: unknown;
 }
 
-export interface NeverWriteRuntime {
+export interface BifrostWriteRuntime {
     name: RuntimeName;
     invoke<T>(command: string, args?: Record<string, unknown>): Promise<T>;
     listen<T>(
@@ -139,53 +139,4 @@ export interface NeverWriteRuntime {
     getAllWebviewWindows(): Promise<RuntimeWindow[]>;
     WebviewWindow: RuntimeWebviewWindowConstructor;
     LogicalPosition: RuntimeLogicalPositionConstructor;
-}
-
-export interface RuntimeWindowInfo {
-    label: string;
-}
-
-export interface ElectronWindowCreateOptions {
-    label: string;
-    options?: Record<string, unknown>;
-}
-
-export interface ElectronPreloadApi {
-    invoke<T>(command: string, args?: Record<string, unknown>): Promise<T>;
-    listen<T>(
-        eventName: string,
-        handler: RuntimeEventHandler<T>,
-    ): Promise<UnlistenFn>;
-    emitTo<T>(
-        targetLabel: string,
-        eventName: string,
-        payload: T,
-    ): Promise<void>;
-    openDialog(options?: OpenDialogOptions): Promise<string | string[] | null>;
-    confirmDialog(
-        message: string,
-        options?: ConfirmDialogOptions,
-    ): Promise<boolean>;
-    openPath(path: string): Promise<void>;
-    revealItemInDir(path: string): Promise<void>;
-    openUrl(url: string): Promise<void>;
-    setZoom(factor: number): Promise<void>;
-    onDragDropEvent(
-        handler: (event: RuntimeDragDropEvent) => void,
-    ): Promise<UnlistenFn>;
-    getCurrentWindowLabel(): Promise<string>;
-    getAllWindows(): Promise<RuntimeWindowInfo[]>;
-    createWindow(input: ElectronWindowCreateOptions): Promise<void>;
-    windowCommand(
-        label: string | null,
-        command: string,
-        args?: Record<string, unknown>,
-    ): Promise<unknown>;
-    onWindowEvent(eventName: string, handler: () => void): Promise<UnlistenFn>;
-    log(
-        level: "debug" | "info" | "warn" | "error",
-        scope: string,
-        message: string,
-        detail?: unknown,
-    ): Promise<void>;
 }

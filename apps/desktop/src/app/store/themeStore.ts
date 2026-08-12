@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { getCurrentWindow } from "@neverwrite/runtime";
+import { getCurrentWindow } from "@bifrostwrite/runtime";
 import { type ThemeName, applyThemeColors, themes } from "../themes/index";
 import { getDesktopPlatform } from "../utils/platform";
 import { readSearchParam, safeMatchMedia } from "../utils/safeBrowser";
@@ -26,9 +26,9 @@ interface ThemeStore {
     setThemeName: (name: ThemeName) => void;
 }
 
-const THEME_KEY_PREFIX = "neverwrite:theme:";
-const THEME_KEY_FALLBACK = "neverwrite:theme";
-const LAST_VAULT_KEY = "neverwrite:lastVaultPath";
+const THEME_KEY_PREFIX = "bifrostwrite:theme:";
+const THEME_KEY_FALLBACK = "bifrostwrite:theme";
+const LAST_VAULT_KEY = "bifrostwrite:lastVaultPath";
 const DEFAULT_THEME: ThemePreference = { mode: "system", themeName: "default" };
 
 const VALID_THEME_NAMES = new Set<ThemeName>([

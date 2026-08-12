@@ -58,7 +58,7 @@ const ELECTRON_KEY_LABELS: Readonly<Record<string, string>> = {
     tab: "Tab",
 };
 
-function formatElectronAcceleratorKey(key: string): string | null {
+function formatTauriAcceleratorKey(key: string): string | null {
     const normalized = key.toLowerCase();
     const namedKey = ELECTRON_KEY_LABELS[normalized];
     if (namedKey) {
@@ -76,7 +76,7 @@ function formatElectronAcceleratorKey(key: string): string | null {
 export function formatNativeMenuAccelerator(
     binding: ShortcutBinding,
 ): string | null {
-    const key = formatElectronAcceleratorKey(binding.key);
+    const key = formatTauriAcceleratorKey(binding.key);
     if (!key) {
         return null;
     }

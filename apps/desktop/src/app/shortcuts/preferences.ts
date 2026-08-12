@@ -13,7 +13,7 @@ import {
 import { getReservedInteractionShortcut } from "./reservedInteractions";
 
 export const SHORTCUT_OVERRIDES_STORAGE_KEY =
-    "neverwrite:shortcut-overrides";
+    "bifrostwrite:shortcut-overrides";
 
 type ShortcutOverridePlatform = "macos" | "windows";
 type PlatformShortcutOverrides = Partial<

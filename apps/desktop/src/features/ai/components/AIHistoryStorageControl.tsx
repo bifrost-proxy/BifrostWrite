@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { confirm, revealItemInDir } from "@neverwrite/runtime";
+import { confirm, revealItemInDir } from "@bifrostwrite/runtime";
 import {
     getAiHistoryRecoveryDiagnostic,
     getAiHistoryRecoveryRevealPath,
@@ -87,7 +87,7 @@ export function AIHistoryStorageControl({
         async (target: AIStorageScope, sourceVaultKey?: string) => {
             if (!vaultPath || changing) return;
             const accepted = await confirm(
-                "This moves all saved AI chats and NeverWrite-managed pasted attachments. The storage setting changes only after the move succeeds.",
+                "This moves all saved AI chats and BifrostWrite-managed pasted attachments. The storage setting changes only after the move succeeds.",
                 {
                     title:
                         target === "vault"

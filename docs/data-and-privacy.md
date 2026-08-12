@@ -1,6 +1,6 @@
 # Data And Privacy
 
-NeverWrite is local-first: vault files, hidden vault state, app preferences, logs,
+BifrostWrite is local-first: vault files, hidden vault state, app preferences, logs,
 and web clipper data are stored on the user's machine unless the user explicitly
 sends content to an AI provider, a grammar service, a bug report, or another
 external tool.
@@ -14,45 +14,45 @@ Related implementation references:
 
 - [App logs](app-logs.md)
 - [AI session history and crash recovery](ai-session-history.md)
-- [`apps/desktop/src-electron/main/appLogger.ts`](../apps/desktop/src-electron/main/appLogger.ts)
-- [`apps/desktop/src-electron/main/webClipper.ts`](../apps/desktop/src-electron/main/webClipper.ts)
+- [`apps/desktop/src-tauri/src/lib.rs`](../apps/desktop/src-tauri/src/lib.rs)
+- [`apps/desktop/src-tauri/src/lib.rs`](../apps/desktop/src-tauri/src/lib.rs)
 - [`apps/web-clipper/src/lib/storage.ts`](../apps/web-clipper/src/lib/storage.ts)
 - [`crates/ai/src/persistence.rs`](../crates/ai/src/persistence.rs)
 - [`crates/vault/src/pdf.rs`](../crates/vault/src/pdf.rs)
 
 ## Overview
 
-NeverWrite stores data in three main places:
+BifrostWrite stores data in three main places:
 
 - The vault directory selected by the user.
-- Electron's app data directory for logs, local app state, AI runtime setup, and
+- Tauri's app data directory for logs, local app state, AI runtime setup, and
   desktop web clipper pairing state.
 - The browser extension's `browser.storage.local` area for web clipper settings,
   local clip history, and its copy of the desktop pairing token.
 
-Electron's app data directory is usually:
+Tauri's app data directory is usually:
 
-- Windows: `%APPDATA%\NeverWrite\`
-- macOS: `~/Library/Application Support/NeverWrite/`
-- Linux: `~/.config/NeverWrite/` for Electron-managed data such as logs.
+- Windows: `%APPDATA%\com.bifrostwrite.desktop\`
+- macOS: `~/Library/Application Support/com.bifrostwrite.desktop/`
+- Linux: `~/.local/share/com.bifrostwrite.desktop/`.
 
-Unpackaged desktop development uses a separate `NeverWrite Dev` profile in the equivalent platform app-data location. The installed release keeps the paths above unchanged. Opening the same vault in both variants still shares the vault-owned `.neverwrite` and `.neverwrite-cache` directories described below.
+Unpackaged desktop development uses a separate `BifrostWrite Dev` profile in the equivalent platform app-data location. The installed release keeps the paths above unchanged. Opening the same vault in both variants still shares the vault-owned `.neverwrite` and `.neverwrite-cache` directories described below.
 
-The native backend normally receives Electron's `userData` path through
-`NEVERWRITE_APP_DATA_DIR`, so its persisted app state is stored under the same
+The native backend normally receives Tauri's `userData` path through
+`BIFROSTWRITE_APP_DATA_DIR`, so its persisted app state is stored under the same
 app data directory when launched from the desktop app. If the native backend is
-run outside Electron, its fallback app data path is platform-dependent.
+run outside Tauri, its fallback app data path is platform-dependent.
 
 ## Vault Data
 
-The vault is the user's source of truth. NeverWrite reads and writes normal files
+The vault is the user's source of truth. BifrostWrite reads and writes normal files
 inside the selected vault, including Markdown notes, text/code files, CSV files,
 Mermaid diagram files, PDFs, images, and `.excalidraw` concept maps.
 
 Vault content is stored in the original file formats. It is plaintext when the
 file format is plaintext, for example Markdown, CSV, JSON, source code,
 Mermaid source, or Excalidraw JSON. Binary files such as PDFs and images remain
-their original binary files. NeverWrite does not add encryption to vault files.
+their original binary files. BifrostWrite does not add encryption to vault files.
 
 Vault file paths, titles, tags, links, and content can be shown in the UI,
 indexed for search, sent to AI providers when attached or included as context,
@@ -60,7 +60,7 @@ and written into local history or cache files described below.
 
 ## Hidden Vault State
 
-NeverWrite uses hidden directories inside each vault for app-owned state:
+BifrostWrite uses hidden directories inside each vault for app-owned state:
 
 ```text
 <vault>/.neverwrite/
@@ -123,7 +123,7 @@ are checked during initialization, recovery, and an explicit scope move.
 ### AI Screenshot Drafts And Managed Blobs
 
 Pasted chat screenshots are written as temporary local drafts before they are
-sent. Drafts are stored under Electron's app data directory, not in the vault:
+sent. Drafts are stored under Tauri's app data directory, not in the vault:
 
 ```text
 <app-data>/ai-history/v1/vaults/<sha256(canonical-vault-path)>/drafts/<draft-id>/
@@ -132,16 +132,16 @@ sent. Drafts are stored under Electron's app data directory, not in the vault:
 Each draft directory contains the original image bytes in `blob` and plaintext
 JSON metadata in `metadata.json`. The vault namespace hashes the canonical vault
 path, but this is an identifier, not encryption. On Unix-like systems,
-NeverWrite creates the draft directories and files with owner-only permissions
+BifrostWrite creates the draft directories and files with owner-only permissions
 when possible. Other platforms rely on the access controls inherited from the
 user's app data directory.
 
-NeverWrite deletes a draft when its last composer, queue, or edit owner releases
+BifrostWrite deletes a draft when its last composer, queue, or edit owner releases
 it. Orphan drafts left by a crash are removed on a later app startup after a
 seven-day TTL. Cleanup is best-effort, so backups, filesystem snapshots, or an
 app that is never reopened can retain the files longer.
 
-Before a screenshot is added to a sent message, NeverWrite promotes it to an
+Before a screenshot is added to a sent message, BifrostWrite promotes it to an
 app-owned managed blob in the current canonical scope:
 
 ```text
@@ -163,7 +163,7 @@ inside the vault; deleting those requires the explicit Chat History action.
 
 ## App Logs
 
-NeverWrite writes diagnostic JSONL logs under Electron's app data directory:
+BifrostWrite writes diagnostic JSONL logs under Tauri's app data directory:
 
 ```text
 <app-data>/logs/main.log
@@ -182,7 +182,7 @@ secret redaction path before being written.
 
 Logs are still diagnostic plaintext. They may include:
 
-- Platform, app version, Electron/Node versions, process status, and timestamps.
+- Platform, app version, Tauri/Node versions, process status, and timestamps.
 - File paths, executable paths, vault names or paths, runtime names, provider
   ids, update URLs, and error messages.
 - Stack traces or failures that can reveal local usernames or project names.
@@ -219,7 +219,7 @@ domain, metadata, folder, tags, vault id/name, and the save method. This is
 plaintext in browser extension storage and may contain full page or selection
 content.
 
-When the desktop API is unavailable, the extension can use a `neverwrite://clip`
+When the desktop API is unavailable, the extension can use a `bifrostwrite://clip`
 deep link. Small payloads can be embedded in the deep link. Larger payloads, or
 the user preference for clipboard mode, use the system clipboard as a temporary
 handoff: the extension writes the Markdown to the clipboard and the desktop app
@@ -231,21 +231,21 @@ clipboard and may be visible to clipboard managers.
 Desktop renderer preferences use a `safeStorage` wrapper that prefers persistent
 `window.localStorage` and falls back to in-memory storage if localStorage is
 blocked. In normal desktop use, these values are plaintext localStorage entries
-inside Electron's profile data.
+inside Tauri's profile data.
 
 Examples include:
 
-- `neverwrite:settings` and `neverwrite:settings:<vault-path>`: editor,
+- `bifrostwrite:settings` and `bifrostwrite:settings:<vault-path>`: editor,
   spellcheck, grammar, developer, review, and UI preferences.
-- `neverwrite:theme` and `neverwrite:theme:<vault-path>`: theme preference.
-- `neverwrite:lastVaultPath` and `neverwrite:recentVaults`: recent vault paths
+- `bifrostwrite:theme` and `bifrostwrite:theme:<vault-path>`: theme preference.
+- `bifrostwrite:lastVaultPath` and `bifrostwrite:recentVaults`: recent vault paths
   and pinned/recent vault metadata.
-- `neverwrite:bookmarks:<vault-path>`: vault bookmarks.
+- `bifrostwrite:bookmarks:<vault-path>`: vault bookmarks.
 - `neverwrite.session.tabs:<vault-path>` and related chat/window keys: workspace,
   tab, detached-window, and window restore state.
 - `neverwrite.ai.preferences` and per-vault AI preference keys: UI preferences
   such as auto-context and diff zoom, plus cached runtime catalog data.
-- `neverwrite:window-operational-state:<label>`: temporary update-safety state
+- `bifrostwrite:window-operational-state:<label>`: temporary update-safety state
   listing dirty tab titles, pending review session titles, active agent session
   titles, and separate open windows.
 
@@ -263,7 +263,7 @@ That file contains vault paths and names.
 
 ## AI Provider Secrets And Auth
 
-NeverWrite separates AI runtime setup metadata from secret values.
+BifrostWrite separates AI runtime setup metadata from secret values.
 
 Runtime setup metadata is stored under app data:
 
@@ -280,7 +280,7 @@ API keys and secret headers for supported runtimes are stored through the OS
 credential store using the service name:
 
 ```text
-NeverWrite AI Provider Secrets
+BifrostWrite AI Provider Secrets
 ```
 
 Secret account names are runtime/key pairs such as `codex:OPENAI_API_KEY` or
@@ -290,7 +290,7 @@ Secret account names are runtime/key pairs such as `codex:OPENAI_API_KEY` or
 `OPENCODE_API_KEY`.
 
 `GEMINI_API_KEY` and `GOOGLE_API_KEY` are still treated as sensitive when they
-appear in inherited process environments or diagnostic logs, but NeverWrite no
+appear in inherited process environments or diagnostic logs, but BifrostWrite no
 longer stores them as provider setup secrets because Gemini ACP support has been
 removed.
 
@@ -299,17 +299,17 @@ are not stored there, it can reveal private endpoint URLs, local binary paths,
 and which credentials are configured.
 
 Some provider login methods use provider-owned CLI authentication outside
-NeverWrite's app data directory. For example, a runtime CLI may keep its own
-tokens or config in that provider's standard location. NeverWrite cannot
+BifrostWrite's app data directory. For example, a runtime CLI may keep its own
+tokens or config in that provider's standard location. BifrostWrite cannot
 guarantee or document those third-party storage formats here.
 
 Custom ACP definitions are stored separately from built-in runtime setup metadata in `<app-data>/ai/custom-acp-runtimes.json`. They contain a display name, command, arguments, non-secret environment entries, revision, fingerprint, and deleted-definition tombstones. They are global to the application and are not written into a vault.
 
-NeverWrite rejects secret-like custom environment names and launches custom ACP processes with an isolated environment, controlled `PATH`, and no inherited provider credentials or sidecar secrets. The adapter remains responsible for its own authentication material and any third-party files it creates. Review custom definition files before sharing them because executable paths and non-secret configuration can still be sensitive.
+BifrostWrite rejects secret-like custom environment names and launches custom ACP processes with an isolated environment, controlled `PATH`, and no inherited provider credentials or sidecar secrets. The adapter remains responsible for its own authentication material and any third-party files it creates. Review custom definition files before sharing them because executable paths and non-secret configuration can still be sensitive.
 
 ## Caches And Derived Data
 
-NeverWrite stores derived cache data that can still contain source content.
+BifrostWrite stores derived cache data that can still contain source content.
 
 PDF text extraction cache:
 
@@ -341,10 +341,10 @@ not needed for normal bug reports unless a maintainer asks for them.
 
 ## Release And Update State
 
-The updater code keeps update status in memory and uses `electron-updater` for
-platform-specific download/install behavior. NeverWrite's update safety check
+The updater code keeps update status in memory and uses `Homebrew Cask` for
+platform-specific download/install behavior. BifrostWrite's update safety check
 does write temporary plaintext localStorage entries named
-`neverwrite:window-operational-state:<label>` so it can warn before installing
+`bifrostwrite:window-operational-state:<label>` so it can warn before installing
 while there are unsaved tabs, pending review changes, active agent sessions, or
 separate operational windows.
 
@@ -355,7 +355,7 @@ they can still reveal sensitive file or chat names.
 
 Usually safe to share:
 
-- NeverWrite version, operating system, architecture, and whether the app is
+- BifrostWrite version, operating system, architecture, and whether the app is
   packaged or running from development.
 - A short description of the action that failed and the expected behavior.
 - Screenshots with private note content, file paths, and tokens hidden.
@@ -372,7 +372,7 @@ Review and redact before sharing:
 - App logs under `<app-data>/logs/`.
 - `recent_vaults.json`.
 - Browser extension `clipperSettings` export or screenshots.
-- LocalStorage values whose keys start with `neverwrite:`,
+- LocalStorage values whose keys start with `bifrostwrite:`,
   `neverwrite.`, or `neverwrite.ai.`.
 - `runtime-setup.json`, especially gateway URLs, project ids, custom headers,
   custom binary paths, and local usernames.
@@ -414,16 +414,16 @@ the contents.
 
 ## Known Limits
 
-- Vault files and AI transcripts are not encrypted by NeverWrite.
+- Vault files and AI transcripts are not encrypted by BifrostWrite.
 - Hidden vault directories are local-only by design, but they will be copied by
   backups, sync tools, and manual zip/archive operations unless excluded.
 - Log sanitization is best-effort and key-based. It reduces accidental leakage
   but cannot prove that every string is non-sensitive.
-- Browser extension storage and Electron localStorage are plaintext from the
-  application's perspective and follow browser/Electron profile behavior.
+- Browser extension storage and Tauri localStorage are plaintext from the
+  application's perspective and follow browser/Tauri profile behavior.
 - OS credential storage security depends on the operating system keychain,
   credential manager, or secret service available on the user's machine.
-- Third-party AI runtime CLIs can store their own auth state outside NeverWrite.
+- Third-party AI runtime CLIs can store their own auth state outside BifrostWrite.
   Check that provider's documentation before sharing provider config folders.
 
 Last updated: July 16, 2026.

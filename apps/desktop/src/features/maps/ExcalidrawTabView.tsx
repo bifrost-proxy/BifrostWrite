@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import type { MutableRefObject } from "react";
-import { invoke } from "@neverwrite/runtime";
-import { listen } from "@neverwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
+import { listen } from "@bifrostwrite/runtime";
 import {
     useEditorStore,
     isMapTab,

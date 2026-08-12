@@ -1,6 +1,6 @@
-export const REVEAL_NOTE_IN_TREE_EVENT = "neverwrite:reveal-note-in-tree";
+export const REVEAL_NOTE_IN_TREE_EVENT = "bifrostwrite:reveal-note-in-tree";
 export const CLEAR_FILE_TREE_SELECTION_EVENT =
-    "neverwrite:clear-file-tree-selection";
+    "bifrostwrite:clear-file-tree-selection";
 
 export function revealNoteInTree(noteId: string) {
     window.dispatchEvent(

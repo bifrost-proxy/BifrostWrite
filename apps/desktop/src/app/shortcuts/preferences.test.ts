@@ -60,14 +60,14 @@ describe("shortcut preferences persistence", () => {
     });
 
     it("keeps overrides global and isolated from per-vault settings", () => {
-        const vaultSettingsKey = "neverwrite:settings:/vaults/one";
+        const vaultSettingsKey = "bifrostwrite:settings:/vaults/one";
         localStorage.setItem(vaultSettingsKey, '{"state":{"vimMode":true}}');
 
         setShortcutOverride("new_note", "macos", {
             key: "D",
             modifiers: ["meta"],
         });
-        localStorage.setItem("neverwrite:lastVault", "/vaults/two");
+        localStorage.setItem("bifrostwrite:lastVault", "/vaults/two");
 
         expect(getShortcutOverride("new_note", "macos")).toEqual({
             key: "D",
@@ -80,7 +80,7 @@ describe("shortcut preferences persistence", () => {
             [...Array(localStorage.length)].map((_, index) =>
                 localStorage.key(index),
             ),
-        ).not.toContain("neverwrite:settings:/vaults/two");
+        ).not.toContain("bifrostwrite:settings:/vaults/two");
     });
 
     it("stores and resolves macOS and Windows overrides independently", () => {
@@ -374,10 +374,10 @@ describe("shortcut preferences persistence", () => {
         const listener = vi.fn();
         const unsubscribe = subscribeShortcutOverrides(listener);
 
-        localStorage.setItem("neverwrite:settings:/vaults/one", "{}");
+        localStorage.setItem("bifrostwrite:settings:/vaults/one", "{}");
         window.dispatchEvent(
             new StorageEvent("storage", {
-                key: "neverwrite:settings:/vaults/one",
+                key: "bifrostwrite:settings:/vaults/one",
                 newValue: "{}",
             }),
         );

@@ -1,5 +1,5 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
-import { invoke, openPath, revealItemInDir } from "@neverwrite/runtime";
+import { invoke, openPath, revealItemInDir } from "@bifrostwrite/runtime";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useEditorStore } from "../../../app/store/editorStore";
 import { useSettingsStore } from "../../../app/store/settingsStore";
@@ -363,7 +363,7 @@ describe("AIChatMessageItem generated images", () => {
             name: "A tiny blue square",
         });
         expect(image.getAttribute("src")).toContain(
-            "neverwrite-file://localhost/codex-image/",
+            "bifrostwrite-file://localhost/codex-image/",
         );
 
         fireEvent.click(
@@ -463,7 +463,7 @@ describe("AIChatMessageItem user image attachments", () => {
 
         const image = screen.getByRole("img", { name: "Screenshot 10:32" });
         expect(image.getAttribute("src")).toContain(
-            "neverwrite-file://localhost/vault/",
+            "bifrostwrite-file://localhost/vault/",
         );
 
         fireEvent.click(screen.getByRole("button", { name: "Open" }));
@@ -511,7 +511,7 @@ describe("AIChatMessageItem user image attachments", () => {
 
         const image = screen.getByRole("img", { name: "Screenshot 10:32" });
         expect(image.getAttribute("src")).toContain(
-            "neverwrite-file://localhost/ai-attachment/",
+            "bifrostwrite-file://localhost/ai-attachment/",
         );
         expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
 

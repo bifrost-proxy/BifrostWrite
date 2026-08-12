@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { openPath, revealItemInDir } from "@neverwrite/runtime";
+import { openPath, revealItemInDir } from "@bifrostwrite/runtime";
 import { useVaultStore } from "../../app/store/vaultStore";
 import { toVaultRelativePath } from "../../app/utils/vaultPaths";
 import { buildVaultAssetUrl } from "../../app/utils/filePreviewUrl";

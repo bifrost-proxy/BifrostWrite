@@ -14,8 +14,8 @@ import { wikilinkExtension } from "./wikilinks";
 import { invalidateNotePreviewCache } from "./notePreviewSource";
 import { useVaultStore } from "../../../app/store/vaultStore";
 
-vi.mock("@neverwrite/runtime", () => ({ invoke: vi.fn() }));
-import { invoke } from "@neverwrite/runtime";
+vi.mock("@bifrostwrite/runtime", () => ({ invoke: vi.fn() }));
+import { invoke } from "@bifrostwrite/runtime";
 
 function createView(doc: string) {
     const parent = document.createElement("div");

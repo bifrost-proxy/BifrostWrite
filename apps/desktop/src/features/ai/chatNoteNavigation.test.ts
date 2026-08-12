@@ -1,4 +1,4 @@
-import { invoke } from "@neverwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useEditorStore, isMapTab } from "../../app/store/editorStore";
 import { useVaultStore, type NoteDto } from "../../app/store/vaultStore";

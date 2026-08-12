@@ -29,7 +29,7 @@ import {
 } from "@codemirror/search";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { indentUnit } from "@codemirror/language";
-import { getCurrentWebview } from "@neverwrite/runtime";
+import { getCurrentWebview } from "@bifrostwrite/runtime";
 import { vaultInvoke } from "../../app/utils/vaultInvoke";
 import { useShallow } from "zustand/react/shallow";
 import {
@@ -207,7 +207,7 @@ import {
     type TabScrollPosition,
 } from "./editorViewportCache";
 
-// Map vim ex-commands (:w, :q, :wq) onto NeverWrite's save/close actions.
+// Map vim ex-commands (:w, :q, :wq) onto BifrostWrite's save/close actions.
 // Idempotent and global to the vim engine, so register once at module load.
 registerVimExCommands();
 
@@ -3880,7 +3880,7 @@ export function Editor({
     }, [activeTab, pendingSelectionReveal, clearPendingSelectionReveal]);
 
     // Jump to a 1-based line (optionally selecting through an end line) after a
-    // deep link like `neverwrite://open?path=note.md#L10-L20` opens the note.
+    // deep link like `bifrostwrite://open?path=note.md#L10-L20` opens the note.
     useEffect(() => {
         const view = viewRef.current;
         if (!view || !activeTab || !pendingLineReveal) return;

@@ -1,4 +1,4 @@
-import { openPath } from "@neverwrite/runtime";
+import { openPath } from "@bifrostwrite/runtime";
 
 import { useEditorStore } from "../../app/store/editorStore";
 import { useVaultStore } from "../../app/store/vaultStore";

@@ -2,7 +2,7 @@
 
 This directory is committed on purpose.
 
-NeverWrite currently vendors upstream runtime projects that are needed for desktop
+BifrostWrite currently vendors upstream runtime projects that are needed for desktop
 integration and release packaging, especially:
 
 - `codex-acp`
@@ -52,8 +52,8 @@ That means the directory is intentionally reproducible, but not yet minimal.
   - ACP wire protocol: v1; ACP v2 is not enabled by this runtime promotion
   - local `vendor/codex-utils-pty/` snapshot: `0.147.0`, with the matching `[patch."https://github.com/openai/codex"]` entry and a standalone local manifest
   - resolved V8 crate: `150.4.0`, built with OpenAI's verified `ptrcomp_sandbox_release` archive and source binding for the target
-  - Rust toolchain: NeverWrite `1.96.0`; upstream Codex `1.95.0`
-  - local NeverWrite delta remains intentionally bounded and currently lives in:
+  - Rust toolchain: BifrostWrite `1.96.0`; upstream Codex `1.95.0`
+  - local BifrostWrite delta remains intentionally bounded and currently lives in:
     - `vendor/codex-acp/Cargo.toml`
     - `vendor/codex-acp/Cargo.lock`
     - `vendor/codex-acp/src/lib.rs`
@@ -80,16 +80,16 @@ That means the directory is intentionally reproducible, but not yet minimal.
 
 The Codex vendor is no longer a raw upstream checkout. Its runtime compatibility baseline is OpenAI Codex `rust-v0.147.0`, resolved to `be6e8eac029b183056b7e4402879f15d2c85f61b` in `Cargo.lock`.
 
-The remaining NeverWrite-specific delta exists to preserve desktop product behavior:
+The remaining BifrostWrite-specific delta exists to preserve desktop product behavior:
 
 - canonical `neverwrite*` and `codexAcp*` ACP metadata for status, turn lifecycle, plan updates, diffs, `user_input_request`, and child-session relationships
 - reconstruction of `unified_diff` into `old_text`, `new_text` and hunk metadata for inline review and edited-files flows
 - review-mode and review-finding adaptation while preserving inline review and accept/reject flows
 - permission, mode, and approval-preset stability when Codex expands writable roots under `workspace-write`
-- custom slash-prompt discovery and expansion without moving NeverWrite's prompt queue
+- custom slash-prompt discovery and expansion without moving BifrostWrite's prompt queue
 - model discovery through the route-aware HTTP client, Fast service-tier controls, and refreshed `ConfigOptionUpdate` values after successful model selection
 - session-config synchronization from Codex `SessionConfiguredEvent` and thread snapshots, preserving model, provider, reasoning effort, service tier, and reviewer
-- authentication/keyring selection, async login, reload, logout, and API-key flows without changing NeverWrite's credential policy
+- authentication/keyring selection, async login, reload, logout, and API-key flows without changing BifrostWrite's credential policy
 - MCP transport compatibility through `ClientMcpExtensions`, while retaining client-provided environment, cwd, auth, and approval settings
 - explicit `PathUri` boundaries: UI paths use runtime rendering helpers and operational paths convert back to host-native paths
 - state DB lookup plus thread-store and installation-ID wiring used by list, load, resume, fork, reconnect, and child-thread registration
@@ -98,7 +98,7 @@ The remaining NeverWrite-specific delta exists to preserve desktop product behav
 - a private `codexAcp*` subagent contract for session creation, navigable activity breadcrumbs, child lifecycle, and receiver-owned inter-agent transcripts
 - per-turn coalescing of equivalent subagent waits; only fully terminal status sets complete the ACP activity
 - localized `StartThreadOptions`, shared models-manager, external code-mode provider, config, auth, MCP, permission, and thread-store adapters at the ACP boundary
-- a local `codex-utils-pty` `0.147.0` snapshot that preserves its standalone manifest and NeverWrite's macOS process-group member fallback while adopting upstream Windows Job Objects, ConPTY/input changes, and tests
+- a local `codex-utils-pty` `0.147.0` snapshot that preserves its standalone manifest and BifrostWrite's macOS process-group member fallback while adopting upstream Windows Job Objects, ConPTY/input changes, and tests
 
 The 0.147 deferred turn items are handled as localized projections. `SubAgentActivity` is projected through the same canonical activity identity as its `TurnItem` fallback: matching protocol IDs update one ACP tool call, while distinct IDs remain separate rather than being correlated by descriptive metadata. Child `ThreadId` values remain authoritative; paths, nicknames, and roles are display metadata only.
 
@@ -153,7 +153,7 @@ This baseline does not enable MCP protocol `2026-07-28`, expose `--approve-for-m
 
 The App Server adapter `1.1.4` remains an architectural follow-up rather than a replacement. It must demonstrate parity for sessions, configuration, permissions, review, inline changes, and accept/reject flows before it can replace the current adapter.
 
-Portable plugins, thread sections/pinning, side conversations, audio/realtime, external imports, and Bedrock support are also deferred. NeverWrite does not expose a local projection merely because the upstream runtime can represent one. The Goal contract remains tracked separately in issue `#387`.
+Portable plugins, thread sections/pinning, side conversations, audio/realtime, external imports, and Bedrock support are also deferred. BifrostWrite does not expose a local projection merely because the upstream runtime can represent one. The Goal contract remains tracked separately in issue `#387`.
 
 ### Packaged code-mode smoke matrix
 
@@ -172,19 +172,19 @@ The same smoke starts an isolated copy of `codex-acp` without its sibling host a
 
 #### Historical rollback baseline
 
-The known rollback baseline is OpenAI Codex `rust-v0.144.6` at `5d1fbf26c43abc65a203928b2e31561cb039e06d`, local PTY `0.144.6`, V8 `149.2.0` with the standard `release` artifact profile, and the lockfile recorded by NeverWrite commit `248a743f`. A rollback must restore `vendor/codex-acp/Cargo.toml`, `vendor/codex-acp/Cargo.lock`, `vendor/codex-acp/vendor/codex-utils-pty/`, the V8 artifact profile, and any 0.147-only adapter API changes as one reviewed unit. Never roll back a single Codex crate, PTY snapshot, V8 profile, or lockfile independently.
+The known rollback baseline is OpenAI Codex `rust-v0.144.6` at `5d1fbf26c43abc65a203928b2e31561cb039e06d`, local PTY `0.144.6`, V8 `149.2.0` with the standard `release` artifact profile, and the lockfile recorded by BifrostWrite commit `248a743f`. A rollback must restore `vendor/codex-acp/Cargo.toml`, `vendor/codex-acp/Cargo.lock`, `vendor/codex-acp/vendor/codex-utils-pty/`, the V8 artifact profile, and any 0.147-only adapter API changes as one reviewed unit. Never roll back a single Codex crate, PTY snapshot, V8 profile, or lockfile independently.
 
-The desktop backend supports a mixed ACP world: current ACP integration for Claude, Codex, Kilo, and OpenCode, plus the vendored `agent-client-protocol-legacy` crates for Grok. The native backend tests cover the reconstructed diff, permission, status metadata, and legacy runtime compatibility paths that NeverWrite depends on.
+The desktop backend supports a mixed ACP world: current ACP integration for Claude, Codex, Kilo, and OpenCode, plus the vendored `agent-client-protocol-legacy` crates for Grok. The native backend tests cover the reconstructed diff, permission, status metadata, and legacy runtime compatibility paths that BifrostWrite depends on.
 
 ## Current Claude Delta
 
-The Claude vendor is based on upstream `@agentclientprotocol/claude-agent-acp` `0.66.0` at commit `6b405138fc82be947964612fac04e56654827b66`, with no NeverWrite-specific runtime source delta.
+The Claude vendor is based on upstream `@agentclientprotocol/claude-agent-acp` `0.66.0` at commit `6b405138fc82be947964612fac04e56654827b66`, with no BifrostWrite-specific runtime source delta.
 
-The previous NeverWrite trailer-parsing hardening is fully absorbed by upstream. Version `0.66.0` retains the linear-time ReDoS protection and its whole-line matching, so no local runtime patch needs to be reapplied.
+The previous BifrostWrite trailer-parsing hardening is fully absorbed by upstream. Version `0.66.0` retains the linear-time ReDoS protection and its whole-line matching, so no local runtime patch needs to be reapplied.
 
-Upstream `0.66.0` includes an opt-in `subagent-transcript` client capability. NeverWrite does not advertise that capability, so Claude keeps the legacy behavior that filters nested subagent text and thinking from the top-level feed. Rich nested transcript integration remains intentionally out of scope.
+Upstream `0.66.0` includes an opt-in `subagent-transcript` client capability. BifrostWrite does not advertise that capability, so Claude keeps the legacy behavior that filters nested subagent text and thinking from the top-level feed. Rich nested transcript integration remains intentionally out of scope.
 
-Upstream `0.66.0` also publishes the provider-neutral `_meta.goal` extension. NeverWrite does not yet consume goal snapshots or expose goal controls; that product integration is tracked separately in issue `#377` and is intentionally out of scope for this vendor update.
+Upstream `0.66.0` also publishes the provider-neutral `_meta.goal` extension. BifrostWrite does not yet consume goal snapshots or expose goal controls; that product integration is tracked separately in issue `#377` and is intentionally out of scope for this vendor update.
 
 The `dist/` directory is rebuilt from the vendored source snapshot because the
 desktop packaging flow stages the compiled runtime files, while upstream does
@@ -200,13 +200,13 @@ the packaged resources include:
 
 The only expected local non-source delta is generated `dist/`, which upstream does not commit. The vendor `.gitignore` matches upstream, so newly generated files must be force-added when the snapshot is refreshed.
 
-NeverWrite advertises ACP client capabilities through the native backend, not by
+BifrostWrite advertises ACP client capabilities through the native backend, not by
 patching the vendored Claude runtime. The active capability matrix for the
 Claude runtime compatibility work is:
 
 - `fs`: advertised
 - `elicitation.form`: advertised; the native backend bridges form requests into
-  NeverWrite's user-input UI
+  BifrostWrite's user-input UI
 - `elicitation.url`: advertised; the native backend bridges URL requests into a
   compact timeline confirmation UI
 
@@ -216,7 +216,7 @@ When updating a vendored dependency:
 
 1. Refresh the upstream snapshot to the exact release or commit you intend to ship.
 2. Keep `dist/` aligned with the vendored Claude source snapshot.
-3. Re-apply only the bounded local product delta that NeverWrite still needs.
+3. Re-apply only the bounded local product delta that BifrostWrite still needs.
 4. Remove any local byproducts before committing.
 5. Re-run the relevant validation:
    - the target-aware vendor check and test commands in the canonical compatibility checks above

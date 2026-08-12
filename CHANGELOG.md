@@ -1,6 +1,6 @@
 # Changelog
 
-All notable user-facing changes to NeverWrite will be documented in this file.
+All notable user-facing changes to BifrostWrite will be documented in this file.
 
 ## Format
 
@@ -16,7 +16,7 @@ Entries are grouped by release version under the following categories:
 
 ## Versioning
 
-NeverWrite uses [Semantic Versioning](https://semver.org/) with `0.x` releases
+BifrostWrite uses [Semantic Versioning](https://semver.org/) with `0.x` releases
 during the beta phase. The minor version increments with each release — there
 is no upper limit before `1.0`. The `1.0` release signals a stable, public API
 and UX commitment.
@@ -29,10 +29,29 @@ Patch versions (`0.x.1`, `0.x.2`) are reserved for hotfixes within a release.
 
 ## What belongs here
 
-Only changes that matter to users who download and use NeverWrite. Internal
+Only changes that matter to users who download and use BifrostWrite. Internal
 refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
+
+## [1.0.0-beta.1] - 2026-08-13
+
+### Added
+
+- Added the first BifrostWrite Tauri 2 desktop preview for Apple Silicon and Intel Macs.
+- Added verified in-app updates with stable and beta channels, architecture-specific DMG selection, SHA-256 validation, app signature and version checks, atomic replacement, rollback, and automatic restart.
+- Added Homebrew Cask distribution through `bifrost-proxy/homebrew-bifrost`.
+
+### Changed
+
+- Renamed the application and desktop identity to BifrostWrite.
+- Replaced the bundled browser desktop shell with the macOS system WebView, a Rust Tauri shell, and a JSON-lines native Sidecar.
+- Reworked deep links, local attachment previews, multi-window events, single-instance routing, and the authenticated Web Clipper bridge for the native shell.
+- Rewrote the project README in Chinese with the current architecture, security boundaries, development workflow, testing, and distribution design.
+
+### Removed
+
+- Removed the former desktop runtime, its build dependencies, packaging scripts, framework bundle, and legacy Appcast/APT/DNF release paths.
 
 ## [0.7.1] - 2026-08-09
 
@@ -152,7 +171,7 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 - Added OKF v0.1 document status support, including status indicators in the file tree, editor header status and type badges, trust banners for non-published documents, and a Settings toggle for file tree status dots.
 - Added quick document status changes from the editor header, preserving existing frontmatter and recording the local user in `status_by` when available. Thanks to @spamsch
-- Added `neverwrite://open` deep links for opening and revealing files inside the current vault, including optional line fragments such as `#L10` and `#L10-L20`. Thanks to @spamsch
+- Added `bifrostwrite://open` deep links for opening and revealing files inside the current vault, including optional line fragments such as `#L10` and `#L10-L20`. Thanks to @spamsch
 
 ### Changed
 
@@ -388,7 +407,7 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 ### Added
 
 - Promoted Terminal to a first-class workspace feature, including terminal tabs, theme-aware ANSI palettes, Terminal settings, and Claude Code CLI integration as a built-in agent provider. Thanks to @spamsch.
-- Added native OpenCode ACP provider support, including CLI auth, diagnostics, provider settings, runtime smoke coverage, and setup-state handling without storing OpenCode secrets in NeverWrite.
+- Added native OpenCode ACP provider support, including CLI auth, diagnostics, provider settings, runtime smoke coverage, and setup-state handling without storing OpenCode secrets in BifrostWrite.
 - Added file tree extension filtering for power users with mixed vaults, with a curated default file set and consistent filtering across the file tree, `@` mentions, New Tab, Quick Switcher, Search Files & Notes, and wikilink suggestions.
 - Added support for dragging files from Finder into vault folders, including folder hover feedback, multiple-file drops, root drops, and existing-name deduplication. Thanks to @spamsch.
 - Added keyboard shortcut hints to the empty workspace pane so Open File, Command Palette, New Agent, and New Terminal actions show their current platform shortcuts.
@@ -458,7 +477,7 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 ### Changed
 
 - Updated Developer Mode settings copy to describe terminal tabs in the editor workspace instead of the old bottom terminal panel. Thanks to @mvanhorn.
-- Added a README notice about Claude subscription usage in NeverWrite starting June 15, 2026.
+- Added a README notice about Claude subscription usage in BifrostWrite starting June 15, 2026.
 
 ### Fixed
 
@@ -466,7 +485,7 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ## [0.2.5] - 2026-05-12
 
-**Security note:** NeverWrite's repository was audited for the May 2026 **Mini Shai-Hulud** npm supply-chain attack and no exposure was found. The repo does not contain the known malware indicators, does not depend on the affected TanStack/Mistral/UiPath/Squawk package sets, and its own GitHub workflows do not use the risky `pull_request_target` plus trusted-publishing/OIDC pattern involved in the attack. **Cloning the repository and updating the app through this channel is safe**.
+**Security note:** BifrostWrite's repository was audited for the May 2026 **Mini Shai-Hulud** npm supply-chain attack and no exposure was found. The repo does not contain the known malware indicators, does not depend on the affected TanStack/Mistral/UiPath/Squawk package sets, and its own GitHub workflows do not use the risky `pull_request_target` plus trusted-publishing/OIDC pattern involved in the attack. **Cloning the repository and updating the app through this channel is safe**.
 
 ### Added
 
@@ -478,7 +497,7 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 ### Changed
 
 - Updated the embedded Claude ACP runtime to upstream `0.33.1`, keeping the vendored Claude agent adapter aligned with current upstream behavior.
-- Updated the embedded Codex agent runtime to `0.14.0`, keeping subagents, permissions, history replay, and change-review metadata compatible with NeverWrite.
+- Updated the embedded Codex agent runtime to `0.14.0`, keeping subagents, permissions, history replay, and change-review metadata compatible with BifrostWrite.
 - Polished Linux-specific desktop packaging behavior, window chrome, updater handling, and cross-platform shortcut behavior as part of the AppImage release path.
 
 ### Fixed
@@ -516,7 +535,7 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 ### Fixed
 
 - Fixed external vault refresh handling so ambiguous external deletes, including folders that look like Markdown notes, refresh the vault structure instead of leaving the file tree stale.
-- Fixed closing active AI agent tabs so NeverWrite asks for confirmation consistently, including Cmd/Ctrl+W and multi-tab close paths. Thanks to @wtasg for the first contribution!
+- Fixed closing active AI agent tabs so BifrostWrite asks for confirmation consistently, including Cmd/Ctrl+W and multi-tab close paths. Thanks to @wtasg for the first contribution!
 - Fixed Codex saved chats so restored, detached, resumed, or crash-recovered sessions keep enough transcript context to continue without losing the prior conversation.
 - Fixed Codex subagent breadcrumb `Open` actions so they continue working after restore or resume even when the live `sessionId` differs from the saved history or runtime session id.
 - Fixed detached windows and tab reattachment for AI chats so related parent, child, and sibling subagent sessions transfer and hydrate together instead of losing the agent tree.
@@ -550,7 +569,7 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ### Changed
 
-- Updated the embedded Claude ACP runtime to the latest upstream `0.31.4` snapshot, keeping NeverWrite aligned with Claude Code `v2.1.123` and picking up upstream runtime dependency fixes.
+- Updated the embedded Claude ACP runtime to the latest upstream `0.31.4` snapshot, keeping BifrostWrite aligned with Claude Code `v2.1.123` and picking up upstream runtime dependency fixes.
 
 ### Security
 
@@ -589,10 +608,10 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 - Fixed AI provider logout so local auth state and Google Cloud environment settings are cleared consistently.
 - Fixed Claude gateway setup so remote HTTP URLs are rejected by the backend, localhost HTTP remains allowed, and gateway-with-token setups stay labeled as gateway auth.
 - Fixed Windows runtime lookup for CLI shims that depend on `PATHEXT`, such as `.cmd` and `.exe` launchers.
-- Fixed Gemini startup on Windows so NeverWrite prefers the executable `.cmd` shim over npm's extensionless shim, avoiding `CreateProcessW` Win32 launch failures.
-- Fixed Gemini Google sign-in hydration so NeverWrite marks the provider as connected as soon as the Gemini CLI reports successful authentication, instead of waiting for the login terminal process to exit.
+- Fixed Gemini startup on Windows so BifrostWrite prefers the executable `.cmd` shim over npm's extensionless shim, avoiding `CreateProcessW` Win32 launch failures.
+- Fixed Gemini Google sign-in hydration so BifrostWrite marks the provider as connected as soon as the Gemini CLI reports successful authentication, instead of waiting for the login terminal process to exit.
 - Fixed Gemini ACP sessions on Windows by stripping verbatim `\\?\` path prefixes before launching the Node-based CLI, avoiding `EISDIR: illegal operation on a directory, lstat 'C:'` failures.
-- Fixed Gemini model and mode changes so NeverWrite uses Gemini's supported ACP `session/set_model` and `session/set_mode` requests instead of the unsupported `session/set_config_option` request.
+- Fixed Gemini model and mode changes so BifrostWrite uses Gemini's supported ACP `session/set_model` and `session/set_mode` requests instead of the unsupported `session/set_config_option` request.
 - Fixed Codex subagent persistence so background subagent threads are saved when they are created or receive tool, status, plan, image, permission, or input events while their chat tab is closed, using the subagent's own vault path for delayed saves.
 - Documented a Codex subagent edge case where models may try to combine a full-history fork with explicit child role, model, or reasoning-effort overrides; Codex rejects that combination and the parent may retry visibly with a non-forked launch.
 

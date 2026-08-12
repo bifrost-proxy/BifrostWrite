@@ -7,7 +7,7 @@ import {
     type MouseEvent,
     type ReactNode,
 } from "react";
-import { openPath, revealItemInDir } from "@neverwrite/runtime";
+import { openPath, revealItemInDir } from "@bifrostwrite/runtime";
 import {
     DataSheetGrid,
     createTextColumn,

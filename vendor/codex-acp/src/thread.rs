@@ -118,18 +118,18 @@ impl ClientSender for AcpConnection {
 
 static APPROVAL_PRESETS: LazyLock<Vec<ApprovalPreset>> = LazyLock::new(builtin_approval_presets);
 const INIT_COMMAND_PROMPT: &str = include_str!("./prompt_for_init_command.md");
-const NEVERWRITE_USER_INPUT_RESPONSE_PREFIX: &str = "__neverwrite_user_input_response__:";
-const NEVERWRITE_STATUS_EVENT_TYPE_KEY: &str = "neverwriteEventType";
-const NEVERWRITE_STATUS_KIND_KEY: &str = "neverwriteStatusKind";
-const NEVERWRITE_STATUS_EMPHASIS_KEY: &str = "neverwriteStatusEmphasis";
-const NEVERWRITE_IMAGE_GENERATION_EVENT_TYPE: &str = "image_generation";
-const NEVERWRITE_PLAN_TITLE_KEY: &str = "neverwritePlanTitle";
-const NEVERWRITE_PLAN_DETAIL_KEY: &str = "neverwritePlanDetail";
-const NEVERWRITE_DIFF_PREVIOUS_PATH_KEY: &str = "neverwritePreviousPath";
-const NEVERWRITE_DIFF_HUNKS_KEY: &str = "neverwriteHunks";
-const NEVERWRITE_ACTIVITY_STARTED_AT_MS_KEY: &str = "neverwriteActivityStartedAtMs";
-const NEVERWRITE_STATUS_EVENT_ID_PREFIX: &str = "neverwrite:status:";
-const NEVERWRITE_IMAGE_EVENT_ID_PREFIX: &str = "neverwrite:image:";
+const BIFROSTWRITE_USER_INPUT_RESPONSE_PREFIX: &str = "__neverwrite_user_input_response__:";
+const BIFROSTWRITE_STATUS_EVENT_TYPE_KEY: &str = "neverwriteEventType";
+const BIFROSTWRITE_STATUS_KIND_KEY: &str = "neverwriteStatusKind";
+const BIFROSTWRITE_STATUS_EMPHASIS_KEY: &str = "neverwriteStatusEmphasis";
+const BIFROSTWRITE_IMAGE_GENERATION_EVENT_TYPE: &str = "image_generation";
+const BIFROSTWRITE_PLAN_TITLE_KEY: &str = "neverwritePlanTitle";
+const BIFROSTWRITE_PLAN_DETAIL_KEY: &str = "neverwritePlanDetail";
+const BIFROSTWRITE_DIFF_PREVIOUS_PATH_KEY: &str = "neverwritePreviousPath";
+const BIFROSTWRITE_DIFF_HUNKS_KEY: &str = "neverwriteHunks";
+const BIFROSTWRITE_ACTIVITY_STARTED_AT_MS_KEY: &str = "neverwriteActivityStartedAtMs";
+const BIFROSTWRITE_STATUS_EVENT_ID_PREFIX: &str = "bifrostwrite:status:";
+const BIFROSTWRITE_IMAGE_EVENT_ID_PREFIX: &str = "bifrostwrite:image:";
 const FILE_DELETED_PLACEHOLDER: &str = "[file deleted]";
 const MAX_PENDING_COMMAND_OUTPUT_BYTES: usize = 1024 * 1024;
 const MAX_CLOSED_EVENT_PROJECTIONS: usize = 256;
@@ -234,16 +234,16 @@ fn mode_trusts_project(mode_id: &str) -> bool {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-struct NeverWriteDiffHunk {
+struct BifrostWriteDiffHunk {
     old_start: usize,
     old_count: usize,
     new_start: usize,
     new_count: usize,
-    lines: Vec<NeverWriteDiffHunkLine>,
+    lines: Vec<BifrostWriteDiffHunkLine>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-struct NeverWriteDiffHunkLine {
+struct BifrostWriteDiffHunkLine {
     r#type: String,
     text: String,
 }
@@ -931,7 +931,7 @@ enum SubagentProjectionOrigin {
     LegacyEvent,
 }
 #[derive(Debug, serde::Deserialize)]
-struct NeverWriteUserInputAnswerPayload {
+struct BifrostWriteUserInputAnswerPayload {
     turn_id: String,
     response: codex_protocol::request_user_input::RequestUserInputResponse,
 }
@@ -939,18 +939,18 @@ struct NeverWriteUserInputAnswerPayload {
 fn neverwrite_status_meta(kind: &str, emphasis: &str) -> Meta {
     let mut meta = Meta::new();
     meta.insert(
-        NEVERWRITE_STATUS_EVENT_TYPE_KEY.to_string(),
+        BIFROSTWRITE_STATUS_EVENT_TYPE_KEY.to_string(),
         json!("status"),
     );
-    meta.insert(NEVERWRITE_STATUS_KIND_KEY.to_string(), json!(kind));
-    meta.insert(NEVERWRITE_STATUS_EMPHASIS_KEY.to_string(), json!(emphasis));
+    meta.insert(BIFROSTWRITE_STATUS_KIND_KEY.to_string(), json!(kind));
+    meta.insert(BIFROSTWRITE_STATUS_EMPHASIS_KEY.to_string(), json!(emphasis));
     meta
 }
 
 fn neverwrite_activity_started_at_meta(started_at_ms: Option<i64>) -> Option<Meta> {
     started_at_ms.filter(|value| *value > 0).map(|value| {
         Meta::from_iter([(
-            NEVERWRITE_ACTIVITY_STARTED_AT_MS_KEY.to_string(),
+            BIFROSTWRITE_ACTIVITY_STARTED_AT_MS_KEY.to_string(),
             json!(value),
         )])
     })
@@ -959,8 +959,8 @@ fn neverwrite_activity_started_at_meta(started_at_ms: Option<i64>) -> Option<Met
 fn neverwrite_image_generation_meta() -> Meta {
     let mut meta = Meta::new();
     meta.insert(
-        NEVERWRITE_STATUS_EVENT_TYPE_KEY.to_string(),
-        json!(NEVERWRITE_IMAGE_GENERATION_EVENT_TYPE),
+        BIFROSTWRITE_STATUS_EVENT_TYPE_KEY.to_string(),
+        json!(BIFROSTWRITE_IMAGE_GENERATION_EVENT_TYPE),
     );
     meta
 }
@@ -979,10 +979,10 @@ fn codex_turn_lifecycle_meta(event_type: &str, turn_id: Option<&str>) -> Meta {
 }
 
 fn image_generation_tool_call_id(call_id: &str) -> String {
-    if call_id.starts_with(NEVERWRITE_IMAGE_EVENT_ID_PREFIX) {
+    if call_id.starts_with(BIFROSTWRITE_IMAGE_EVENT_ID_PREFIX) {
         return call_id.to_string();
     }
-    format!("{NEVERWRITE_IMAGE_EVENT_ID_PREFIX}{call_id}")
+    format!("{BIFROSTWRITE_IMAGE_EVENT_ID_PREFIX}{call_id}")
 }
 
 fn image_generation_tool_status(status: &str) -> ToolCallStatus {
@@ -1072,7 +1072,7 @@ fn completed_image_generation_tool_update(
 fn neverwrite_user_input_meta() -> Meta {
     let mut meta = Meta::new();
     meta.insert(
-        NEVERWRITE_STATUS_EVENT_TYPE_KEY.to_string(),
+        BIFROSTWRITE_STATUS_EVENT_TYPE_KEY.to_string(),
         json!("user_input_request"),
     );
     meta
@@ -1081,10 +1081,10 @@ fn neverwrite_user_input_meta() -> Meta {
 fn neverwrite_plan_meta(title: Option<&str>, detail: Option<&str>) -> Option<Meta> {
     let mut meta = Meta::new();
     if let Some(title) = title.filter(|value| !value.trim().is_empty()) {
-        meta.insert(NEVERWRITE_PLAN_TITLE_KEY.to_string(), json!(title));
+        meta.insert(BIFROSTWRITE_PLAN_TITLE_KEY.to_string(), json!(title));
     }
     if let Some(detail) = detail.filter(|value| !value.trim().is_empty()) {
-        meta.insert(NEVERWRITE_PLAN_DETAIL_KEY.to_string(), json!(detail));
+        meta.insert(BIFROSTWRITE_PLAN_DETAIL_KEY.to_string(), json!(detail));
     }
     (!meta.is_empty()).then_some(meta)
 }
@@ -1212,7 +1212,7 @@ fn turn_item_call_id(item: &TurnItem, projection: TurnItemProjection) -> String 
 
     match projection {
         TurnItemProjection::Status => format!(
-            "{NEVERWRITE_STATUS_EVENT_ID_PREFIX}item:{}",
+            "{BIFROSTWRITE_STATUS_EVENT_ID_PREFIX}item:{}",
             turn_item_id(item)
         ),
         TurnItemProjection::Hidden | TurnItemProjection::Dedicated | TurnItemProjection::Tool => {
@@ -1686,19 +1686,19 @@ fn parse_plan_text(text: &str, streaming: bool) -> ParsedPlanText {
 
 fn extract_user_input_answer_payload(
     prompt: &[ContentBlock],
-) -> Result<Option<NeverWriteUserInputAnswerPayload>, Error> {
+) -> Result<Option<BifrostWriteUserInputAnswerPayload>, Error> {
     let Some(ContentBlock::Text(text)) = prompt.first() else {
         return Ok(None);
     };
 
     let raw_payload = text
         .text
-        .strip_prefix(NEVERWRITE_USER_INPUT_RESPONSE_PREFIX);
+        .strip_prefix(BIFROSTWRITE_USER_INPUT_RESPONSE_PREFIX);
     let Some(raw_payload) = raw_payload else {
         return Ok(None);
     };
 
-    serde_json::from_str::<NeverWriteUserInputAnswerPayload>(raw_payload)
+    serde_json::from_str::<BifrostWriteUserInputAnswerPayload>(raw_payload)
         .map(Some)
         .map_err(|err| Error::invalid_params().data(err.to_string()))
 }
@@ -2514,7 +2514,7 @@ impl PromptState {
                     .await;
                 let detail = model_context_window.map(|size| format!("Context window: {size}"));
                 self.send_status_tool_call(client, StatusToolCall {
-                    call_id: format!("{NEVERWRITE_STATUS_EVENT_ID_PREFIX}turn:{turn_id}").into(),
+                    call_id: format!("{BIFROSTWRITE_STATUS_EVENT_ID_PREFIX}turn:{turn_id}").into(),
                     kind: "turn_started",
                     title: "New turn".to_string(),
                     detail,
@@ -2884,7 +2884,7 @@ impl PromptState {
                         client,
                         StatusToolCall {
                             call_id: format!(
-                                "{NEVERWRITE_STATUS_EVENT_ID_PREFIX}turn_error:{turn_id}"
+                                "{BIFROSTWRITE_STATUS_EVENT_ID_PREFIX}turn_error:{turn_id}"
                             )
                             .into(),
                             kind: "turn_error",
@@ -2931,7 +2931,7 @@ impl PromptState {
                     .filter(|details| !details.trim().is_empty())
                     .unwrap_or_else(|| message.clone());
                 self.send_status_tool_call(client, StatusToolCall {
-                    call_id: format!("{NEVERWRITE_STATUS_EVENT_ID_PREFIX}stream_error:{}", self.event_count).into(),
+                    call_id: format!("{BIFROSTWRITE_STATUS_EVENT_ID_PREFIX}stream_error:{}", self.event_count).into(),
                     kind: "stream_error",
                     title: "Streaming interrupted".to_string(),
                     detail: Some(detail),
@@ -2995,7 +2995,7 @@ impl PromptState {
             EventMsg::EnteredReviewMode(review_request) => {
                 info!("Review begin: request={review_request:?}");
                 self.send_status_tool_call(client, StatusToolCall {
-                    call_id: format!("{NEVERWRITE_STATUS_EVENT_ID_PREFIX}review:{}", self.event_count).into(),
+                    call_id: format!("{BIFROSTWRITE_STATUS_EVENT_ID_PREFIX}review:{}", self.event_count).into(),
                     kind: "review_mode",
                     title: "Review mode active".to_string(),
                     detail: Some(format_review_target(&review_request.target)),
@@ -3054,7 +3054,7 @@ impl PromptState {
                     .map(|reason| format!("{from_model} -> {to_model}. {reason}"))
                     .or_else(|| Some(format!("{from_model} -> {to_model}")));
                 self.send_status_tool_call(client, StatusToolCall {
-                    call_id: format!("{NEVERWRITE_STATUS_EVENT_ID_PREFIX}model_reroute:{}", self.event_count).into(),
+                    call_id: format!("{BIFROSTWRITE_STATUS_EVENT_ID_PREFIX}model_reroute:{}", self.event_count).into(),
                     kind: "model_reroute",
                     title: format!("Switched to {to_model}"),
                     detail,
@@ -3120,7 +3120,7 @@ impl PromptState {
                 );
             }
             EventMsg::EnvironmentConnected(event) => {
-                // NeverWrite does not expose remote runtime environments yet. Treat connection
+                // BifrostWrite does not expose remote runtime environments yet. Treat connection
                 // state as transport-only so it cannot create fictitious transcript activity.
                 info!(
                     "Runtime environment connected without ACP projection: environment_id={}",
@@ -6215,7 +6215,7 @@ fn seek_sequence(lines: &[String], pattern: &[String], start: usize, eof: bool) 
     None
 }
 
-fn diff_hunk_lines(old_lines: &[String], new_lines: &[String]) -> Vec<NeverWriteDiffHunkLine> {
+fn diff_hunk_lines(old_lines: &[String], new_lines: &[String]) -> Vec<BifrostWriteDiffHunkLine> {
     let m = old_lines.len();
     let n = new_lines.len();
     let dp: Vec<Vec<usize>> = (0..=m).map(|_| vec![0; n + 1]).collect();
@@ -6235,20 +6235,20 @@ fn diff_hunk_lines(old_lines: &[String], new_lines: &[String]) -> Vec<NeverWrite
     let (mut i, mut j) = (m, n);
     while i > 0 || j > 0 {
         if i > 0 && j > 0 && old_lines[i - 1] == new_lines[j - 1] {
-            stack.push(NeverWriteDiffHunkLine {
+            stack.push(BifrostWriteDiffHunkLine {
                 r#type: "context".to_string(),
                 text: old_lines[i - 1].clone(),
             });
             i -= 1;
             j -= 1;
         } else if j > 0 && (i == 0 || dp[i][j - 1] >= dp[i - 1][j]) {
-            stack.push(NeverWriteDiffHunkLine {
+            stack.push(BifrostWriteDiffHunkLine {
                 r#type: "add".to_string(),
                 text: new_lines[j - 1].clone(),
             });
             j -= 1;
         } else {
-            stack.push(NeverWriteDiffHunkLine {
+            stack.push(BifrostWriteDiffHunkLine {
                 r#type: "remove".to_string(),
                 text: old_lines[i - 1].clone(),
             });
@@ -6335,7 +6335,7 @@ fn resolve_update_file_chunks(
 fn compute_update_file_hunks(
     original_text: &str,
     chunks: &[ProjectedUpdateFileChunk],
-) -> Option<Vec<NeverWriteDiffHunk>> {
+) -> Option<Vec<BifrostWriteDiffHunk>> {
     let resolved = resolve_update_file_chunks(original_text, chunks)?;
     let mut hunks = Vec::with_capacity(resolved.len());
     let mut cumulative_delta = 0isize;
@@ -6343,7 +6343,7 @@ fn compute_update_file_hunks(
     for chunk in resolved {
         let old_count = chunk.old_lines.len();
         let new_count = chunk.new_lines.len();
-        hunks.push(NeverWriteDiffHunk {
+        hunks.push(BifrostWriteDiffHunk {
             old_start: chunk.start_idx + 1,
             old_count,
             new_start: (chunk.start_idx as isize + cumulative_delta + 1).max(1) as usize,
@@ -6359,7 +6359,7 @@ fn compute_update_file_hunks(
 fn build_single_hunk(
     old_text: Option<&str>,
     new_text: Option<&str>,
-) -> Option<Vec<NeverWriteDiffHunk>> {
+) -> Option<Vec<BifrostWriteDiffHunk>> {
     let old_lines = old_text.map(split_snapshot_lines).unwrap_or_default();
     let new_lines = new_text.map(split_snapshot_lines).unwrap_or_default();
 
@@ -6367,7 +6367,7 @@ fn build_single_hunk(
         return None;
     }
 
-    Some(vec![NeverWriteDiffHunk {
+    Some(vec![BifrostWriteDiffHunk {
         old_start: 1,
         old_count: old_lines.len(),
         new_start: 1,
@@ -6384,9 +6384,9 @@ fn parse_unified_diff_range(segment: &str) -> Option<(usize, usize)> {
     Some((start.parse().ok()?, count.parse().ok()?))
 }
 
-fn parse_unified_diff_hunks(unified_diff: &str) -> Vec<NeverWriteDiffHunk> {
+fn parse_unified_diff_hunks(unified_diff: &str) -> Vec<BifrostWriteDiffHunk> {
     let mut hunks = Vec::new();
-    let mut current: Option<NeverWriteDiffHunk> = None;
+    let mut current: Option<BifrostWriteDiffHunk> = None;
 
     for line in unified_diff.lines() {
         if let Some(header) = line.strip_prefix("@@ -") {
@@ -6407,7 +6407,7 @@ fn parse_unified_diff_hunks(unified_diff: &str) -> Vec<NeverWriteDiffHunk> {
                 continue;
             };
 
-            current = Some(NeverWriteDiffHunk {
+            current = Some(BifrostWriteDiffHunk {
                 old_start,
                 old_count,
                 new_start,
@@ -6434,7 +6434,7 @@ fn parse_unified_diff_hunks(unified_diff: &str) -> Vec<NeverWriteDiffHunk> {
             continue;
         };
 
-        hunk.lines.push(NeverWriteDiffHunkLine {
+        hunk.lines.push(BifrostWriteDiffHunkLine {
             r#type: marker.to_string(),
             text: text.to_string(),
         });
@@ -6488,19 +6488,19 @@ fn fallback_texts_from_unified_diff(unified_diff: &str) -> Option<(String, Strin
 fn with_neverwrite_diff_meta(
     mut diff: Diff,
     previous_path: Option<&Path>,
-    hunks: Option<Vec<NeverWriteDiffHunk>>,
+    hunks: Option<Vec<BifrostWriteDiffHunk>>,
 ) -> Diff {
     let mut meta = diff.meta.take().unwrap_or_default();
 
     if let Some(path) = previous_path {
         meta.insert(
-            NEVERWRITE_DIFF_PREVIOUS_PATH_KEY.to_string(),
+            BIFROSTWRITE_DIFF_PREVIOUS_PATH_KEY.to_string(),
             json!(path.display().to_string()),
         );
     }
 
     if let Some(hunks) = hunks.filter(|hunks| !hunks.is_empty()) {
-        meta.insert(NEVERWRITE_DIFF_HUNKS_KEY.to_string(), json!(hunks));
+        meta.insert(BIFROSTWRITE_DIFF_HUNKS_KEY.to_string(), json!(hunks));
     }
 
     if !meta.is_empty() {
@@ -8099,7 +8099,7 @@ mod tests {
             .iter()
             .filter_map(|notification| match &notification.update {
                 SessionUpdate::ToolCall(call)
-                    if call.tool_call_id.0.as_ref() == "neverwrite:status:item:sleep-live" =>
+                    if call.tool_call_id.0.as_ref() == "bifrostwrite:status:item:sleep-live" =>
                 {
                     Some(call)
                 }
@@ -8114,7 +8114,7 @@ mod tests {
                 &notification.update,
                 SessionUpdate::ToolCallUpdate(update)
                     if update.tool_call_id.0.as_ref()
-                        == "neverwrite:status:item:sleep-live"
+                        == "bifrostwrite:status:item:sleep-live"
                         && update.fields.status == Some(ToolCallStatus::Completed)
             )
         }));
@@ -8123,7 +8123,7 @@ mod tests {
             .iter()
             .find_map(|notification| match &notification.update {
                 SessionUpdate::ToolCall(call)
-                    if call.tool_call_id.0.as_ref() == "neverwrite:status:item:sleep-restored" =>
+                    if call.tool_call_id.0.as_ref() == "bifrostwrite:status:item:sleep-restored" =>
                 {
                     Some(call)
                 }
@@ -8135,7 +8135,7 @@ mod tests {
             restored
                 .meta
                 .as_ref()
-                .and_then(|meta| meta.get(NEVERWRITE_ACTIVITY_STARTED_AT_MS_KEY)),
+                .and_then(|meta| meta.get(BIFROSTWRITE_ACTIVITY_STARTED_AT_MS_KEY)),
             Some(&json!(2_000))
         );
     }
@@ -8307,7 +8307,7 @@ mod tests {
             plan_updates[0]
                 .meta
                 .as_ref()
-                .and_then(|meta| meta.get(NEVERWRITE_PLAN_TITLE_KEY))
+                .and_then(|meta| meta.get(BIFROSTWRITE_PLAN_TITLE_KEY))
                 .and_then(|value| value.as_str()),
             Some("Final plan")
         );
@@ -8315,7 +8315,7 @@ mod tests {
             plan_updates[0]
                 .meta
                 .as_ref()
-                .and_then(|meta| meta.get(NEVERWRITE_PLAN_DETAIL_KEY))
+                .and_then(|meta| meta.get(BIFROSTWRITE_PLAN_DETAIL_KEY))
                 .and_then(|value| value.as_str()),
             Some("Summary paragraph")
         );
@@ -8468,7 +8468,7 @@ mod tests {
             .find_map(|notification| match &notification.update {
                 SessionUpdate::ToolCall(call)
                     if call.tool_call_id.0.as_ref()
-                        == "neverwrite:status:turn_error:turn-failed" =>
+                        == "bifrostwrite:status:turn_error:turn-failed" =>
                 {
                     Some(call)
                 }
@@ -9513,14 +9513,14 @@ mod tests {
                 _ => None,
             })
             .expect("image generation should create a tool call");
-        assert_eq!(start.tool_call_id.0.as_ref(), "neverwrite:image:img-1");
+        assert_eq!(start.tool_call_id.0.as_ref(), "bifrostwrite:image:img-1");
         assert_eq!(
             start
                 .meta
                 .as_ref()
-                .and_then(|meta| meta.get(NEVERWRITE_STATUS_EVENT_TYPE_KEY))
+                .and_then(|meta| meta.get(BIFROSTWRITE_STATUS_EVENT_TYPE_KEY))
                 .and_then(|value| value.as_str()),
-            Some(NEVERWRITE_IMAGE_GENERATION_EVENT_TYPE)
+            Some(BIFROSTWRITE_IMAGE_GENERATION_EVENT_TYPE)
         );
 
         let update = notifications
@@ -9584,16 +9584,16 @@ mod tests {
             .expect("image replay should emit a complete tool call");
         assert_eq!(
             tool_call.tool_call_id.0.as_ref(),
-            "neverwrite:image:img-replay-1"
+            "bifrostwrite:image:img-replay-1"
         );
         assert_eq!(tool_call.status, ToolCallStatus::Completed);
         assert_eq!(
             tool_call
                 .meta
                 .as_ref()
-                .and_then(|meta| meta.get(NEVERWRITE_STATUS_EVENT_TYPE_KEY))
+                .and_then(|meta| meta.get(BIFROSTWRITE_STATUS_EVENT_TYPE_KEY))
                 .and_then(|value| value.as_str()),
-            Some(NEVERWRITE_IMAGE_GENERATION_EVENT_TYPE)
+            Some(BIFROSTWRITE_IMAGE_GENERATION_EVENT_TYPE)
         );
         let raw_input = tool_call
             .raw_input
@@ -9647,7 +9647,7 @@ mod tests {
             .expect("image end replay should emit a complete tool call");
         assert_eq!(
             tool_call.tool_call_id.0.as_ref(),
-            "neverwrite:image:img-event-replay"
+            "bifrostwrite:image:img-event-replay"
         );
         assert_eq!(tool_call.status, ToolCallStatus::Failed);
         let raw_input = tool_call

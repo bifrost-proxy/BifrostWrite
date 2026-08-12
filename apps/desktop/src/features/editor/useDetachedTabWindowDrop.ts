@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import type { WebviewWindow } from "@neverwrite/runtime";
+import type { WebviewWindow } from "@bifrostwrite/runtime";
 import type { Tab } from "../../app/store/editorStore";
 import {
     commitDetachedTabDrop,

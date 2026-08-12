@@ -769,7 +769,7 @@ fn session_created_meta(
     snapshot: &ThreadConfigSnapshot,
 ) -> Meta {
     let mut meta = Meta::new();
-    // NeverWrite consumes these codexAcp* keys as a private child-session contract.
+    // BifrostWrite consumes these codexAcp* keys as a private child-session contract.
     meta.insert(
         CODEX_ACP_EVENT_TYPE_KEY.to_string(),
         json!(CODEX_ACP_SUBAGENT_SESSION_CREATED_EVENT),

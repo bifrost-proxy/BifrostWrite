@@ -173,7 +173,7 @@ impl DevTerminalManager {
                     return Err(format!("Invalid binary name: {name}"));
                 }
                 // Use a login shell so the full user PATH is available (important
-                // on macOS where Electron inherits a stripped environment PATH).
+                // on macOS where the Tauri app inherits a stripped environment PATH).
                 #[cfg(unix)]
                 let found = std::process::Command::new("sh")
                     .args(["-lc", &format!("command -v {name}")])
@@ -1083,8 +1083,8 @@ mod tests {
     #[test]
     fn encodes_project_path_like_claude_code() {
         assert_eq!(
-            encode_project_path("/Users/simonpamies/Documents/Code/NeverWrite"),
-            "-Users-simonpamies-Documents-Code-NeverWrite"
+            encode_project_path("/Users/simonpamies/Documents/Code/BifrostWrite"),
+            "-Users-simonpamies-Documents-Code-BifrostWrite"
         );
         // Spaces, dots, and underscores all collapse to '-'.
         assert_eq!(encode_project_path("/a b/c.d_e"), "-a-b-c-d-e");

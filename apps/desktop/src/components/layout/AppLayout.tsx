@@ -8,7 +8,7 @@ import {
     type PointerEvent as ReactPointerEvent,
     type TransitionEvent as ReactTransitionEvent,
 } from "react";
-import { getCurrentWindow } from "@neverwrite/runtime";
+import { getCurrentWindow } from "@bifrostwrite/runtime";
 import {
     DEFAULT_RIGHT_PANEL_WIDTH,
     DEFAULT_SIDEBAR_WIDTH,

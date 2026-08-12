@@ -1,4 +1,4 @@
-import { getAllWebviewWindows } from "@neverwrite/runtime";
+import { getAllWebviewWindows } from "@bifrostwrite/runtime";
 import type { DetachedWindowPayload } from "./detachedWindows";
 import {
     safeStorageGetItem,
@@ -11,8 +11,8 @@ import type { TabInput } from "./store/editorStore";
 import { logWarn } from "./utils/runtimeLog";
 import { prepareTabsForDetachedTransfer } from "./detachedTabTransfer";
 
-const WINDOW_SESSION_DESCRIPTOR_PREFIX = "neverwrite:window-session:";
-const WINDOW_SESSION_SNAPSHOT_KEY = "neverwrite:window-session-snapshot";
+const WINDOW_SESSION_DESCRIPTOR_PREFIX = "bifrostwrite:window-session:";
+const WINDOW_SESSION_SNAPSHOT_KEY = "bifrostwrite:window-session-snapshot";
 
 export interface PersistedVaultWindow {
     label: string;

@@ -7,8 +7,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useShallow } from "zustand/react/shallow";
-import { getCurrentWebview } from "@neverwrite/runtime";
-import { getCurrentWindow } from "@neverwrite/runtime";
+import { getCurrentWebview } from "@bifrostwrite/runtime";
+import { getCurrentWindow } from "@bifrostwrite/runtime";
 import {
     getCurrentWindowLabel,
     publishWindowTabDropZone,

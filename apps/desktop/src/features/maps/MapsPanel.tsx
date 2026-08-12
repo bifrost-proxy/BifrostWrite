@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { invoke } from "@neverwrite/runtime";
-import { openPath, revealItemInDir } from "@neverwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
+import { openPath, revealItemInDir } from "@bifrostwrite/runtime";
 import { useEditorStore } from "../../app/store/editorStore";
 import { resolveVaultAbsolutePath } from "../../app/utils/vaultPaths";
 import { useVaultStore, type VaultEntryDto } from "../../app/store/vaultStore";

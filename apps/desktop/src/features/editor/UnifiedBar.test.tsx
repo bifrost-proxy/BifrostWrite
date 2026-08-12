@@ -1,5 +1,5 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
-import { confirm } from "@neverwrite/runtime";
+import { confirm } from "@bifrostwrite/runtime";
 import { describe, expect, it, beforeEach, vi } from "vitest";
 import { useState } from "react";
 import userEvent from "@testing-library/user-event";
@@ -51,7 +51,7 @@ function createChatSession(
 }
 
 vi.mock("../../app/detachedWindows", () => ({
-    ATTACH_EXTERNAL_TAB_EVENT: "neverwrite:attach-external-tab",
+    ATTACH_EXTERNAL_TAB_EVENT: "bifrostwrite:attach-external-tab",
     commitDetachedTabDrop: vi.fn(),
     createDetachedWindowPayload: vi.fn(),
     createGhostWindow: vi.fn(),

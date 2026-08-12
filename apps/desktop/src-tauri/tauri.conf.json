@@ -1,0 +1,70 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "BifrostWrite",
+  "version": "1.0.0-beta.1",
+  "identifier": "com.bifrostwrite.desktop",
+  "build": {
+    "beforeDevCommand": "npm run renderer:dev",
+    "beforeBuildCommand": "npm run renderer:build",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "withGlobalTauri": true,
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-eval'; connect-src 'self' ipc: http://ipc.localhost asset: bifrostwrite-file: http://bifrostwrite-file.localhost https://bifrostwrite-file.localhost https://www.youtube.com; worker-src 'self' blob:; img-src 'self' asset: data: bifrostwrite-file: http://bifrostwrite-file.localhost https://bifrostwrite-file.localhost https: http:; media-src 'self' asset: data: blob: bifrostwrite-file: http://bifrostwrite-file.localhost https://bifrostwrite-file.localhost; style-src 'self' 'unsafe-inline'; frame-src https://www.youtube.com https://www.youtube-nocookie.com bifrostwrite-file: http://bifrostwrite-file.localhost https://bifrostwrite-file.localhost",
+      "assetProtocol": {
+        "enable": false,
+        "scope": []
+      }
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "BifrostWrite",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 960,
+        "minHeight": 640,
+        "center": true,
+        "decorations": true,
+        "transparent": false,
+        "dragDropEnabled": true
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "app",
+      "dmg"
+    ],
+    "category": "Productivity",
+    "shortDescription": "Agentic markdown workspace",
+    "longDescription": "BifrostWrite is an agentic markdown workspace with native Rust services.",
+    "resources": {
+      "resources/native-backend/": "native-backend/"
+    },
+    "macOS": {
+      "minimumSystemVersion": "12.0",
+      "entitlements": "Entitlements.plist"
+    },
+    "icon": [
+      "../build/icons/32x32.png",
+      "../build/icons/128x128.png",
+      "../build/icons/128x128@2x.png",
+      "../build/icons/icon.icns",
+      "../build/icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "bifrostwrite"
+        ]
+      }
+    }
+  }
+}

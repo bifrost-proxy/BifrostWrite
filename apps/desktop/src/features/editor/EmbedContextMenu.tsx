@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { openPath, revealItemInDir } from "@neverwrite/runtime";
+import { openPath, revealItemInDir } from "@bifrostwrite/runtime";
 import {
     ContextMenu,
     type ContextMenuEntry,

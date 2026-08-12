@@ -26,7 +26,7 @@ describe("VaultSwitcher", () => {
             name: `Vault ${index + 1}`,
         }));
 
-        localStorage.setItem("neverwrite:recentVaults", JSON.stringify(recents));
+        localStorage.setItem("bifrostwrite:recentVaults", JSON.stringify(recents));
 
         renderComponent(<VaultSwitcher />);
 

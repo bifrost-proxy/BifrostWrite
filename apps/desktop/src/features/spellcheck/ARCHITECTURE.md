@@ -1,6 +1,6 @@
 # Spellcheck Architecture
 
-NeverWrite now uses a single app-owned spellcheck system.
+BifrostWrite now uses a single app-owned spellcheck system.
 
 ## Overview
 

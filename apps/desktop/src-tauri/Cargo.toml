@@ -1,0 +1,41 @@
+[package]
+name = "bifrostwrite-desktop"
+version = "1.0.0-beta.1"
+edition = "2021"
+description = "Tauri desktop shell for BifrostWrite"
+license = "Apache-2.0"
+
+[lib]
+name = "bifrostwrite_desktop_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[[bin]]
+name = "bifrostwrite"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+base64 = "0.22"
+arboard = { version = "3", default-features = false }
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
+semver = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+tauri = { version = "2.11.1", features = ["image-png", "macos-private-api"] }
+tauri-plugin-deep-link = "2.4.9"
+tauri-plugin-dialog = "2.7.0"
+tauri-plugin-opener = "2.5.0"
+tauri-plugin-single-instance = { version = "2.4.2", features = ["deep-link"] }
+tokio = { version = "1", features = ["rt", "sync"] }
+tiny_http = "0.12"
+url = "2"
+urlencoding = "2"
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[workspace]

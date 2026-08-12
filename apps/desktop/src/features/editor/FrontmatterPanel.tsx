@@ -6,7 +6,7 @@ import {
     useState,
     type CSSProperties,
 } from "react";
-import { openUrl } from "@neverwrite/runtime";
+import { openUrl } from "@bifrostwrite/runtime";
 import { useSettingsStore } from "../../app/store/settingsStore";
 import {
     ContextMenu,

@@ -1,4 +1,4 @@
-export const AGENT_SIDEBAR_DRAG_EVENT = "neverwrite:agent-sidebar-drag";
+export const AGENT_SIDEBAR_DRAG_EVENT = "bifrostwrite:agent-sidebar-drag";
 
 export type AgentSidebarDragPhase = "start" | "move" | "end" | "cancel";
 

@@ -41,7 +41,7 @@ export type DeepLinkOpenResult =
     | "not-found";
 
 /**
- * Resolve a `neverwrite://open?path=...` deep link against the open vault and
+ * Resolve a `bifrostwrite://open?path=...` deep link against the open vault and
  * open the file if it is a legitimate vault member.
  *
  * Security boundary (see issue #289): this only opens or reveals an existing

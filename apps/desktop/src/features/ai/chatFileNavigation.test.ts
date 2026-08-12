@@ -1,4 +1,4 @@
-import { invoke } from "@neverwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
 import { describe, expect, it, vi } from "vitest";
 import { isNoteTab, useEditorStore } from "../../app/store/editorStore";
 import {

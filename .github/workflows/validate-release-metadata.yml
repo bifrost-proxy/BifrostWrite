@@ -1,130 +1,58 @@
-name: Validate Release Metadata
+name: Validate Tauri Release Metadata
 
 on:
-    pull_request:
-        paths:
-            - CHANGELOG.md
-            - apps/desktop/package.json
-            - apps/desktop/package-lock.json
-            - apps/desktop/electron-builder.config.mjs
-            - apps/desktop/electron.vite.config.ts
-            - apps/desktop/build/**
-            - apps/desktop/embedded/**
-            - apps/desktop/scripts/build-electron.mjs
-            - apps/desktop/scripts/build-electron-release.mjs
-            - apps/desktop/scripts/electron-builder-config.test.mjs
-            - apps/desktop/scripts/stage-electron-release-assets.mjs
-            - apps/desktop/scripts/stage-electron-release-assets.test.mjs
-            - apps/desktop/scripts/stage-electron-sidecar.mjs
-            - apps/desktop/scripts/validate-linux-deb-package.mjs
-            - apps/desktop/scripts/validate-linux-rpm-package.mjs
-            - apps/desktop/scripts/verify-electron-bundle.mjs
-            - apps/desktop/src-electron/**
-            - apps/desktop/src/features/settings/SettingsPanel.test.tsx
-            - apps/desktop/native-backend/Cargo.toml
-            - scripts/extract-changelog-release-notes.mjs
-            - scripts/appcast-lib.mjs
-            - scripts/appcast.test.mjs
-            - scripts/apt-repo-lib.mjs
-            - scripts/apt-repo.test.mjs
-            - scripts/build-apt-repository.mjs
-            - scripts/build-appcast-manifest.mjs
-            - scripts/build-appcast-from-target-metadata.mjs
-            - scripts/build-dnf-repository.mjs
-            - scripts/build-platform-validation-pack.mjs
-            - scripts/build-release-body.mjs
-            - scripts/dnf-repo-lib.mjs
-            - scripts/dnf-repo.test.mjs
-            - scripts/electron-release-lib.mjs
-            - scripts/platform-validation-lib.mjs
-            - scripts/platform-validation.test.mjs
-            - scripts/serve-static-directory.mjs
-            - scripts/release-metadata-lib.mjs
-            - scripts/release-assets-lib.mjs
-            - scripts/release-assets.test.mjs
-            - scripts/release-metadata.test.mjs
-            - scripts/sign-apt-repository.mjs
-            - scripts/sign-dnf-repository.mjs
-            - scripts/sign-rpm-packages.mjs
-            - scripts/validate-appcast-manifest.mjs
-            - scripts/validate-apt-repository.mjs
-            - scripts/validate-dnf-repository.mjs
-            - scripts/validate-release-metadata.mjs
-            - release/appcast/README.md
-            - release/apt/README.md
-            - release/dnf/README.md
-            - .github/workflows/electron-package-smoke.yml
-            - .github/workflows/release-desktop.yml
-            - .github/workflows/validate-release-metadata.yml
-    push:
-        tags:
-            - v*
-    workflow_dispatch:
+  pull_request:
+    paths:
+      - CHANGELOG.md
+      - apps/desktop/package.json
+      - apps/desktop/package-lock.json
+      - apps/desktop/build/**
+      - apps/desktop/embedded/**
+      - apps/desktop/scripts/stage-native-runtime-assets*.mjs
+      - apps/desktop/scripts/stage-tauri-sidecar.mjs
+      - apps/desktop/src-tauri/**
+      - scripts/sync-tauri-version.mjs
+      - .github/workflows/release-desktop.yml
+      - .github/workflows/validate-release-metadata.yml
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
 
 permissions:
-    contents: read
+  contents: read
 
 jobs:
-    validate:
-        runs-on: ubuntu-latest
+  validate:
+    name: Version and bundle contract
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v6
+    steps:
+      - uses: actions/checkout@v6
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v6
-              with:
-                  node-version: 22
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
 
-            - name: Install desktop dependencies
-              working-directory: apps/desktop
-              run: npm ci
+      - name: Validate version sources
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./apps/desktop/package.json').version")
+          node scripts/sync-tauri-version.mjs --check "$VERSION"
 
-            - name: Run release metadata tests
-              run: node --test scripts/release-metadata.test.mjs
+      - name: Validate release tag alignment
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: node scripts/sync-tauri-version.mjs --check "${GITHUB_REF_NAME#v}"
 
-            - name: Run appcast tests
-              run: node --test scripts/appcast.test.mjs
+      - name: Check release scripts
+        run: |
+          node --check scripts/sync-tauri-version.mjs
+          node --check apps/desktop/scripts/stage-native-runtime-assets.mjs
+          node --check apps/desktop/scripts/stage-tauri-sidecar.mjs
+          node --check apps/desktop/scripts/smoke-packaged-sidecar.mjs
 
-            - name: Run APT repository tests
-              run: node --test scripts/apt-repo.test.mjs
-
-            - name: Check APT repository scripts
-              run: node --check scripts/build-apt-repository.mjs && node --check scripts/sign-apt-repository.mjs && node --check scripts/validate-apt-repository.mjs
-
-            - name: Run DNF repository tests
-              run: node --test scripts/dnf-repo.test.mjs
-
-            - name: Check DNF repository scripts
-              run: node --check scripts/build-dnf-repository.mjs && node --check scripts/sign-dnf-repository.mjs && node --check scripts/sign-rpm-packages.mjs && node --check scripts/validate-dnf-repository.mjs
-
-            - name: Run Electron release helper tests
-              run: node --test apps/desktop/scripts/electron-builder-config.test.mjs apps/desktop/scripts/stage-electron-release-assets.test.mjs
-
-            - name: Check Debian package validation script
-              run: node --check apps/desktop/scripts/validate-linux-deb-package.mjs
-
-            - name: Check RPM package validation script
-              run: node --check apps/desktop/scripts/validate-linux-rpm-package.mjs
-
-            - name: Run platform validation tests
-              run: node --test scripts/platform-validation.test.mjs
-
-            - name: Run release asset tests
-              run: node --test scripts/release-assets.test.mjs
-
-            - name: Run Electron updater UI tests
-              working-directory: apps/desktop
-              run: npx vitest run src-electron/main/window.test.ts src/features/settings/SettingsPanel.test.tsx
-
-            - name: Validate desktop version sources
-              run: node scripts/validate-release-metadata.mjs
-
-            - name: Validate tag alignment
-              if: startsWith(github.ref, 'refs/tags/v')
-              run: node scripts/validate-release-metadata.mjs --tag "${GITHUB_REF_NAME}"
-
-            - name: Extract release notes for tag
-              if: startsWith(github.ref, 'refs/tags/v')
-              run: node scripts/extract-changelog-release-notes.mjs "${GITHUB_REF_NAME}" > release-notes.md
+      - name: Validate Tauri configuration
+        run: |
+          node -e "const c=require('./apps/desktop/src-tauri/tauri.conf.json'); if(c.productName!=='BifrostWrite'||c.identifier!=='com.bifrostwrite.desktop') process.exit(1)"
+          node -e "const c=require('./apps/desktop/src-tauri/tauri.conf.json'); if(JSON.stringify(c.bundle.targets)!=='[\"app\",\"dmg\"]') process.exit(1)"

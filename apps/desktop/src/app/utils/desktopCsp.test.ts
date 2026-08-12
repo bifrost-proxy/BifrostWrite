@@ -20,17 +20,17 @@ describe("desktop CSP allowlist", () => {
         expect(csp).toContain("default-src 'self'");
         expect(csp).toContain("script-src 'self' 'unsafe-eval'");
         expect(csp).toContain(
-            "connect-src 'self' ipc: http://ipc.localhost asset: neverwrite-file:",
+            "connect-src 'self' ipc: http://ipc.localhost asset: bifrostwrite-file:",
         );
         expect(csp).toContain("https://www.youtube.com");
         expect(csp).toContain(
-            "img-src 'self' asset: data: neverwrite-file:",
+            "img-src 'self' asset: data: bifrostwrite-file:",
         );
         expect(csp).toContain("https: http:");
         expect(csp).toContain("worker-src 'self' blob:");
         expect(csp).toContain("style-src 'self' 'unsafe-inline'");
         expect(csp).toContain(
-            "frame-src https://www.youtube.com https://www.youtube-nocookie.com neverwrite-file:",
+            "frame-src https://www.youtube.com https://www.youtube-nocookie.com bifrostwrite-file:",
         );
     });
 });

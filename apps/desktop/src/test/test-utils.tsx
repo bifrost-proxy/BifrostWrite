@@ -1,6 +1,6 @@
 import { act, render } from "@testing-library/react";
 import type { ReactElement } from "react";
-import { invoke } from "@neverwrite/runtime";
+import { invoke } from "@bifrostwrite/runtime";
 import { vi } from "vitest";
 import {
     useCommandStore,

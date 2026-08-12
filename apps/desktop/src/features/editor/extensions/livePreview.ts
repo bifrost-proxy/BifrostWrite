@@ -1,5 +1,5 @@
 import { EditorView } from "@codemirror/view";
-import { openUrl } from "@neverwrite/runtime";
+import { openUrl } from "@bifrostwrite/runtime";
 
 import {
     resolveLinkHref,

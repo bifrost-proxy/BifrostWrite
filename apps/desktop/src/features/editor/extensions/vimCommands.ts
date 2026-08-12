@@ -14,7 +14,7 @@ function requestClose() {
 
 let registered = false;
 
-// Map the familiar vim ex-commands onto NeverWrite's existing save/close
+// Map the familiar vim ex-commands onto BifrostWrite's existing save/close
 // actions so muscle memory (:w, :q, :wq, :x) works. The active tab's editor
 // listens for these window events; closing already saves first, so :wq just
 // dispatches the close request.

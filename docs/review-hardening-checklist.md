@@ -293,9 +293,9 @@ cargo test -p neverwrite-native-backend
 cd apps/desktop
 npm run lint
 npm run build
-npm run electron:sidecar:build
-npm run electron:vault-editor:smoke
-npm run electron:ai-runtime:smoke
+npm run tauri:sidecar:build
+npm run tauri:vault-editor:smoke
+npm run tauri:ai-runtime:smoke
 ```
 
 Refer to [Testing and Validation](./testing.md) for full CI parity commands.

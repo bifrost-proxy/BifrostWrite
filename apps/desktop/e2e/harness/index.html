@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>NeverWrite live-preview harness</title>
+        <title>BifrostWrite live-preview harness</title>
         <style>
             :root {
                 --text-primary: #1a1a1a;
@@ -46,19 +46,31 @@
     <body>
         <div id="editor"></div>
         <script>
-            // The renderer's runtime module throws at module load if
-            // window.neverwriteElectron is missing. The harness only needs
-            // CodeMirror + the live-preview extensions, so we provide a
-            // permissive stub here (synchronous, before any module loads).
-            window.neverwriteElectron = new Proxy(
-                {},
-                {
-                    get() {
-                        return () => Promise.resolve(null);
-                    },
+            // The renderer selects the Tauri runtime at module load. This
+            // browser-only harness only exercises CodeMirror, so provide the
+            // minimal IPC callback surface used by @tauri-apps/api.
+            const callbacks = new Map();
+            let nextCallbackId = 1;
+            window.__TAURI_INTERNALS__ = {
+                invoke: () => Promise.resolve(null),
+                transformCallback(callback, once = false) {
+                    const id = nextCallbackId++;
+                    callbacks.set(id, (...args) => {
+                        callback?.(...args);
+                        if (once) callbacks.delete(id);
+                    });
+                    return id;
                 },
-            );
-            window.neverwriteWindowLabel = "harness";
+                unregisterCallback(id) {
+                    callbacks.delete(id);
+                },
+                convertFileSrc(path) {
+                    return path;
+                },
+            };
+            window.__TAURI_EVENT_PLUGIN_INTERNALS__ = {
+                unregisterListener() {},
+            };
         </script>
         <script type="module" src="./main.ts"></script>
     </body>

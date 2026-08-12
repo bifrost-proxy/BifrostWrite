@@ -9,7 +9,7 @@ CLAUDE.md
 !.env.sample
 .cargo-home/
 .claude/settings.local.json
-# Local NeverWrite product state lives here, including persisted AI sessions.
+# Local BifrostWrite product state lives here, including persisted AI sessions.
 .neverwrite/
 .neverwrite/sessions/
 .neverwrite-cache/
@@ -27,6 +27,7 @@ apps/desktop/dist/
 apps/desktop/dist-electron/
 apps/desktop/dist-electron*/
 apps/desktop/out/
+apps/desktop/src-tauri/resources/native-backend/
 apps/desktop/node_modules/
 apps/desktop/test-results/
 apps/desktop/playwright-report/

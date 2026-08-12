@@ -41,7 +41,7 @@ export default defineConfig({
         dedupe: ["react", "react-dom"],
         alias: [
             {
-                find: "@neverwrite/runtime",
+                find: "@bifrostwrite/runtime",
                 replacement: fileURLToPath(
                     new URL("./src/app/runtime/index.ts", import.meta.url),
                 ),

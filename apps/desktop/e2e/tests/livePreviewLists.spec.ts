@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * Regression coverage for jsgrrchg/NeverWrite#102.
+ * Regression coverage for jsgrrchg/BifrostWrite#102.
  *
  * Two visual properties must hold for an active empty list item:
  *
@@ -34,6 +34,18 @@ async function measureCaretAtLine(
     page: import("@playwright/test").Page,
     lineNumber: number,
 ): Promise<CaretMeasurement> {
+    await page.waitForFunction(
+        () =>
+            document.querySelector(
+                ".cm-editor.cm-focused .cm-cursorLayer .cm-cursor",
+            ) !== null,
+    );
+    await page.evaluate(
+        () =>
+            new Promise<void>((resolve) =>
+                requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+            ),
+    );
     return page.evaluate((nth) => {
         const lines = document.querySelectorAll(".cm-content > .cm-line");
         const line = lines[nth - 1] as HTMLElement | undefined;

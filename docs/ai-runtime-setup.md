@@ -1,9 +1,9 @@
 # AI Runtime Setup
 
-NeverWrite talks to AI providers through ACP runtimes. The desktop renderer does
+BifrostWrite talks to AI providers through ACP runtimes. The desktop renderer does
 not launch provider CLIs directly; it calls the native backend through the
 allowlisted `ai_*` commands in
-[`apps/desktop/src-electron/main/nativeBackend.ts`](../apps/desktop/src-electron/main/nativeBackend.ts).
+[`apps/desktop/src-tauri/src/lib.rs`](../apps/desktop/src-tauri/src/lib.rs).
 The backend owns runtime discovery, authentication state, environment injection,
 session startup, and logout in
 [`apps/desktop/native-backend/src/ai.rs`](../apps/desktop/native-backend/src/ai.rs).
@@ -17,7 +17,7 @@ and terminal-auth routing helpers are in
 
 ## Provider Matrix
 
-| Runtime id | Runtime command | Bundled in release | Auth methods exposed by NeverWrite |
+| Runtime id | Runtime command | Bundled in release | Auth methods exposed by BifrostWrite |
 | --- | --- | --- | --- |
 | `codex-acp` | `codex-acp` | Yes. Staged as a sidecar binary. | ChatGPT account, OpenAI API key, Codex API key |
 | `claude-acp` | Claude ACP adapter | Yes. Staged as vendored JS plus embedded Node. | Claude subscription terminal login, Anthropic Console terminal login, Anthropic API key, custom Anthropic-compatible gateway |
@@ -25,7 +25,7 @@ and terminal-auth routing helpers are in
 | `kilo-acp` | `kilo acp` | No. Must be available from PATH or a configured binary override. | Kilo terminal login |
 | `opencode-acp` | `opencode acp` | No. Must be available from PATH or a configured binary override. | OpenCode terminal login |
 
-NeverWrite currently supports two ACP compatibility paths:
+BifrostWrite currently supports two ACP compatibility paths:
 
 - `Current14`: Claude, Codex, Kilo, and OpenCode use the current ACP session
   config path.
@@ -33,7 +33,7 @@ NeverWrite currently supports two ACP compatibility paths:
 
 For current ACP runtimes, model, mode, and reasoning selectors are derived from
 ACP `config_options` and updated through `session/set_config_option` when the
-runtime supports it. For Grok, NeverWrite keeps using legacy `models` /
+runtime supports it. For Grok, BifrostWrite keeps using legacy `models` /
 `modes` descriptors plus `session/set_model` / `session/set_mode` instead.
 Grok does not receive a synthetic `Auto` model when its runtime does not expose
 real model options; in that case the model selector is hidden.
@@ -46,9 +46,9 @@ inventory cannot be loaded.
 
 ## Custom ACP Runtimes
 
-Settings can register local ACP-compatible executables in addition to the built-in provider catalog. A custom runtime is active only when its configured command passes **Verify executable**; it uses external/runtime-managed authentication rather than a NeverWrite provider login or secret form.
+Settings can register local ACP-compatible executables in addition to the built-in provider catalog. A custom runtime is active only when its configured command passes **Verify executable**; it uses external/runtime-managed authentication rather than a BifrostWrite provider login or secret form.
 
-Custom definitions are launched directly without a shell, with an isolated environment and controlled `PATH`. NeverWrite does not inject built-in provider credentials and rejects secret-like custom environment keys. Custom runtime capabilities, including continuation, options, slash commands, permissions, user input, images, and diffs, are negotiated through ACP rather than hardcoded in the UI.
+Custom definitions are launched directly without a shell, with an isolated environment and controlled `PATH`. BifrostWrite does not inject built-in provider credentials and rejects secret-like custom environment keys. Custom runtime capabilities, including continuation, options, slash commands, permissions, user input, images, and diffs, are negotiated through ACP rather than hardcoded in the UI.
 
 See [Configurable Custom ACP Runtimes](custom-acp-runtimes.md) for the definition format, continuation semantics, history identity, limits, and troubleshooting.
 
@@ -56,7 +56,7 @@ See [Configurable Custom ACP Runtimes](custom-acp-runtimes.md) for the definitio
 
 For every provider, the backend resolves the runtime command in this order:
 
-1. Provider-specific `NEVERWRITE_*_ACP_BIN` environment override.
+1. Provider-specific `BIFROSTWRITE_*_ACP_BIN` environment override.
 2. Custom binary path saved through the backend setup payload.
 3. Packaged release resources, when available.
 4. Development vendor fallback for Codex and Claude.
@@ -67,26 +67,26 @@ The provider-specific runtime binary overrides are:
 
 | Variable | Provider |
 | --- | --- |
-| `NEVERWRITE_CODEX_ACP_BIN` | Codex |
-| `NEVERWRITE_CLAUDE_ACP_BIN` | Claude |
-| `NEVERWRITE_GROK_ACP_BIN` | Grok |
-| `NEVERWRITE_KILO_ACP_BIN` | Kilo |
-| `NEVERWRITE_OPENCODE_ACP_BIN` | OpenCode |
+| `BIFROSTWRITE_CODEX_ACP_BIN` | Codex |
+| `BIFROSTWRITE_CLAUDE_ACP_BIN` | Claude |
+| `BIFROSTWRITE_GROK_ACP_BIN` | Grok |
+| `BIFROSTWRITE_KILO_ACP_BIN` | Kilo |
+| `BIFROSTWRITE_OPENCODE_ACP_BIN` | OpenCode |
 
 The values may be absolute paths or command names resolvable on `PATH`. For
-Grok, Kilo, and OpenCode, NeverWrite appends the ACP arguments automatically:
+Grok, Kilo, and OpenCode, BifrostWrite appends the ACP arguments automatically:
 `grok --no-auto-update agent stdio`, `kilo acp`, and `opencode acp`.
 
-Packaged builds use `NEVERWRITE_ELECTRON_ACP_RESOURCE_DIR` internally to point
-the native backend at staged Electron resources. In normal app usage this is set
-by the Electron main process, not by users.
+Packaged builds use `BIFROSTWRITE_TAURI_ACP_RESOURCE_DIR` internally to point
+the native backend at staged Tauri resources. In normal app usage this is set
+by the Tauri main process, not by users.
 
 ## Authentication Methods
 
 Provider setup state is stored under the app data directory as
 `ai/runtime-setup.json`. Secret values are not kept in that JSON file in normal
 production use; they are stored through the OS keyring service named
-`NeverWrite AI Provider Secrets`. The JSON file tracks non-secret environment
+`BifrostWrite AI Provider Secrets`. The JSON file tracks non-secret environment
 values, selected auth method, custom binary path when one has been supplied by
 an internal setup flow, and which secret keys belong to a runtime.
 
@@ -101,11 +101,11 @@ The backend also detects existing CLI auth files and environment secrets:
 | OpenCode | `OPENCODE_API_KEY`, provider keys inherited by OpenCode, or active `opencode/auth.json` in the platform data directory |
 
 Codex ChatGPT auth is implemented through the ACP `authenticate` request and
-requires a resolved Codex runtime binary before NeverWrite marks it connected.
+requires a resolved Codex runtime binary before BifrostWrite marks it connected.
 Codex does not use the integrated auth terminal.
 
 Claude, Grok, Kilo, and OpenCode expose integrated terminal auth methods.
-NeverWrite starts the provider CLI in a PTY and marks auth pending before
+BifrostWrite starts the provider CLI in a PTY and marks auth pending before
 launch. A zero exit code marks the provider verified; Grok and OpenCode can
 also be marked verified when terminal output contains success strings recognized
 by the backend.
@@ -128,7 +128,7 @@ Use one of:
 - Process environment `OPENAI_API_KEY` or `CODEX_API_KEY`.
 
 In releases, `codex-acp` and its `codex-code-mode-host` companion are bundled
-under `native-backend/binaries/`. NeverWrite launches `codex-acp`; the companion
+under `native-backend/binaries/`. BifrostWrite launches `codex-acp`; the companion
 is required for Codex code-mode features. In development, build or point to a
 local runtime pair if the vendor fallback is not present.
 
@@ -158,15 +158,15 @@ auth token.
 
 ### Removed Gemini ACP Support
 
-NeverWrite no longer registers a `gemini-acp` provider. Google redirected
+BifrostWrite no longer registers a `gemini-acp` provider. Google redirected
 Gemini CLI subscription usage toward Antigravity, and Antigravity is closed
 source and does not expose ACP support for third-party apps. That leaves no
-stable ACP path for NeverWrite to launch or authenticate Gemini as an app-owned
+stable ACP path for BifrostWrite to launch or authenticate Gemini as an app-owned
 runtime.
 
-Antigravity can still be used manually from a terminal outside NeverWrite. It is
-not managed by the AI Providers setup UI, does not participate in NeverWrite
-chat sessions, and does not receive NeverWrite's review/change-control events.
+Antigravity can still be used manually from a terminal outside BifrostWrite. It is
+not managed by the AI Providers setup UI, does not participate in BifrostWrite
+chat sessions, and does not receive BifrostWrite's review/change-control events.
 
 ### Grok
 
@@ -178,11 +178,11 @@ Use one of:
 - Process environment `XAI_API_KEY`.
 
 Because Grok is not bundled by default, install the Grok CLI separately or
-configure `NEVERWRITE_GROK_ACP_BIN`. NeverWrite launches sessions as
+configure `BIFROSTWRITE_GROK_ACP_BIN`. BifrostWrite launches sessions as
 `grok --no-auto-update agent stdio` and opens terminal auth as `grok login`.
 
 Grok requires ACP authentication inside the same runtime process that opens the
-session. Before `session/new`, NeverWrite sends `authenticate` with
+session. Before `session/new`, BifrostWrite sends `authenticate` with
 `xai.api_key` for API-key auth and `cached_token` for Grok CLI login auth. If
 the running Grok ACP process does not advertise the selected method during
 `initialize`, setup remains local but session startup fails with an explicit
@@ -193,21 +193,21 @@ to `ai/runtime-setup.json`. The JSON setup file only records the selected auth
 method and secret-key marker. If the app process inherits `XAI_API_KEY`, that
 environment value is preferred by default. A locally saved xAI key that is
 selected and ready is passed to the Grok ACP process explicitly, so it can
-recover from an inherited `XAI_API_KEY` that NeverWrite has marked invalid.
-NeverWrite does not delete or overwrite the inherited environment variable.
+recover from an inherited `XAI_API_KEY` that BifrostWrite has marked invalid.
+BifrostWrite does not delete or overwrite the inherited environment variable.
 
 Grok uses the legacy ACP compatibility path for model and mode changes:
-NeverWrite reads legacy `models` / `modes` descriptors and sends
+BifrostWrite reads legacy `models` / `modes` descriptors and sends
 `session/set_model` / `session/set_mode` instead of
 `session/set_config_option`. If the Grok runtime does not expose real model
-options, NeverWrite does not synthesize an `Auto` model.
+options, BifrostWrite does not synthesize an `Auto` model.
 
 Some Grok models map to different provider-side `agentType` values. Once a chat
 has started, switching to a model that requires a different `agentType` is
 blocked because the Grok ACP runtime requires a fresh session for that change.
 Start a new chat with the desired model instead.
 
-Disconnecting Grok in NeverWrite clears local NeverWrite setup state. For stored
+Disconnecting Grok in BifrostWrite clears local BifrostWrite setup state. For stored
 xAI API keys, it also deletes the local keyring secret. For Grok CLI login, it
 records a local invalidation marker so stale `~/.grok/auth.json` credentials are
 not immediately rehydrated, but it does not remotely log out of Grok or delete
@@ -218,7 +218,7 @@ you need a full remote/provider logout.
 
 Use Kilo terminal login from the setup UI, a Kilo API key saved in the setup UI,
 or pre-existing Kilo CLI auth. Because Kilo is not bundled by default, install
-the CLI separately or configure `NEVERWRITE_KILO_ACP_BIN`.
+the CLI separately or configure `BIFROSTWRITE_KILO_ACP_BIN`.
 
 ### OpenCode
 
@@ -226,41 +226,41 @@ Use OpenCode terminal login from the setup UI, pre-existing OpenCode CLI auth, a
 provider key inherited by the OpenCode CLI, or `/connect` inside OpenCode.
 The current UI keeps OpenCode auth primarily owned by the OpenCode CLI rather
 than exposing a first-party API key form. Disconnecting OpenCode clears
-NeverWrite's local selection and persists an invalidation marker, but it does
+BifrostWrite's local selection and persists an invalidation marker, but it does
 not delete `opencode/auth.json`.
 
 Because OpenCode is not bundled by default, install the CLI separately or
-configure `NEVERWRITE_OPENCODE_ACP_BIN`. NeverWrite launches sessions as
+configure `BIFROSTWRITE_OPENCODE_ACP_BIN`. BifrostWrite launches sessions as
 `opencode acp` and opens auth as `opencode auth login`.
 
 ## Environment Overrides
 
-These `NEVERWRITE_*` variables are relevant to AI runtime setup and packaging:
+These `BIFROSTWRITE_*` variables are relevant to AI runtime setup and packaging:
 
 | Variable | Use |
 | --- | --- |
-| `NEVERWRITE_CODEX_ACP_BIN` | Runtime launch override for Codex in dev or local troubleshooting. |
-| `NEVERWRITE_CLAUDE_ACP_BIN` | Runtime launch override for Claude in dev or local troubleshooting. |
-| `NEVERWRITE_GROK_ACP_BIN` | Runtime launch override for Grok in dev or local troubleshooting. |
-| `NEVERWRITE_KILO_ACP_BIN` | Runtime launch override for Kilo in dev or local troubleshooting. |
-| `NEVERWRITE_OPENCODE_ACP_BIN` | Runtime launch override for OpenCode in dev or local troubleshooting. |
-| `NEVERWRITE_APP_DATA_DIR` | Overrides app data storage, including `ai/runtime-setup.json`; Electron sets this for the sidecar. |
-| `NEVERWRITE_AI_SECRET_STORE=memory` | Test/smoke-only opt-in for in-memory secrets when no OS keyring is available. Do not use for production persistence. |
-| `NEVERWRITE_NATIVE_BACKEND_PATH` | Forces Electron to use a specific native backend sidecar. Useful when testing a local sidecar build. |
-| `NEVERWRITE_ELECTRON_ACP_RESOURCE_DIR` | Internal packaged-resource directory used by Electron to expose bundled ACP resources to the backend. |
-| `NEVERWRITE_NATIVE_BACKEND_BUNDLE_BIN` | Packaging override for the native backend binary staged into Electron. |
-| `NEVERWRITE_CODEX_ACP_BUNDLE_BIN` | Packaging override for the Codex binary staged into Electron. |
-| `NEVERWRITE_CODEX_CODE_MODE_HOST_BUNDLE_BIN` | Packaging override for the Codex standalone code-mode host staged into Electron. Must be provided with `NEVERWRITE_CODEX_ACP_BUNDLE_BIN`. |
-| `NEVERWRITE_CODEX_ACP_BUNDLE_BIN_ARM64` / `NEVERWRITE_CODEX_ACP_BUNDLE_BIN_X64` | Target-specific macOS universal packaging inputs for the Codex ACP binary. Each configured slice requires its matching host override. |
-| `NEVERWRITE_CODEX_CODE_MODE_HOST_BUNDLE_BIN_ARM64` / `NEVERWRITE_CODEX_CODE_MODE_HOST_BUNDLE_BIN_X64` | Target-specific macOS universal packaging inputs for the standalone code-mode host. |
-| `NEVERWRITE_EMBEDDED_NODE_BIN` | Packaging override for the embedded Node binary used by bundled Claude. |
-| `NEVERWRITE_EMBEDDED_NODE_BIN_ARM64` / `NEVERWRITE_EMBEDDED_NODE_BIN_X64` | Packaging overrides for macOS universal embedded Node inputs. |
-| `NEVERWRITE_EMBEDDED_NODE_VERSION` | Embedded Node download version used by sidecar staging when no Node binary override is supplied. |
-| `NEVERWRITE_CLAUDE_EMBEDDED_DIR` | Packaging override for the Claude embedded runtime source directory. |
-| `NEVERWRITE_ELECTRON_RELEASE_TARGET` | Default Rust target for `stage-electron-sidecar.mjs`. |
-| `NEVERWRITE_ELECTRON_OUTPUT_DIR` | Electron release output directory override. |
+| `BIFROSTWRITE_CODEX_ACP_BIN` | Runtime launch override for Codex in dev or local troubleshooting. |
+| `BIFROSTWRITE_CLAUDE_ACP_BIN` | Runtime launch override for Claude in dev or local troubleshooting. |
+| `BIFROSTWRITE_GROK_ACP_BIN` | Runtime launch override for Grok in dev or local troubleshooting. |
+| `BIFROSTWRITE_KILO_ACP_BIN` | Runtime launch override for Kilo in dev or local troubleshooting. |
+| `BIFROSTWRITE_OPENCODE_ACP_BIN` | Runtime launch override for OpenCode in dev or local troubleshooting. |
+| `BIFROSTWRITE_APP_DATA_DIR` | Overrides app data storage, including `ai/runtime-setup.json`; Tauri sets this for the sidecar. |
+| `BIFROSTWRITE_AI_SECRET_STORE=memory` | Test/smoke-only opt-in for in-memory secrets when no OS keyring is available. Do not use for production persistence. |
+| `BIFROSTWRITE_NATIVE_BACKEND_PATH` | Forces Tauri to use a specific native backend sidecar. Useful when testing a local sidecar build. |
+| `BIFROSTWRITE_TAURI_ACP_RESOURCE_DIR` | Internal packaged-resource directory used by Tauri to expose bundled ACP resources to the backend. |
+| `BIFROSTWRITE_NATIVE_BACKEND_BUNDLE_BIN` | Packaging override for the native backend binary staged into Tauri. |
+| `BIFROSTWRITE_CODEX_ACP_BUNDLE_BIN` | Packaging override for the Codex binary staged into Tauri. |
+| `BIFROSTWRITE_CODEX_CODE_MODE_HOST_BUNDLE_BIN` | Packaging override for the Codex standalone code-mode host staged into Tauri. Must be provided with `BIFROSTWRITE_CODEX_ACP_BUNDLE_BIN`. |
+| `BIFROSTWRITE_CODEX_ACP_BUNDLE_BIN_ARM64` / `BIFROSTWRITE_CODEX_ACP_BUNDLE_BIN_X64` | Target-specific macOS universal packaging inputs for the Codex ACP binary. Each configured slice requires its matching host override. |
+| `BIFROSTWRITE_CODEX_CODE_MODE_HOST_BUNDLE_BIN_ARM64` / `BIFROSTWRITE_CODEX_CODE_MODE_HOST_BUNDLE_BIN_X64` | Target-specific macOS universal packaging inputs for the standalone code-mode host. |
+| `BIFROSTWRITE_EMBEDDED_NODE_BIN` | Packaging override for the embedded Node binary used by bundled Claude. |
+| `BIFROSTWRITE_EMBEDDED_NODE_BIN_ARM64` / `BIFROSTWRITE_EMBEDDED_NODE_BIN_X64` | Packaging overrides for macOS universal embedded Node inputs. |
+| `BIFROSTWRITE_EMBEDDED_NODE_VERSION` | Embedded Node download version used by sidecar staging when no Node binary override is supplied. |
+| `BIFROSTWRITE_CLAUDE_EMBEDDED_DIR` | Packaging override for the Claude embedded runtime source directory. |
+| `BIFROSTWRITE_TAURI_RELEASE_TARGET` | Default Rust target for `stage-native-runtime-assets.mjs`. |
+| `BIFROSTWRITE_TAURI_OUTPUT_DIR` | Tauri release output directory override. |
 
-Use launch overrides (`NEVERWRITE_*_ACP_BIN`) when a local provider CLI is
+Use launch overrides (`BIFROSTWRITE_*_ACP_BIN`) when a local provider CLI is
 installed outside the packaged app, when testing a patched runtime, or when
 diagnostics show the app cannot inherit the shell PATH you expected.
 
@@ -277,50 +277,50 @@ npm install
 npm run dev
 ```
 
-If a runtime is not found, either install the provider CLI so Electron can see
+If a runtime is not found, either install the provider CLI so Tauri can see
 it on PATH or launch the app with an explicit override:
 
 ```bash
 cd apps/desktop
-NEVERWRITE_GROK_ACP_BIN=/absolute/path/to/grok npm run dev
+BIFROSTWRITE_GROK_ACP_BIN=/absolute/path/to/grok npm run dev
 ```
 
 For sidecar-only AI runtime smoke testing:
 
 ```bash
 cd apps/desktop
-npm run electron:sidecar:build
-npm run electron:ai-runtime:smoke
+npm run tauri:sidecar:build
+npm run tauri:ai-runtime:smoke
 ```
 
 The smoke test creates fake ACP runtimes, uses
-`NEVERWRITE_AI_SECRET_STORE=memory` by default, validates runtime inventory,
+`BIFROSTWRITE_AI_SECRET_STORE=memory` by default, validates runtime inventory,
 setup status, diagnostics, session creation, ACP streaming, persisted history,
 the Codex auth-terminal rejection path, and the Grok ACP auth handshake plus
 reversible text-diff path.
 
 ## Release Packaging
 
-Electron release packaging runs through
-[`build-electron-release.mjs`](../apps/desktop/scripts/build-electron-release.mjs),
-which builds the Electron app, stages the sidecar/resources, and then runs
-`electron-builder`.
+Tauri release packaging runs through
+[`stage-tauri-sidecar.mjs`](../apps/desktop/scripts/stage-tauri-sidecar.mjs),
+which builds the Tauri app, stages the sidecar/resources, and then runs
+`Tauri bundler`.
 
 Runtime staging is handled by
-[`stage-electron-sidecar.mjs`](../apps/desktop/scripts/stage-electron-sidecar.mjs):
+[`stage-native-runtime-assets.mjs`](../apps/desktop/scripts/stage-native-runtime-assets.mjs):
 
 - Builds or resolves the target-specific native backend.
 - Builds or resolves the target-specific Codex runtime pair: `codex-acp` and `codex-code-mode-host`. Both are built by one Cargo invocation with the committed lockfile and the same verified V8 archive/binding pair.
 - Inspects Mach-O, PE, or ELF headers before staging so host-architecture artifacts cannot be reused accidentally for a cross-compiled target. macOS slices are checked before `lipo`, and the produced universal binaries are checked again afterward.
 - Downloads or uses an overridden embedded Node runtime.
 - Resolves the Claude embedded runtime from `apps/desktop/embedded/claude-agent-acp`,
-  `vendor/Claude-agent-acp-upstream`, or `NEVERWRITE_CLAUDE_EMBEDDED_DIR`.
+  `vendor/Claude-agent-acp-upstream`, or `BIFROSTWRITE_CLAUDE_EMBEDDED_DIR`.
 - Installs required Claude production dependencies and target-specific optional packages.
 - Copies resources to `apps/desktop/out/native-backend/`.
 
-The Electron builder config stages `apps/desktop/out/native-backend/` into the
+The Tauri builder config stages `apps/desktop/out/native-backend/` into the
 packaged `native-backend/` resources directory and runs
-[`verify-electron-bundle.mjs`](../apps/desktop/scripts/verify-electron-bundle.mjs)
+[`smoke-packaged-sidecar.mjs`](../apps/desktop/scripts/smoke-packaged-sidecar.mjs)
 as an `afterPack` hook. That verification treats these Claude runtime files as
 release-critical resources:
 
@@ -355,7 +355,7 @@ on PATH.
 
 Common fixes:
 
-- Set the provider-specific `NEVERWRITE_*_ACP_BIN` variable before launching the app.
+- Set the provider-specific `BIFROSTWRITE_*_ACP_BIN` variable before launching the app.
 - Supply a custom binary path through `ai_update_setup` if you are exercising
   the backend API directly or a caller that exposes this field.
 - For Grok, Kilo, or OpenCode, install the CLI separately; they are not bundled in releases.
@@ -370,7 +370,7 @@ the provider terminal login, or ensure the corresponding CLI auth file exists
 and is non-empty.
 
 If the setup store cannot load because secure credential storage is unavailable,
-NeverWrite suppresses persisted auth and reports that the provider must be
+BifrostWrite suppresses persisted auth and reports that the provider must be
 reconnected or configured through environment variables.
 
 ### Provider Terminal Auth
@@ -407,14 +407,14 @@ https://user:pass@gateway.example Rejected
 
 The diagnostics panel compares the app's inherited PATH, the PATH injected into
 runtimes, common executable resolution, and the final launch command for each
-runtime. Use it when a provider works in your shell but not in the Electron app.
+runtime. Use it when a provider works in your shell but not in the Tauri app.
 GUI-launched apps often inherit a different PATH than interactive shells.
 
 ### Packaged vs Development Differences
 
 Development can resolve Codex and Claude from vendor paths if those artifacts
 exist. Packaged builds should resolve Codex and Claude from
-`NEVERWRITE_ELECTRON_ACP_RESOURCE_DIR`, which Electron sets to the staged
+`BIFROSTWRITE_TAURI_ACP_RESOURCE_DIR`, which Tauri sets to the staged
 resources directory. Grok, Kilo, and OpenCode still require an external
 CLI or explicit runtime override in both development and packaged builds.
 
@@ -443,14 +443,14 @@ cargo test -p neverwrite-native-backend ai
 ```bash
 # Sidecar smoke test with a fake ACP runtime
 cd apps/desktop
-npm run electron:sidecar:build
-npm run electron:ai-runtime:smoke
+npm run tauri:sidecar:build
+npm run tauri:ai-runtime:smoke
 ```
 
 ```bash
 # Local packaged app build path
 cd apps/desktop
-npm run electron:package:unsigned
+npm run tauri:build:dmg
 ```
 
 Last updated: June 2, 2026.

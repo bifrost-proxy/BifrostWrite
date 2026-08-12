@@ -84,13 +84,13 @@ describe("desktop api client", () => {
         expect(fetchMock.mock.calls[0]?.[0]).toContain("/clips");
         expect(fetchMock.mock.calls[0]?.[1]?.headers).toEqual({
             "content-type": "application/json",
-            "x-neverwrite-extension-id": "pogmjgibofkooljfgaandhoinmenfhao",
+            "x-bifrostwrite-extension-id": "pogmjgibofkooljfgaandhoinmenfhao",
         });
         expect(fetchMock.mock.calls[1]?.[0]).toContain("/pair");
         expect(fetchMock.mock.calls[2]?.[1]?.headers).toEqual({
             "content-type": "application/json",
-            "x-neverwrite-clipper-token": "token-1",
-            "x-neverwrite-extension-id": "pogmjgibofkooljfgaandhoinmenfhao",
+            "x-bifrostwrite-clipper-token": "token-1",
+            "x-bifrostwrite-extension-id": "pogmjgibofkooljfgaandhoinmenfhao",
         });
         expect(storage.get("clipperDesktopAuth")).toEqual({ token: "token-1" });
     });
@@ -189,18 +189,18 @@ describe("desktop api client", () => {
         expect(fetchMock).toHaveBeenCalledTimes(4);
         expect(fetchMock.mock.calls[0]?.[1]?.headers).toEqual({
             "content-type": "application/json",
-            "x-neverwrite-clipper-token": "stale-token",
-            "x-neverwrite-extension-id": "pogmjgibofkooljfgaandhoinmenfhao",
+            "x-bifrostwrite-clipper-token": "stale-token",
+            "x-bifrostwrite-extension-id": "pogmjgibofkooljfgaandhoinmenfhao",
         });
         expect(fetchMock.mock.calls[1]?.[1]?.headers).toEqual({
             "content-type": "application/json",
-            "x-neverwrite-extension-id": "pogmjgibofkooljfgaandhoinmenfhao",
+            "x-bifrostwrite-extension-id": "pogmjgibofkooljfgaandhoinmenfhao",
         });
         expect(fetchMock.mock.calls[2]?.[0]).toContain("/pair");
         expect(fetchMock.mock.calls[3]?.[1]?.headers).toEqual({
             "content-type": "application/json",
-            "x-neverwrite-clipper-token": "token-2",
-            "x-neverwrite-extension-id": "pogmjgibofkooljfgaandhoinmenfhao",
+            "x-bifrostwrite-clipper-token": "token-2",
+            "x-bifrostwrite-extension-id": "pogmjgibofkooljfgaandhoinmenfhao",
         });
         expect(storage.get("clipperDesktopAuth")).toEqual({ token: "token-2" });
     });
@@ -220,7 +220,7 @@ describe("desktop api client", () => {
                 folder: "",
             }),
         ).rejects.toMatchObject({
-            message: "NeverWrite desktop API is unavailable.",
+            message: "BifrostWrite desktop API is unavailable.",
             isUnauthorized: false,
             isUnavailable: true,
         });
@@ -234,7 +234,7 @@ describe("desktop api client", () => {
                 new Response(
                     JSON.stringify({
                         ok: true,
-                        message: "NeverWrite desktop API is ready.",
+                        message: "BifrostWrite desktop API is ready.",
                     }),
                     {
                         status: 200,
@@ -271,8 +271,8 @@ describe("desktop api client", () => {
         for (const [, init] of fetchMock.mock.calls) {
             expect(init?.headers).toEqual({
                 "content-type": "application/json",
-                "x-neverwrite-clipper-token": "persisted-token",
-                "x-neverwrite-extension-id": "pogmjgibofkooljfgaandhoinmenfhao",
+                "x-bifrostwrite-clipper-token": "persisted-token",
+                "x-bifrostwrite-extension-id": "pogmjgibofkooljfgaandhoinmenfhao",
             });
         }
     });
