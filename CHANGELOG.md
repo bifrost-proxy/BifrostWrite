@@ -34,6 +34,12 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.0.0-beta.2] - 2026-08-13
+
+### Changed
+
+- Rebuilt the preview release to validate the complete in-app update path from `1.0.0-beta.1` before the stable `1.0.0` release.
+
 ## [1.0.0-beta.1] - 2026-08-13
 
 ### Added

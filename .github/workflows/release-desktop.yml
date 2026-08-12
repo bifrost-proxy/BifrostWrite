@@ -92,23 +92,14 @@ jobs:
           APPLE_SIGNING_IDENTITY: "-"
         run: npx tauri build --config src-tauri/tauri.conf.json --target ${{ matrix.target }} --bundles dmg
 
-      - name: Verify native app bundle
-        working-directory: apps/desktop
-        shell: bash
-        run: |
-          APP_PATH=$(find "src-tauri/target/${{ matrix.target }}/release/bundle/macos" -maxdepth 1 -type d -name 'BifrostWrite.app' | head -n 1)
-          test -n "$APP_PATH"
-          test -x "$APP_PATH/Contents/MacOS/bifrostwrite"
-          test -x "$APP_PATH/Contents/Resources/native-backend/neverwrite-native-backend"
-          test ! -e "$APP_PATH/Contents/Frameworks/Electron Framework.framework"
-          codesign --verify --deep --strict "$APP_PATH"
-          du -sh "$APP_PATH"
-
-      - name: Smoke packaged native runtimes
+      - name: Verify and smoke packaged DMG
         working-directory: apps/desktop
         env:
           BIFROSTWRITE_TAURI_RELEASE_TARGET: ${{ matrix.target }}
-        run: node scripts/smoke-packaged-sidecar.mjs
+        run: |
+          DMG_PATH=$(find "src-tauri/target/${{ matrix.target }}/release/bundle/dmg" -maxdepth 1 -name '*.dmg' -type f | head -n 1)
+          test -n "$DMG_PATH"
+          scripts/verify-macos-dmg.sh "$DMG_PATH" "${{ matrix.target }}"
 
       - name: Package release asset
         working-directory: apps/desktop
