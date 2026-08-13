@@ -16,16 +16,14 @@ Entries are grouped by release version under the following categories:
 
 ## Versioning
 
-BifrostWrite uses [Semantic Versioning](https://semver.org/) with `0.x` releases
-during the beta phase. The minor version increments with each release — there
-is no upper limit before `1.0`. The `1.0` release signals a stable, public API
-and UX commitment.
+BifrostWrite uses [Semantic Versioning](https://semver.org/). Stable releases
+start at `1.0.0`; preview builds use prerelease suffixes such as `-beta.1`.
 
 ```
-0.1 → 0.2 → ... → 0.47 → ... → 1.0
+1.0.0-beta.1 → 1.0.0-beta.2 → 1.0.0
 ```
 
-Patch versions (`0.x.1`, `0.x.2`) are reserved for hotfixes within a release.
+Patch versions are reserved for compatible fixes within a stable release line.
 
 ## What belongs here
 
@@ -33,6 +31,22 @@ Only changes that matter to users who download and use BifrostWrite. Internal
 refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
+
+## [1.0.0] - 2026-08-13
+
+### Added
+
+- Released the first stable BifrostWrite desktop application for Apple Silicon and Intel Macs.
+- Added GitHub Release and Homebrew Cask distribution with architecture-specific DMGs and SHA-256 checksums.
+
+### Changed
+
+- Promoted the Tauri 2 desktop architecture after validating the published `1.0.0-beta.1` to `1.0.0-beta.2` in-app update path.
+- Updated release checksums so downloaded files can be verified directly with `shasum -c`.
+
+### Removed
+
+- Removed the Electron runtime, Electron packaging dependencies, legacy framework bundle, and obsolete desktop release paths.
 
 ## [1.0.0-beta.2] - 2026-08-13
 
