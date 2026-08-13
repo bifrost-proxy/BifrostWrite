@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { LinksPanel } from "./LinksPanel";
@@ -291,7 +291,85 @@ describe("LinksPanel", () => {
         );
     });
 
-    it.todo(
-        "ignores late backlink responses in the combined links panel when the active note changes",
-    );
+    it("ignores late backlink responses in the combined links panel when the active note changes", async () => {
+        const invokeMock = mockInvoke();
+        let resolveCurrentBacklinks: (
+            backlinks: Array<{ id: string; title: string }>,
+        ) => void = () => undefined;
+        const currentBacklinks = new Promise<
+            Array<{ id: string; title: string }>
+        >((resolve) => {
+            resolveCurrentBacklinks = resolve;
+        });
+
+        setVaultNotes([
+            {
+                id: "notes/current",
+                path: "/vault/notes/current.md",
+                title: "Current",
+                modified_at: 1,
+                created_at: 1,
+            },
+            {
+                id: "notes/next",
+                path: "/vault/notes/next.md",
+                title: "Next",
+                modified_at: 1,
+                created_at: 1,
+            },
+        ]);
+        setEditorTabs(
+            [
+                {
+                    id: "tab-current",
+                    noteId: "notes/current",
+                    title: "Current",
+                    content: "",
+                },
+                {
+                    id: "tab-next",
+                    noteId: "notes/next",
+                    title: "Next",
+                    content: "",
+                },
+            ],
+            "tab-current",
+        );
+
+        invokeMock.mockImplementation(async (command, args) => {
+            if (command !== "get_backlinks") {
+                throw new Error(`Unexpected command: ${command}`);
+            }
+            const noteId = (args as { noteId?: string } | undefined)?.noteId;
+            if (noteId === "notes/current") return currentBacklinks;
+            if (noteId === "notes/next") {
+                return [{ id: "notes/new-source", title: "New Source" }];
+            }
+            throw new Error(`Unexpected note: ${noteId}`);
+        });
+
+        renderComponent(<LinksPanel />);
+        await waitFor(() => {
+            expect(invokeMock).toHaveBeenCalledWith(
+                "get_backlinks",
+                expect.objectContaining({ noteId: "notes/current" }),
+            );
+        });
+
+        act(() => {
+            useEditorStore.getState().switchTab("tab-next");
+        });
+        expect(await screen.findByText("New Source")).toBeInTheDocument();
+
+        await act(async () => {
+            resolveCurrentBacklinks([
+                { id: "notes/stale-source", title: "Stale Source" },
+            ]);
+            await currentBacklinks;
+        });
+        await flushPromises();
+
+        expect(screen.queryByText("Stale Source")).not.toBeInTheDocument();
+        expect(screen.getByText("New Source")).toBeInTheDocument();
+    });
 });

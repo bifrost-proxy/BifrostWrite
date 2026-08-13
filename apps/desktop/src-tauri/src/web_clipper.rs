@@ -5,6 +5,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
+use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 use url::Url;
@@ -17,6 +18,8 @@ const CHROME_EXTENSION_ID: &str = "pogmjgibofkooljfgaandhoinmenfhao";
 const FIREFOX_EXTENSION_ID: &str = "web-clipper@bifrostwrite.app";
 const CLIP_SAVED_EVENT: &str = "bifrostwrite:web-clipper/clip-saved";
 const ROUTE_CLIP_EVENT: &str = "bifrostwrite:web-clipper/route-clip";
+const DEEP_LINK_READY_ATTEMPTS: usize = 300;
+const DEEP_LINK_READY_INTERVAL: Duration = Duration::from_millis(100);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum IdentityKind {
@@ -106,7 +109,13 @@ pub fn handle_deep_link(app: AppHandle, bridge: Arc<BackendBridge>, url: Url) {
                 "vaultPathHint": query.get("vaultPathHint").map(|value| value.as_ref()).or_else(|| vault.as_deref().filter(|value| Path::new(value).is_absolute())),
                 "vaultNameHint": query.get("vaultNameHint").map(|value| value.as_ref()).or_else(|| vault.as_deref().filter(|value| !Path::new(value).is_absolute())),
             });
-            let payload = bridge.invoke("web_clipper_save_note".to_string(), args)?;
+            let payload = save_deep_link_when_ready(
+                args,
+                || bridge.invoke("web_clipper_ready_vaults".to_string(), json!({})),
+                |args| bridge.invoke("web_clipper_save_note".to_string(), args),
+                || std::thread::sleep(DEEP_LINK_READY_INTERVAL),
+                DEEP_LINK_READY_ATTEMPTS,
+            )?;
             emit_saved(&app, &payload);
             Ok(())
         })();
@@ -114,6 +123,68 @@ pub fn handle_deep_link(app: AppHandle, bridge: Arc<BackendBridge>, url: Url) {
             eprintln!("[bifrostwrite-clipper] deep link failed: {error}");
         }
     });
+}
+
+fn requested_vault_is_ready(vaults: &Value, args: &Value) -> bool {
+    let Some(vaults) = vaults.as_array() else {
+        return false;
+    };
+    if let Some(path_hint) = args
+        .get("vaultPathHint")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        return vaults
+            .iter()
+            .any(|vault| vault.get("path").and_then(Value::as_str) == Some(path_hint));
+    }
+    if let Some(name_hint) = args
+        .get("vaultNameHint")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        return vaults.iter().any(|vault| {
+            vault
+                .get("name")
+                .and_then(Value::as_str)
+                .is_some_and(|name| name.eq_ignore_ascii_case(name_hint))
+        });
+    }
+    !vaults.is_empty()
+}
+
+fn save_deep_link_when_ready<Ready, Save, Wait>(
+    args: Value,
+    mut ready_vaults: Ready,
+    mut save: Save,
+    mut wait: Wait,
+    max_attempts: usize,
+) -> Result<Value, String>
+where
+    Ready: FnMut() -> Result<Value, String>,
+    Save: FnMut(Value) -> Result<Value, String>,
+    Wait: FnMut(),
+{
+    let attempts = max_attempts.max(1);
+    let mut last_error = None;
+    for attempt in 0..attempts {
+        match ready_vaults() {
+            Ok(vaults) if requested_vault_is_ready(&vaults, &args) => {
+                return save(args);
+            }
+            Ok(_) => {}
+            Err(error) => last_error = Some(error),
+        }
+        if attempt + 1 < attempts {
+            wait();
+        }
+    }
+
+    Err(last_error.unwrap_or_else(|| {
+        "Timed out waiting for the selected vault before saving the deep-link clip.".to_string()
+    }))
 }
 
 fn handle_request(
@@ -508,5 +579,60 @@ mod tests {
             second_state.firefox_origin.as_deref(),
             Some("moz-extension://second")
         );
+    }
+
+    #[test]
+    fn deep_link_waits_for_the_selected_vault_before_saving() {
+        let args = json!({
+            "vaultPathHint": "/vault/acceptance",
+            "title": "Cold start clip",
+        });
+        let readiness = [
+            json!([]),
+            json!([{"name": "Other", "path": "/vault/other"}]),
+            json!([{"name": "Acceptance", "path": "/vault/acceptance"}]),
+        ];
+        let mut readiness = readiness.into_iter();
+        let mut waits = 0;
+        let mut saves = 0;
+
+        let result = save_deep_link_when_ready(
+            args.clone(),
+            || Ok(readiness.next().unwrap()),
+            |received| {
+                saves += 1;
+                assert_eq!(received, args);
+                Ok(json!({"ok": true}))
+            },
+            || waits += 1,
+            3,
+        )
+        .unwrap();
+
+        assert_eq!(result, json!({"ok": true}));
+        assert_eq!(waits, 2);
+        assert_eq!(saves, 1);
+    }
+
+    #[test]
+    fn deep_link_times_out_without_saving_when_the_vault_never_becomes_ready() {
+        let mut waits = 0;
+        let mut saves = 0;
+
+        let error = save_deep_link_when_ready(
+            json!({"vaultNameHint": "Missing"}),
+            || Ok(json!([])),
+            |_| {
+                saves += 1;
+                Ok(Value::Null)
+            },
+            || waits += 1,
+            3,
+        )
+        .unwrap_err();
+
+        assert!(error.contains("Timed out waiting"));
+        assert_eq!(waits, 2);
+        assert_eq!(saves, 0);
     }
 }
