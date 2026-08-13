@@ -10,6 +10,8 @@ type InitializeOptions = {
     backgroundCheck?: boolean;
 };
 
+export const APP_UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000;
+
 interface AppUpdateStore {
     status: AppUpdateStatus | null;
     loading: boolean;
@@ -179,3 +181,20 @@ export const useAppUpdateStore = create<AppUpdateStore>((set, get) => ({
         });
     },
 }));
+
+export function startAppUpdateBackgroundChecks(
+    intervalMs = APP_UPDATE_CHECK_INTERVAL_MS,
+) {
+    void useAppUpdateStore
+        .getState()
+        .initialize({ backgroundCheck: true });
+
+    const intervalId = window.setInterval(() => {
+        const state = useAppUpdateStore.getState();
+        if (state.status?.enabled) {
+            void state.checkNow({ background: true });
+        }
+    }, intervalMs);
+
+    return () => window.clearInterval(intervalId);
+}

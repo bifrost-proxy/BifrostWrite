@@ -39,13 +39,16 @@ vi.mock("./EditorPaneBar", () => ({
     EditorPaneBar: ({
         paneId,
         isFocused,
+        isTopRightPane,
     }: {
         paneId: string;
         isFocused: boolean;
+        isTopRightPane?: boolean;
     }) => (
         <div
             data-testid={`pane-bar-${paneId}`}
             data-focused={isFocused || undefined}
+            data-top-right={isTopRightPane || undefined}
         >
             {paneId}
         </div>
@@ -938,6 +941,16 @@ describe("MultiPaneWorkspace", () => {
                 .getByTestId("pane-bar-secondary")
                 .closest('[data-workspace-split-direction="column"]'),
         ).not.toBeNull();
+        expect(screen.getByTestId("pane-bar-primary")).not.toHaveAttribute(
+            "data-top-right",
+        );
+        expect(screen.getByTestId("pane-bar-secondary")).toHaveAttribute(
+            "data-top-right",
+            "true",
+        );
+        expect(screen.getByTestId("pane-bar-tertiary")).not.toHaveAttribute(
+            "data-top-right",
+        );
     });
 
     it("stretches pane containers to fill their split slots", () => {

@@ -125,7 +125,7 @@ import {
     openDeepLinkFile,
     type DeepLinkOpenFilePayload,
 } from "./features/deep-link/openDeepLinkFile";
-import { useAppUpdateStore } from "./features/updates/store";
+import { startAppUpdateBackgroundChecks } from "./features/updates/store";
 import {
     buildWindowOperationalState,
     WINDOW_OPERATIONAL_STATE_PUBLISH_DEBOUNCE_MS,
@@ -1413,7 +1413,8 @@ export default function App() {
         if (windowMode !== "main") {
             return;
         }
-        void useAppUpdateStore.getState().initialize({ backgroundCheck: true });
+
+        return startAppUpdateBackgroundChecks();
     }, [windowMode]);
 
     useEffect(() => {

@@ -52,6 +52,8 @@ export const ZH_CN_TRANSLATIONS: Readonly<Record<string, string>> = {
     "Simplified Chinese": "简体中文",
     "Choose the language used by the application.": "选择应用界面所使用的语言。",
     "Downloading…": "下载中…",
+    "Install update": "安装更新",
+    "Installing update…": "正在安装更新…",
     "Failed to install the agent runtime.": "智能体运行时安装失败。",
     "Agent runtime installation timed out.": "智能体运行时安装超时。",
     "The managed Codex ACP adapter requires the previously discovered system Codex CLI. Reinstall the Codex runtime to repair it.":
