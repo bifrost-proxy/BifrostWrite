@@ -28,6 +28,7 @@ describe("settingsStore", () => {
     });
 
     it("defaults app settings", () => {
+        expect(useSettingsStore.getState().appLanguage).toBe("system");
         expect(useSettingsStore.getState().terminalFontFamily).toBe("");
         expect(useSettingsStore.getState().terminalFontSize).toBe(13);
         expect(useSettingsStore.getState().claudeCodeOptimized).toBe(false);
@@ -54,6 +55,25 @@ describe("settingsStore", () => {
         expect(useSettingsStore.getState().fileTreeExtensionFilter).toEqual([]);
         expect(useSettingsStore.getState().vimModeEnabled).toBe(false);
         expect(useSettingsStore.getState().vimRelativeLineNumbers).toBe(false);
+    });
+
+    it("persists the application language globally across vaults", () => {
+        useVaultStore.setState({ vaultPath: "/vaults/language-one" });
+        useSettingsStore.getState().setSetting("appLanguage", "zh-CN");
+
+        expect(
+            JSON.parse(localStorage.getItem("bifrostwrite:settings") ?? ""),
+        ).toMatchObject({ state: { appLanguage: "zh-CN" } });
+        expect(
+            JSON.parse(
+                localStorage.getItem(
+                    "bifrostwrite:settings:/vaults/language-one",
+                ) ?? "",
+            ).state,
+        ).not.toHaveProperty("appLanguage");
+
+        useVaultStore.setState({ vaultPath: "/vaults/language-two" });
+        expect(useSettingsStore.getState().appLanguage).toBe("zh-CN");
     });
 
     it("resolves the default PDF zoom into initial tab state", () => {

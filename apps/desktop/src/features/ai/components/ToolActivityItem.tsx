@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useCallback, useState, type KeyboardEvent } from "react";
 
 import {
@@ -129,14 +130,14 @@ export function OpenSessionActionButton({
                     : "color-mix(in srgb, var(--text-secondary) 62%, transparent)",
                 cursor: canOpenSession ? "pointer" : "default",
             }}
-            title={canOpenSession ? label : "Session is not available yet"}
+            title={canOpenSession ? label : translate("Session is not available yet")}
             onClick={(event) => {
                 event.stopPropagation();
                 if (!resolvedOpenSessionId) return;
                 void openChatSessionInWorkspace(resolvedOpenSessionId);
             }}
         >
-            {label}
+            {translate(label)}
         </button>
     );
 }
@@ -448,7 +449,7 @@ export function ToolActivityItem({
                 )}
                 {isInProgress ? (
                     <span
-                        aria-label="Running"
+                        aria-label={translate("Running")}
                         className="inline-block h-1.5 w-1.5 shrink-0 animate-pulse rounded-full"
                         style={{ backgroundColor: "var(--accent)" }}
                     />

@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 /* eslint-disable react-refresh/only-export-components */
 import {
     useEffect,
@@ -331,7 +332,7 @@ function Pill({ label, fontSize }: { label: string; fontSize: number }) {
                 border: "1px solid var(--border)",
             }}
         >
-            {label}
+            {translate(label)}
         </span>
     );
 }
@@ -404,7 +405,7 @@ function DateField({
                 }}
             >
                 <span style={{ flex: 1, minWidth: 0 }}>
-                    {value ? formatDisplayDate(value) : "Select a date"}
+                    {value ? formatDisplayDate(value) : translate("Select a date")}
                 </span>
                 <svg
                     width="12"
@@ -573,7 +574,7 @@ function DateField({
                                     "color-mix(in srgb, var(--bg-secondary) 78%, transparent)",
                             }}
                         >
-                            Today
+                            {translate("Today")}
                         </button>
                         <button
                             type="button"
@@ -590,7 +591,7 @@ function DateField({
                                 background: "transparent",
                             }}
                         >
-                            Clear
+                            {translate("Clear")}
                         </button>
                     </div>
                 </div>
@@ -700,7 +701,7 @@ function PillEditor({
                     }
                 }}
                 onBlur={commit}
-                placeholder={items.length === 0 ? "Add item…" : "+"}
+                placeholder={items.length === 0 ? translate("Add item…") : "+"}
                 style={{
                     fontSize,
                     color: "var(--text-secondary)",
@@ -848,7 +849,7 @@ function PropertyEditor({
                         flexShrink: 0,
                     }}
                 >
-                    Open
+                    {translate("Open")}
                 </button>
             )}
         </div>
@@ -942,7 +943,7 @@ function AddPropertyTriggerButton({ onClick }: { onClick: () => void }) {
             }}
         >
             <span style={{ fontSize: 12, lineHeight: 1 }}>+</span>
-            Add property
+            {translate("Add property")}
         </button>
     );
 }
@@ -1010,7 +1011,7 @@ function AddPropertyComposer({
                 <input
                     value={key}
                     onChange={(e) => setKey(e.target.value)}
-                    placeholder="Property name"
+                    placeholder={translate("Property name")}
                     style={{
                         minWidth: 0,
                         height: 28,
@@ -1038,11 +1039,11 @@ function AddPropertyComposer({
                         fontSize,
                     }}
                 >
-                    <option value="text">Text</option>
-                    <option value="url">URL</option>
-                    <option value="date">Date</option>
-                    <option value="list">List</option>
-                    <option value="tags">Tags</option>
+                    <option value="text">{translate("Text")}</option>
+                    <option value="url">{translate("URL")}</option>
+                    <option value="date">{translate("Date")}</option>
+                    <option value="list">{translate("List")}</option>
+                    <option value="tags">{translate("Tags")}</option>
                 </select>
                 {type === "date" ? (
                     <DateField
@@ -1056,8 +1057,8 @@ function AddPropertyComposer({
                         onChange={(e) => setValue(e.target.value)}
                         placeholder={
                             type === "list" || type === "tags"
-                                ? "item 1, item 2, item 3"
-                                : "Value"
+                                ? translate("item 1, item 2, item 3")
+                                : translate("Value")
                         }
                         style={{
                             minWidth: 0,
@@ -1089,7 +1090,7 @@ function AddPropertyComposer({
                         background: "transparent",
                     }}
                 >
-                    Cancel
+                    {translate("Cancel")}
                 </button>
                 <button
                     type="button"
@@ -1104,7 +1105,7 @@ function AddPropertyComposer({
                             "color-mix(in srgb, var(--accent) 14%, var(--bg-primary))",
                     }}
                 >
-                    Save
+                    {translate("Save")}
                 </button>
             </div>
         </div>

@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useMemo, useState } from "react";
 
 import {
@@ -288,7 +289,7 @@ function ChangeReviewToolRailRow({
                 <span className="shrink-0 opacity-70">{actionLabel}</span>
                 {canOpen && openPath ? (
                     <button
-                        aria-label={`Open ${openPath}`}
+                        aria-label={translate(`Open ${openPath}`)}
                         className="min-w-0 truncate text-left text-text-primary underline decoration-text-secondary/40 underline-offset-2 hover:decoration-current focus-visible:rounded-sm focus-visible:outline-none focus-visible:shadow-[0_0_0_1px_var(--accent)]"
                         onClick={() => void openAiEditedFileByAbsolutePath(openPath)}
                         onContextMenu={(event) => {
@@ -356,13 +357,13 @@ function ChangeReviewToolRailRow({
                         type="button"
                         aria-label={
                             showMarkdownPreview
-                                ? "Show source diff"
-                                : "Show markdown preview"
+                                ? translate("Show source diff")
+                                : translate("Show markdown preview")
                         }
                         title={
                             showMarkdownPreview
-                                ? "Show source diff"
-                                : "Show markdown preview"
+                                ? translate("Show source diff")
+                                : translate("Show markdown preview")
                         }
                         onClick={() =>
                             setShowMarkdownPreview((current) => !current)
@@ -375,12 +376,12 @@ function ChangeReviewToolRailRow({
                             cursor: "pointer",
                         }}
                     >
-                        {showMarkdownPreview ? "View" : "Preview"}
+                        {showMarkdownPreview ? translate("View") : translate("Preview")}
                     </button>
                 ) : null}
                 {isInProgress ? (
                     <span
-                        aria-label="Running"
+                        aria-label={translate("Running")}
                         className="inline-block h-1.5 w-1.5 shrink-0 animate-pulse rounded-full"
                         style={{ backgroundColor: "var(--accent)" }}
                     />
@@ -390,11 +391,11 @@ function ChangeReviewToolRailRow({
                         className="shrink-0 text-[10px] font-semibold uppercase"
                         style={{ color: "#f87171" }}
                     >
-                        Failed
+                        {translate("Failed")}
                     </span>
                 ) : null}
                 <button
-                    aria-label={`${expanded ? "Collapse" : "Expand"} inline diff review`}
+                    aria-label={translate(`${expanded ? "Collapse" : "Expand"} inline diff review`)}
                     className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-text-secondary hover:bg-bg-tertiary hover:text-text-primary focus-visible:outline-none focus-visible:shadow-[0_0_0_1px_var(--accent)]"
                     onClick={onToggle}
                     type="button"

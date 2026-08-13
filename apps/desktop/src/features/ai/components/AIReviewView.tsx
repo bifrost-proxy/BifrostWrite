@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     useEditorStore,
@@ -73,7 +74,7 @@ function ReviewEmptyState({
                         color: "var(--text-secondary)",
                     }}
                 >
-                    No pending AI edits
+                    {translate("No pending AI edits")}
                 </div>
                 <div
                     style={{
@@ -83,7 +84,7 @@ function ReviewEmptyState({
                         lineHeight: 1.5,
                     }}
                 >
-                    New edits will appear here automatically.
+                    {translate("New edits will appear here automatically.")}
                 </div>
             </div>
             {hasUndo && onUndo && (
@@ -96,7 +97,7 @@ function ReviewEmptyState({
                         ...getNeutralButtonStyle(),
                     }}
                 >
-                    Undo Last Reject
+                    {translate("Undo Last Reject")}
                 </button>
             )}
         </div>
@@ -135,7 +136,7 @@ function StatChips({
     return (
         <div className="flex flex-wrap items-baseline gap-2">
             <span style={statStyle}>
-                {summary.fileCount} {summary.fileCount === 1 ? "file" : "files"}
+                {summary.fileCount} {summary.fileCount === 1 ? translate("file") : translate("files")}
             </span>
             {summary.additions > 0 && (
                 <span style={{ ...statStyle, color: "var(--diff-add)" }}>
@@ -150,7 +151,7 @@ function StatChips({
             {summary.conflictCount > 0 && (
                 <span style={{ ...statStyle, color: "var(--diff-warn)" }}>
                     {summary.conflictCount}{" "}
-                    {summary.conflictCount === 1 ? "conflict" : "conflicts"}
+                    {summary.conflictCount === 1 ? translate("conflict") : translate("conflicts")}
                 </span>
             )}
         </div>
@@ -185,7 +186,7 @@ export function AIReviewView({ paneId, tabId }: AIReviewViewProps) {
                 className="flex h-full items-center justify-center"
                 style={{ color: "var(--text-secondary)" }}
             >
-                No review tab active
+                {translate("No review tab active")}
             </div>
         );
     }
@@ -547,7 +548,7 @@ function ReviewContent({ tab }: { tab: ReviewTab }) {
                                     margin: 0,
                                 }}
                             >
-                                Pending Changes
+                                {translate("Pending Changes")}
                             </h1>
                             <StatChips summary={summary} />
                         </div>
@@ -572,9 +573,9 @@ function ReviewContent({ tab }: { tab: ReviewTab }) {
                                         ...getNeutralButtonStyle(),
                                         ...REVIEW_ACTION_LABEL_STYLE,
                                     }}
-                                    title="Undo last reject"
+                                    title={translate("Undo last reject")}
                                 >
-                                    Undo
+                                    {translate("Undo")}
                                 </button>
                             )}
                             <button
@@ -590,7 +591,7 @@ function ReviewContent({ tab }: { tab: ReviewTab }) {
                                     ...REVIEW_ACTION_LABEL_STYLE,
                                 }}
                             >
-                                {expansion.allExpanded ? "Collapse" : "Expand"}
+                                {expansion.allExpanded ? translate("Collapse") : translate("Expand")}
                             </button>
                             <button
                                 type="button"
@@ -602,11 +603,11 @@ function ReviewContent({ tab }: { tab: ReviewTab }) {
                                 }}
                                 title={
                                     wideMode
-                                        ? "Center cards"
-                                        : "Expand cards to full width"
+                                        ? translate("Center cards")
+                                        : translate("Expand cards to full width")
                                 }
                             >
-                                {wideMode ? "Center" : "Wide"}
+                                {wideMode ? translate("Center") : translate("Wide")}
                             </button>
                             <button
                                 type="button"
@@ -622,7 +623,7 @@ function ReviewContent({ tab }: { tab: ReviewTab }) {
                                     ...REVIEW_ACTION_LABEL_STYLE,
                                 }}
                             >
-                                Reject All
+                                {translate("Reject All")}
                             </button>
                             <button
                                 type="button"
@@ -635,7 +636,7 @@ function ReviewContent({ tab }: { tab: ReviewTab }) {
                                     ...REVIEW_ACTION_LABEL_STYLE,
                                 }}
                             >
-                                Keep All
+                                {translate("Keep All")}
                             </button>
                         </div>
                     </div>

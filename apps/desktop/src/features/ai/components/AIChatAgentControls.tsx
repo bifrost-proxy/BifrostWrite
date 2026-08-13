@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { AIConfigOption, AIModeOption, AIModelOption } from "../types";
 
@@ -55,7 +56,7 @@ function FullAccessPolicyHelp() {
         <div className="relative flex shrink-0 items-center">
             <button
                 aria-describedby={open ? descriptionId : undefined}
-                aria-label="Full Access safety policy"
+                aria-label={translate("Full Access safety policy")}
                 className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold"
                 onBlur={() => setOpen(false)}
                 onFocus={() => setOpen(true)}
@@ -294,7 +295,7 @@ function DropdownField({
                                     event.stopPropagation();
                                 }}
                                 placeholder={searchPlaceholder}
-                                aria-label={`${label} search`}
+                                aria-label={translate(`${label} search`)}
                                 className="min-w-0 flex-1 bg-transparent text-xs outline-none"
                                 style={{
                                     color: "var(--text-primary)",
@@ -341,7 +342,7 @@ function DropdownField({
                                     key={option.value}
                                     type="button"
                                     disabled={option.disabled}
-                                    title={option.description}
+                                    title={translate(String(option.description))}
                                     onMouseDown={(event) => {
                                         if (option.disabled) {
                                             return;
@@ -379,7 +380,7 @@ function DropdownField({
                                             "transparent";
                                     }}
                                 >
-                                    {option.label}
+                                    {translate(String(option.label))}
                                 </button>
                             ))
                         )}
@@ -608,7 +609,7 @@ export function AIChatAgentControls({
             {modes.length > 0 ? (
                 <DropdownField
                     disabled={disabled}
-                    label="Approval Preset"
+                    label={translate("Approval Preset")}
                     value={modeId}
                     options={modes.map((mode) => ({
                         value: mode.id,
@@ -623,7 +624,7 @@ export function AIChatAgentControls({
             {lockedModelOptions.length > 0 ? (
                 <DropdownField
                     disabled={disabled}
-                    label="Model"
+                    label={translate("Model")}
                     value={selectedModelId}
                     searchable={shouldUseSearchableModelMenu(runtimeId)}
                     searchPlaceholder="Search models..."

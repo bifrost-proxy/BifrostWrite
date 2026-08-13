@@ -56,6 +56,19 @@ fn scan_finds_all_notes() {
 }
 
 #[test]
+fn scan_available_fully_parses_local_notes() {
+    let (_dir, vault) = setup_vault();
+    let result = vault.scan_available().unwrap();
+
+    assert_eq!(result.notes.len(), 3);
+    assert!(result.deferred_note_ids.is_empty());
+    assert!(result
+        .notes
+        .iter()
+        .any(|note| note.raw_markdown.contains("Contenido con")));
+}
+
+#[test]
 fn discover_markdown_files_ignores_internal_dirs() {
     let (dir, vault) = setup_vault();
     fs::create_dir_all(dir.path().join(".obsidian/plugins")).unwrap();

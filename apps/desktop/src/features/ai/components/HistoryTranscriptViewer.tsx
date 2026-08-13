@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { EditorFontFamily } from "../../../app/store/settingsStore";
 import { useChatStore } from "../store/chatStore";
@@ -76,11 +77,11 @@ function TranscriptHeader({
                     }}
                     title={
                         parentTitle
-                            ? `Subagent of ${parentTitle}`
-                            : "Subagent"
+                            ? translate(`Subagent of ${parentTitle}`)
+                            : translate("Subagent")
                     }
                 >
-                    {parentTitle ? `Subagent of ${parentTitle}` : "Subagent"}
+                    {parentTitle ? translate(`Subagent of ${parentTitle}`) : translate("Subagent")}
                 </span>
             ) : null}
             {onRestore && (
@@ -94,7 +95,7 @@ function TranscriptHeader({
                         border: "1px solid var(--accent)",
                         color: "var(--text-primary)",
                     }}
-                    title="Restore this chat"
+                    title={translate("Restore this chat")}
                 >
                     <svg
                         width="12"
@@ -109,7 +110,7 @@ function TranscriptHeader({
                         <path d="M2.5 6h7" />
                         <path d="M6 2.5 9.5 6 6 9.5" />
                     </svg>
-                    Restore
+                    {translate("Restore")}
                 </button>
             )}
             {onExport && (
@@ -122,7 +123,7 @@ function TranscriptHeader({
                         border: "1px solid var(--border)",
                         color: "var(--text-secondary)",
                     }}
-                    title="Export to note"
+                    title={translate("Export to note")}
                 >
                     <svg
                         width="12"
@@ -136,7 +137,7 @@ function TranscriptHeader({
                     >
                         <path d="M6 2v6M3.5 5.5 6 8l2.5-2.5M2.5 10h7" />
                     </svg>
-                    Export
+                    {translate("Export")}
                 </button>
             )}
             <button
@@ -155,7 +156,7 @@ function TranscriptHeader({
                         ? "var(--text-primary)"
                         : "var(--text-secondary)",
                 }}
-                title="Find in this chat"
+                title={translate("Find in this chat")}
             >
                 <svg
                     width="12"
@@ -170,7 +171,7 @@ function TranscriptHeader({
                     <circle cx="5.25" cy="5.25" r="3.25" />
                     <path d="M7.75 7.75 10 10" />
                 </svg>
-                Find
+                {translate("Find")}
             </button>
             <button
                 type="button"
@@ -181,7 +182,7 @@ function TranscriptHeader({
                     border: "1px solid var(--border)",
                     color: "var(--text-secondary)",
                 }}
-                title="Fork this chat"
+                title={translate("Fork this chat")}
             >
                 <svg
                     width="12"
@@ -195,7 +196,7 @@ function TranscriptHeader({
                 >
                     <path d="M3 2v3a3 3 0 0 0 3 3h0a3 3 0 0 0 3-3V2M3 2h0M9 2h0M6 8v2" />
                 </svg>
-                Fork
+                {translate("Fork")}
             </button>
             <span
                 className="shrink-0 text-[10px]"
@@ -261,7 +262,7 @@ export function HistoryTranscriptViewer({
                 className="flex h-full items-center justify-center text-xs"
                 style={{ color: "var(--text-secondary)" }}
             >
-                Session not found.
+                {translate("Session not found.")}
             </div>
         );
     }

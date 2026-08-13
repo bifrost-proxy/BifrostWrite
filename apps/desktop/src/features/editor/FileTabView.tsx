@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     useCallback,
     useEffect,
@@ -54,7 +55,7 @@ export function FileTabView({ paneId, tabId }: FileTabViewProps) {
                 className="h-full flex items-center justify-center"
                 style={{ color: "var(--text-secondary)" }}
             >
-                No file tab active
+                {translate("No file tab active")}
             </div>
         );
     }
@@ -80,7 +81,7 @@ export function FileTabView({ paneId, tabId }: FileTabViewProps) {
             className="h-full flex items-center justify-center"
             style={{ color: "var(--text-secondary)" }}
         >
-            Unsupported file viewer
+            {translate("Unsupported file viewer")}
         </div>
     );
 }
@@ -120,7 +121,7 @@ function FileHeader({ tab, children }: { tab: FileTab; children?: ReactNode }) {
                     className="inline-flex items-center rounded px-1.5 text-[10px]"
                     style={headerButtonStyle}
                 >
-                    Open Externally
+                    {translate("Open Externally")}
                 </button>
                 <button
                     type="button"
@@ -128,7 +129,7 @@ function FileHeader({ tab, children }: { tab: FileTab; children?: ReactNode }) {
                     className="inline-flex items-center rounded px-1.5 text-[10px]"
                     style={headerButtonStyle}
                 >
-                    Reveal in Finder
+                    {translate("Reveal in Finder")}
                 </button>
             </div>
         </div>
@@ -239,7 +240,7 @@ function ImageFileViewer({ tab }: { tab: FileTab }) {
                     className="inline-flex items-center rounded px-1.5 text-[10px]"
                     style={isFit ? activeHeaderButtonStyle : headerButtonStyle}
                 >
-                    Fit
+                    {translate("Fit")}
                 </button>
                 <button
                     type="button"
@@ -251,7 +252,7 @@ function ImageFileViewer({ tab }: { tab: FileTab }) {
                             : headerButtonStyle
                     }
                 >
-                    Actual Size
+                    {translate("Actual Size")}
                 </button>
                 {!isFit && (
                     <span
@@ -281,7 +282,7 @@ function ImageFileViewer({ tab }: { tab: FileTab }) {
                         className="h-full flex items-center justify-center"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        Loading image...
+                        {translate("Loading image...")}
                     </div>
                 )}
                 {status === "error" && (
@@ -293,12 +294,12 @@ function ImageFileViewer({ tab }: { tab: FileTab }) {
                             className="text-[13px] font-medium"
                             style={{ color: "var(--text-primary)" }}
                         >
-                            Failed to load image
+                            {translate("Failed to load image")}
                         </span>
                         <span className="text-[12px] max-w-sm">
                             {previewUrl
-                                ? "This image could not be rendered in the in-app viewer."
-                                : "This image can no longer be previewed because it is outside the active vault."}
+                                ? translate("This image could not be rendered in the in-app viewer.")
+                                : translate("This image can no longer be previewed because it is outside the active vault.")}
                         </span>
                     </div>
                 )}

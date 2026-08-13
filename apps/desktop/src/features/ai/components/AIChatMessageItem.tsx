@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import {
     memo,
     useCallback,
@@ -168,7 +169,7 @@ function UserMessageAttachmentThumbnail({
                             lineHeight: 1.2,
                         }}
                     >
-                        Image unavailable
+                        {translate("Image unavailable")}
                     </div>
                 ) : (
                     <img
@@ -206,31 +207,31 @@ function UserMessageAttachmentThumbnail({
                             opacity: 0.82,
                         }}
                     >
-                        {attachment.mimeType ?? "image"}
+                        {attachment.mimeType ?? translate("image")}
                     </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-1.5">
                     {filePath ? (
                         <ImageActionButton icon="open" onClick={openInApp}>
-                            Open
+                            {translate("Open")}
                         </ImageActionButton>
                     ) : null}
                     <ImageActionButton
                         icon="reveal"
                         onClick={reveal}
                     >
-                        Reveal in Finder
+                        {translate("Reveal in Finder")}
                     </ImageActionButton>
                     <ImageActionButton
                         icon={copied ? "check" : "copy"}
                         onClick={copyReference}
                     >
                         {copied
-                            ? "Copied"
+                            ? translate("Copied")
                             : managedAttachmentId
-                              ? "Copy ID"
-                              : "Copy Path"}
+                              ? translate("Copy ID")
+                              : translate("Copy Path")}
                     </ImageActionButton>
                 </div>
             </div>
@@ -361,7 +362,7 @@ function renderUserContent(
             parts.push(
                 <ChatInlinePill
                     key={key++}
-                    label="/plan"
+                    label={translate("/plan")}
                     metrics={pillMetrics}
                     variant="neutral"
                 />,
@@ -374,7 +375,7 @@ function renderUserContent(
             parts.push(
                 <ChatInlinePill
                     key={key++}
-                    label="@fetch"
+                    label={translate("@fetch")}
                     metrics={pillMetrics}
                     variant="success"
                 />,
@@ -576,11 +577,11 @@ function UserTextMessage({
                 ) : null}
                 {canCopy ? (
                     <button
-                        aria-label={copied ? "Message copied" : "Copy message"}
+                        aria-label={copied ? translate("Message copied") : translate("Copy message")}
                         className="flex h-5 w-5 items-center justify-center rounded text-text-secondary transition-colors hover:bg-bg-tertiary hover:text-text-primary focus-visible:outline-none focus-visible:shadow-[0_0_0_1px_var(--accent)]"
                         onClick={copyMessage}
                         style={copied ? { color: "var(--diff-add)" } : undefined}
-                        title={copied ? "Copied" : "Copy message"}
+                        title={copied ? translate("Copied") : translate("Copy message")}
                         type="button"
                     >
                         {copied ? <CopySuccessIcon /> : <CopyMessageIcon />}
@@ -786,11 +787,11 @@ function ThinkingMessage({
                     <path d="M4.5 2.5L8 6L4.5 9.5" />
                 </svg>
                 <span className="min-w-0 flex-1 truncate font-medium">
-                    Reasoning{message.inProgress ? "..." : ""}
+                    {translate("Reasoning")}{message.inProgress ? "..." : ""}
                 </span>
                 {message.inProgress ? (
                     <span
-                        aria-label="Reasoning in progress"
+                        aria-label={translate("Reasoning in progress")}
                         className="inline-block h-1.5 w-1.5 shrink-0 animate-pulse rounded-full"
                         style={{ backgroundColor: "var(--accent)" }}
                     />
@@ -974,8 +975,8 @@ export function PlanMessage({
                 {onDismiss ? (
                     <button
                         type="button"
-                        aria-label="Dismiss plan banner"
-                        title="Dismiss plan banner"
+                        aria-label={translate("Dismiss plan banner")}
+                        title={translate("Dismiss plan banner")}
                         onClick={onDismiss}
                         className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
                         style={{
@@ -1070,7 +1071,7 @@ export function PlanMessage({
                         fontSize: "0.8em",
                     }}
                 >
-                    No plan steps yet.
+                    {translate("No plan steps yet.")}
                 </div>
             ) : null}
 
@@ -1239,7 +1240,7 @@ function GeneratedImageMessage({ message }: { message: AIChatMessage }) {
                         className="font-medium"
                         style={{ fontSize: "0.84em" }}
                     >
-                        Generating image...
+                        {translate("Generating image...")}
                     </span>
                 </div>
             </div>
@@ -1303,10 +1304,10 @@ function GeneratedImageMessage({ message }: { message: AIChatMessage }) {
                         }}
                     >
                         {isFailed
-                            ? message.content || "Image generation failed"
+                            ? message.content || translate("Image generation failed")
                             : previewUrl
-                              ? "Image file could not be loaded"
-                              : "Image path is unavailable"}
+                              ? translate("Image file could not be loaded")
+                              : translate("Image path is unavailable")}
                     </div>
                     {!isFailed ? (
                         <div
@@ -1317,7 +1318,7 @@ function GeneratedImageMessage({ message }: { message: AIChatMessage }) {
                                 opacity: 0.7,
                             }}
                         >
-                            This generated image may have been moved or deleted.
+                            {translate("This generated image may have been moved or deleted.")}
                         </div>
                     ) : null}
                 </div>
@@ -1329,7 +1330,7 @@ function GeneratedImageMessage({ message }: { message: AIChatMessage }) {
                 >
                     <img
                         src={previewUrl ?? undefined}
-                        alt={revisedPrompt ?? "Generated image"}
+                        alt={revisedPrompt ?? translate("Generated image")}
                         title={imagePath ?? undefined}
                         onError={() => setLoadFailed(true)}
                         className="block w-full"
@@ -1353,19 +1354,19 @@ function GeneratedImageMessage({ message }: { message: AIChatMessage }) {
                         icon="open"
                         onClick={() => void openPath(imagePath)}
                     >
-                        Open Externally
+                        {translate("Open Externally")}
                     </ImageActionButton>
                     <ImageActionButton
                         icon="reveal"
                         onClick={() => void revealItemInDir(imagePath)}
                     >
-                        Reveal in Finder
+                        {translate("Reveal in Finder")}
                     </ImageActionButton>
                     <ImageActionButton
                         icon={copied ? "check" : "copy"}
                         onClick={copyPath}
                     >
-                        {copied ? "Copied" : "Copy Path"}
+                        {copied ? translate("Copied") : translate("Copy Path")}
                     </ImageActionButton>
                 </div>
             ) : null}
@@ -1413,7 +1414,7 @@ function StatusMessage({ message }: { message: AIChatMessage }) {
                         className="font-medium"
                         style={{ fontSize: "0.84em" }}
                     >
-                        {title}
+                        {translate(String(title))}
                     </span>
                 </div>
                 {detail && (
@@ -1426,7 +1427,7 @@ function StatusMessage({ message }: { message: AIChatMessage }) {
                             wordBreak: "break-word",
                         }}
                     >
-                        {detail}
+                        {translate(String(detail))}
                     </div>
                 )}
             </div>
@@ -1447,7 +1448,7 @@ function StatusMessage({ message }: { message: AIChatMessage }) {
                     className="uppercase tracking-[0.14em] text-xs font-medium"
                     style={{ color: accent }}
                 >
-                    {title}
+                    {translate(String(title))}
                 </div>
                 {detail && (
                     <div
@@ -1459,7 +1460,7 @@ function StatusMessage({ message }: { message: AIChatMessage }) {
                             fontSize: "0.83em",
                         }}
                     >
-                        {detail}
+                        {translate(String(detail))}
                     </div>
                 )}
             </div>
@@ -1503,7 +1504,9 @@ function StatusMessage({ message }: { message: AIChatMessage }) {
                         ) : null}
                     </svg>
                 )}
-                <span className="min-w-0 flex-1 truncate">{title}</span>
+                <span className="min-w-0 flex-1 truncate">
+                    {translate(String(title))}
+                </span>
                 <OpenSessionActionButton message={message} />
             </div>
             {detail && (
@@ -1515,7 +1518,7 @@ function StatusMessage({ message }: { message: AIChatMessage }) {
                         opacity: 0.8,
                     }}
                 >
-                    {detail}
+                    {translate(String(detail))}
                 </div>
             )}
         </div>
@@ -1600,14 +1603,14 @@ function ChangeReviewFileRow({
                 >
                     <span>
                         {diff.kind === "add"
-                            ? "new file"
+                            ? translate("new file")
                             : diff.kind === "delete"
-                              ? "deleted"
+                              ? translate("deleted")
                               : diff.kind === "move"
                                 ? previousFilename
-                                    ? `moved from ${previousFilename}`
-                                    : "moved"
-                                : "modified"}
+                                    ? translate(`moved from ${previousFilename}`)
+                                    : translate("moved")
+                                : translate("modified")}
                     </span>
                     {diff.reversible === false ? (
                         <span
@@ -1621,7 +1624,7 @@ function ChangeReviewFileRow({
                                     "color-mix(in srgb, #f59e0b 14%, transparent)",
                             }}
                         >
-                            partial
+                            {translate("partial")}
                         </span>
                     ) : null}
                 </span>
@@ -1872,7 +1875,7 @@ function DiffOpenButton({
                 <path d="M10 2L5.5 6.5" />
                 <path d="M9 7v2.5a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6a.5.5 0 0 1 .5-.5H5" />
             </svg>
-            Open
+            {translate("Open")}
         </button>
     );
 }
@@ -2112,7 +2115,7 @@ function ChangeReviewPanel({
                                     : undefined
                             }
                         >
-                            {`${actionLabel}${actionLabel.endsWith("e") ? "d" : "ed"} ${singleFilename}`}
+                            {translate(`${actionLabel}${actionLabel.endsWith("e") ? "d" : "ed"} ${singleFilename}`)}
                         </span>
                         {singleFileStatusLabel &&
                             singleFileStatusLabel !== "modified" && (
@@ -2139,7 +2142,7 @@ function ChangeReviewPanel({
                                         "color-mix(in srgb, #f59e0b 14%, transparent)",
                                 }}
                             >
-                                partial
+                                {translate("partial")}
                             </span>
                         )}
                     </div>
@@ -2152,7 +2155,8 @@ function ChangeReviewPanel({
                                 fontSize: "0.83em",
                             }}
                         >
-                            {actionLabel} {fileCount} {fileWord}
+                            {translate(actionLabel)} {fileCount}{" "}
+                            {translate(fileWord)}
                         </span>
                         <span
                             style={{
@@ -2323,8 +2327,8 @@ function ChangeReviewPanel({
                     }}
                 >
                     {isResponding
-                        ? "Sending decision..."
-                        : `Decision sent${resolvedOptionLabel ? `: ${resolvedOptionLabel}` : "."}`}
+                        ? translate("Sending decision...")
+                        : translate(`Decision sent${resolvedOptionLabel ? `: ${resolvedOptionLabel}` : "."}`)}
                 </div>
             )}
         </div>
@@ -2374,8 +2378,8 @@ function ErrorMessage({
             {onDismiss ? (
                 <button
                     type="button"
-                    aria-label="Dismiss error"
-                    title="Dismiss"
+                    aria-label={translate("Dismiss error")}
+                    title={translate("Dismiss")}
                     onClick={() => onDismiss(message.id)}
                     className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
                     style={{
@@ -2532,10 +2536,10 @@ function PermissionMessage({
                         }}
                         aria-label={
                             expanded
-                                ? "Collapse permission message"
-                                : "Expand permission message"
+                                ? translate("Collapse permission message")
+                                : translate("Expand permission message")
                         }
-                        title={expanded ? "Collapse message" : "Expand message"}
+                        title={expanded ? translate("Collapse message") : translate("Expand message")}
                     >
                         <svg
                             width="10"
@@ -2616,7 +2620,7 @@ function PermissionMessage({
                                         padding: 0,
                                     }}
                                 >
-                                    {expanded ? "Show less" : "Show more"}
+                                    {expanded ? translate("Show less") : translate("Show more")}
                                 </button>
                             )}
                         </div>
@@ -2664,8 +2668,8 @@ function PermissionMessage({
                     }}
                 >
                     {isResponding
-                        ? "Sending decision..."
-                        : `Decision sent${resolvedOptionLabel ? `: ${resolvedOptionLabel}` : "."}`}
+                        ? translate("Sending decision...")
+                        : translate(`Decision sent${resolvedOptionLabel ? `: ${resolvedOptionLabel}` : "."}`)}
                 </div>
             )}
         </div>
@@ -2790,7 +2794,7 @@ function UserInputRequestMessage({
                         fontSize: "0.85em",
                     }}
                 >
-                    {message.title ?? "Input requested"}
+                    {message.title ?? translate("Input requested")}
                 </span>
             </div>
 
@@ -2920,7 +2924,7 @@ function UserInputRequestMessage({
                                                         lineHeight: 1.25,
                                                     }}
                                                 >
-                                                    {option.label}
+                                                    {translate(String(option.label))}
                                                 </span>
                                                 {option.description ? (
                                                     <span
@@ -2937,7 +2941,7 @@ function UserInputRequestMessage({
                                                                 "break-word",
                                                         }}
                                                     >
-                                                        {option.description}
+                                                        {translate(String(option.description))}
                                                     </span>
                                                 ) : null}
                                                 {showPreview ? (
@@ -3009,7 +3013,7 @@ function UserInputRequestMessage({
                                                 fontWeight: 600,
                                             }}
                                         >
-                                            Other
+                                            {translate("Other")}
                                         </label>
                                     ) : null}
                                     <textarea
@@ -3028,8 +3032,8 @@ function UserInputRequestMessage({
                                         }
                                         placeholder={
                                             question.custom_answer_id
-                                                ? "Other"
-                                                : "Additional note"
+                                                ? translate("Other")
+                                                : translate("Additional note")
                                         }
                                         rows={2}
                                         className="w-full resize-y rounded-md px-2.5 py-2"
@@ -3071,7 +3075,7 @@ function UserInputRequestMessage({
                             cursor: isPending ? "pointer" : "default",
                         }}
                     >
-                        Cancel
+                        {translate("Cancel")}
                     </button>
                     <button
                         type="button"
@@ -3087,7 +3091,7 @@ function UserInputRequestMessage({
                             cursor: isPending ? "pointer" : "default",
                         }}
                     >
-                        Submit
+                        {translate("Submit")}
                     </button>
                 </div>
             ) : null}
@@ -3104,12 +3108,12 @@ function UserInputRequestMessage({
                     }}
                 >
                     {isResponding
-                        ? "Sending input..."
+                        ? translate("Sending input...")
                         : isError
-                          ? "Input failed. Try again."
+                          ? translate("Input failed. Try again.")
                           : answered
-                            ? "Input sent."
-                            : "Input skipped."}
+                            ? translate("Input sent.")
+                            : translate("Input skipped.")}
                 </div>
             )}
         </div>
@@ -3189,7 +3193,7 @@ function UrlElicitationRequestMessage({
                         fontSize: "0.85em",
                     }}
                 >
-                    {message.title ?? "Open URL"}
+                    {message.title ?? translate("Open URL")}
                 </span>
             </div>
 
@@ -3214,7 +3218,7 @@ function UrlElicitationRequestMessage({
                             fontSize: "0.76em",
                         }}
                     >
-                        URL opened.
+                        {translate("URL opened.")}
                     </div>
                 ) : null}
             </div>
@@ -3242,7 +3246,7 @@ function UrlElicitationRequestMessage({
                             cursor: isDisabled ? "default" : "pointer",
                         }}
                     >
-                        Open
+                        {translate("Open")}
                     </button>
                     <button
                         type="button"
@@ -3262,7 +3266,7 @@ function UrlElicitationRequestMessage({
                                     : "pointer",
                         }}
                     >
-                        Cancel
+                        {translate("Cancel")}
                     </button>
                     <button
                         type="button"
@@ -3281,7 +3285,7 @@ function UrlElicitationRequestMessage({
                                     : "pointer",
                         }}
                     >
-                        Done
+                        {translate("Done")}
                     </button>
                 </div>
             ) : null}

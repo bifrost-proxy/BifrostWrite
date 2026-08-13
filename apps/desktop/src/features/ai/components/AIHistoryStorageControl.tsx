@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { confirm, revealItemInDir } from "@bifrostwrite/runtime";
 import {
@@ -87,15 +88,15 @@ export function AIHistoryStorageControl({
         async (target: AIStorageScope, sourceVaultKey?: string) => {
             if (!vaultPath || changing) return;
             const accepted = await confirm(
-                "This moves all saved AI chats and BifrostWrite-managed pasted attachments. The storage setting changes only after the move succeeds.",
+                translate("This moves all saved AI chats and BifrostWrite-managed pasted attachments. The storage setting changes only after the move succeeds."),
                 {
                     title:
                         target === "vault"
-                            ? "Move all AI chats into this vault?"
-                            : "Move all AI chats to this device?",
+                            ? translate("Move all AI chats into this vault?")
+                            : translate("Move all AI chats to this device?"),
                     kind: "warning",
-                    okLabel: "Move all chats",
-                    cancelLabel: "Cancel",
+                    okLabel: translate("Move all chats"),
+                    cancelLabel: translate("Cancel"),
                 },
             );
             if (!accepted) return;
@@ -188,16 +189,14 @@ export function AIHistoryStorageControl({
                         className="text-xs font-medium"
                         style={{ color: "var(--text-primary)" }}
                     >
-                        Store AI chats inside this vault
+                        {translate("Store AI chats inside this vault")}
                     </div>
                     {!compact ? (
                         <div
                             className="mt-0.5 max-w-xl text-[11px] leading-relaxed"
                             style={{ color: "var(--text-secondary)" }}
                         >
-                            AI chat history and pasted attachments will sync or
-                            be shared with this vault. Keep this off for shared
-                            or cloud-synced vaults.
+                            {translate("AI chat history and pasted attachments will sync or be shared with this vault. Keep this off for shared or cloud-synced vaults.")}
                         </div>
                     ) : null}
                 </div>
@@ -205,7 +204,7 @@ export function AIHistoryStorageControl({
                     <button
                         type="button"
                         role="switch"
-                        aria-label="Store AI chats inside this vault"
+                        aria-label={translate("Store AI chats inside this vault")}
                         aria-checked={ready.scope === "vault"}
                         disabled={isMoving}
                         onClick={() =>
@@ -236,7 +235,7 @@ export function AIHistoryStorageControl({
                         className="shrink-0 text-[10px]"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        {isMoving ? "Moving chats…" : "Needs attention"}
+                        {isMoving ? translate("Moving chats…") : translate("Needs attention")}
                     </span>
                 )}
             </div>
@@ -250,10 +249,10 @@ export function AIHistoryStorageControl({
                         border: "1px solid var(--border)",
                     }}
                 >
-                    <div>{recovery.message}</div>
+                    <div>{translate(String(recovery.message))}</div>
                     {conflictingIds.length > 0 ? (
                         <div className="mt-1 font-mono">
-                            Conflicts: {conflictingIds.join(", ")}
+                            {translate("Conflicts:")} {conflictingIds.join(", ")}
                         </div>
                     ) : null}
                     {recovery.canReconcile ? (
@@ -268,7 +267,7 @@ export function AIHistoryStorageControl({
                                     border: "1px solid var(--border)",
                                 }}
                             >
-                                Use this device
+                                {translate("Use this device")}
                             </button>
                             <button
                                 type="button"
@@ -280,7 +279,7 @@ export function AIHistoryStorageControl({
                                     border: "1px solid var(--border)",
                                 }}
                             >
-                                Use this vault
+                                {translate("Use this vault")}
                             </button>
                         </div>
                     ) : null}
@@ -302,7 +301,7 @@ export function AIHistoryStorageControl({
                                             border: "1px solid var(--border)",
                                         }}
                                     >
-                                        Reveal {root.label}
+                                        {translate("Reveal")} {translate(String(root.label))}
                                     </button>
                                 ))}
                             <button
@@ -315,7 +314,7 @@ export function AIHistoryStorageControl({
                                     border: "1px solid var(--border)",
                                 }}
                             >
-                                Export diagnostic
+                                {translate("Export diagnostic")}
                             </button>
                             <button
                                 type="button"
@@ -327,7 +326,7 @@ export function AIHistoryStorageControl({
                                     border: "1px solid var(--border)",
                                 }}
                             >
-                                Retry
+                                {translate("Retry")}
                             </button>
                         </div>
                     ) : null}
@@ -344,13 +343,12 @@ export function AIHistoryStorageControl({
                     }}
                 >
                     <div>
-                        Device-local chats from a previous vault are available
-                        to import.
+                        {translate("Device-local chats from a previous vault are available to import.")}
                     </div>
                     <label className="mt-2 block">
-                        <span className="block">Previous vault path</span>
+                        <span className="block">{translate("Previous vault path")}</span>
                         <select
-                            aria-label="Previous vault path"
+                            aria-label={translate("Previous vault path")}
                             value={selectedOrphanKey ?? ""}
                             onChange={(event) =>
                                 setSelectedOrphanKey(event.target.value)
@@ -388,7 +386,7 @@ export function AIHistoryStorageControl({
                                 border: "1px solid var(--border)",
                             }}
                         >
-                            Import to this device
+                            {translate("Import to this device")}
                         </button>
                         <button
                             type="button"
@@ -405,7 +403,7 @@ export function AIHistoryStorageControl({
                                 border: "1px solid var(--border)",
                             }}
                         >
-                            Import into this vault
+                            {translate("Import into this vault")}
                         </button>
                     </div>
                 </div>
@@ -413,7 +411,7 @@ export function AIHistoryStorageControl({
 
             {status?.status === "error" ? (
                 <div className="mt-2 text-[11px] text-red-500">
-                    {status.message}
+                    {translate(String(status.message))}
                 </div>
             ) : null}
         </div>

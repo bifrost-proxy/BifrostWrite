@@ -1,3 +1,4 @@
+import { translate } from "../../../../app/i18n";
 import { useEffect, useRef, type ReactNode } from "react";
 
 interface ChatFindBarProps {
@@ -87,7 +88,7 @@ export function ChatFindBar({
     return (
         <div
             role="search"
-            aria-label="Find in chat"
+            aria-label={translate("Find in chat")}
             className="absolute right-3 top-2 z-10 flex items-center gap-1 rounded-[10px] px-1.5 py-1"
             style={{
                 background: "var(--bg-elevated)",
@@ -114,8 +115,8 @@ export function ChatFindBar({
                         else onNext();
                     }
                 }}
-                placeholder="Find in chat…"
-                aria-label="Find in chat"
+                placeholder={translate("Find in chat…")}
+                aria-label={translate("Find in chat")}
                 spellCheck={false}
                 className="h-[22px] min-w-0 rounded px-2 outline-none"
                 style={{
@@ -140,9 +141,9 @@ export function ChatFindBar({
             <button
                 type="button"
                 onClick={onToggleCaseSensitive}
-                aria-label="Match case"
+                aria-label={translate("Match case")}
                 aria-pressed={caseSensitive}
-                title="Match case"
+                title={translate("Match case")}
                 className="nw-control-trigger flex h-[26px] w-[26px] items-center justify-center rounded-md text-[11px] font-semibold"
                 style={{
                     color: caseSensitive
@@ -152,14 +153,14 @@ export function ChatFindBar({
                     backgroundColor: "transparent",
                 }}
             >
-                Aa
+                {translate("Aa")}
             </button>
 
             <FindIconButton
                 onClick={onPrev}
                 disabled={disabled}
                 ariaLabel="Previous match"
-                title="Previous match (Shift+Enter)"
+                title={translate("Previous match (Shift+Enter)")}
             >
                 <path d="M3 9L7 5L11 9" />
             </FindIconButton>
@@ -168,7 +169,7 @@ export function ChatFindBar({
                 onClick={onNext}
                 disabled={disabled}
                 ariaLabel="Next match"
-                title="Next match (Enter)"
+                title={translate("Next match (Enter)")}
             >
                 <path d="M3 5L7 9L11 5" />
             </FindIconButton>
@@ -176,7 +177,7 @@ export function ChatFindBar({
             <FindIconButton
                 onClick={onClose}
                 ariaLabel="Close find"
-                title="Close (Esc)"
+                title={translate("Close (Esc)")}
             >
                 <path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" />
             </FindIconButton>

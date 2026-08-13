@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
     renderMermaidDiagram,
@@ -51,7 +52,7 @@ export function MermaidFilePreview({ source, tabId }: MermaidFilePreviewProps) {
                 borderLeft: "1px solid var(--border)",
                 backgroundColor: "var(--bg-primary)",
             }}
-            aria-label="Mermaid preview"
+            aria-label={translate("Mermaid preview")}
         >
             <div
                 className="flex h-8 shrink-0 items-center px-3 text-[11px] font-medium"
@@ -61,7 +62,7 @@ export function MermaidFilePreview({ source, tabId }: MermaidFilePreviewProps) {
                     color: "var(--text-secondary)",
                 }}
             >
-                Preview
+                {translate("Preview")}
             </div>
             <div className="min-h-0 flex-1 overflow-auto p-4">
                 {state.status === "idle" ? (
@@ -69,7 +70,7 @@ export function MermaidFilePreview({ source, tabId }: MermaidFilePreviewProps) {
                         className="flex h-full items-center justify-center text-[12px]"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        Mermaid source is empty.
+                        {translate("Mermaid source is empty.")}
                     </div>
                 ) : null}
                 {state.status === "loading" ? (
@@ -77,7 +78,7 @@ export function MermaidFilePreview({ source, tabId }: MermaidFilePreviewProps) {
                         className="flex h-full items-center justify-center text-[12px]"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        Rendering Mermaid diagram...
+                        {translate("Rendering Mermaid diagram...")}
                     </div>
                 ) : null}
                 {state.status === "rendered" ? (
@@ -101,13 +102,13 @@ export function MermaidFilePreview({ source, tabId }: MermaidFilePreviewProps) {
                         role="alert"
                     >
                         <div className="mb-2 font-medium">
-                            Mermaid diagram error
+                            {translate("Mermaid diagram error")}
                         </div>
                         <pre
                             className="m-0 whitespace-pre-wrap font-mono text-[11px]"
                             style={{ color: "var(--text-secondary)" }}
                         >
-                            {state.message}
+                            {translate(String(state.message))}
                         </pre>
                     </div>
                 ) : null}

@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     Fragment,
     memo,
@@ -145,7 +146,7 @@ const WorkspacePane = memo(function WorkspacePane({
             <EditorPaneBar paneId={paneId} isFocused={isFocused} />
             <EditorPaneContent
                 paneId={paneId}
-                emptyStateMessage="This pane is empty. Open a note here or close the pane from its menu."
+                emptyStateMessage={translate("This pane is empty. Open a note here or close the pane from its menu.")}
             />
         </div>
     );
@@ -354,7 +355,7 @@ export function WorkspaceSplitContainer({
                                 <div
                                     role="separator"
                                     aria-orientation={orientation}
-                                    aria-label={`Resize split ${node.id} sections ${index + 1} and ${index + 2}`}
+                                    aria-label={translate(`Resize split ${node.id} sections ${index + 1} and ${index + 2}`)}
                                     className="group/resizer absolute"
                                     style={{
                                         left:

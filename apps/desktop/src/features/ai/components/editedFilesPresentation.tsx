@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useCallback, useMemo } from "react";
 import type { LanguageSupport } from "@codemirror/language";
 import type { TrackedFile } from "../diff/actionLogTypes";
@@ -345,12 +346,12 @@ function HunkActionBar({
                         border: `1px solid color-mix(in srgb, ${color} 30%, var(--border))`,
                     }}
                 >
-                    {accepted ? "Accepted" : "Rejected"}
+                    {accepted ? translate("Accepted") : translate("Rejected")}
                 </span>
                 <button
                     type="button"
                     onClick={onUndo}
-                    aria-label={`Undo hunk ${hunkIndex + 1}`}
+                    aria-label={translate(`Undo hunk ${hunkIndex + 1}`)}
                     className="review-action-btn"
                     style={{
                         ...baseButtonStyle,
@@ -360,7 +361,7 @@ function HunkActionBar({
                         color: "var(--text-primary)",
                     }}
                 >
-                    Undo
+                    {translate("Undo")}
                 </button>
             </div>
         );
@@ -374,7 +375,7 @@ function HunkActionBar({
             <button
                 type="button"
                 onClick={onReject}
-                aria-label={`Reject hunk ${hunkIndex + 1}`}
+                aria-label={translate(`Reject hunk ${hunkIndex + 1}`)}
                 className="review-action-btn"
                 style={{
                     ...baseButtonStyle,
@@ -384,12 +385,12 @@ function HunkActionBar({
                     color: "var(--diff-remove)",
                 }}
             >
-                Reject
+                {translate("Reject")}
             </button>
             <button
                 type="button"
                 onClick={onAccept}
-                aria-label={`Accept hunk ${hunkIndex + 1}`}
+                aria-label={translate(`Accept hunk ${hunkIndex + 1}`)}
                 className="review-action-btn"
                 style={{
                     ...baseButtonStyle,
@@ -399,7 +400,7 @@ function HunkActionBar({
                     color: "var(--diff-add)",
                 }}
             >
-                Accept
+                {translate("Accept")}
             </button>
         </div>
     );
@@ -948,7 +949,7 @@ export function EditedFileDiffPreview({
                                                     opacity: 0.55,
                                                 }}
                                             >
-                                                Linked changes
+                                                {translate("Linked changes")}
                                             </div>
                                         ) : null}
                                         <div style={{ padding: 4 }}>

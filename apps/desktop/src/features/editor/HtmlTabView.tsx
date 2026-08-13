@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useMemo } from "react";
 import { openPath, revealItemInDir } from "@bifrostwrite/runtime";
 import { useVaultStore } from "../../app/store/vaultStore";
@@ -50,7 +51,7 @@ export function HtmlTabView({ tab }: { tab: FileTab }) {
                         className="inline-flex items-center rounded px-1.5 text-[10px]"
                         style={headerButtonStyle}
                     >
-                        Open Externally
+                        {translate("Open Externally")}
                     </button>
                     <button
                         type="button"
@@ -58,7 +59,7 @@ export function HtmlTabView({ tab }: { tab: FileTab }) {
                         className="inline-flex items-center rounded px-1.5 text-[10px]"
                         style={headerButtonStyle}
                     >
-                        Reveal in Finder
+                        {translate("Reveal in Finder")}
                     </button>
                 </div>
             </div>
@@ -86,7 +87,7 @@ export function HtmlTabView({ tab }: { tab: FileTab }) {
                         className="h-full flex items-center justify-center"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        This file is outside the active vault.
+                        {translate("This file is outside the active vault.")}
                     </div>
                 )}
             </div>

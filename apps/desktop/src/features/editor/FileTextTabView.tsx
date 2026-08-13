@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     useCallback,
     useEffect,
@@ -694,7 +695,7 @@ export function FileTextTabView({ paneId, tabId }: FileTextTabViewProps) {
                 className="h-full flex items-center justify-center"
                 style={{ color: "var(--text-secondary)" }}
             >
-                No file tab active
+                {translate("No file tab active")}
             </div>
         );
     }
@@ -718,8 +719,7 @@ export function FileTextTabView({ paneId, tabId }: FileTextTabViewProps) {
                         className="min-w-0 text-[12px]"
                         style={{ color: "var(--text-primary)" }}
                     >
-                        This file changed on disk while you still have unsaved
-                        edits.
+                        {translate("This file changed on disk while you still have unsaved edits.")}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         <button
@@ -732,7 +732,7 @@ export function FileTextTabView({ paneId, tabId }: FileTextTabViewProps) {
                                 color: "var(--text-primary)",
                             }}
                         >
-                            Reload from Disk
+                            {translate("Reload from Disk")}
                         </button>
                         <button
                             type="button"
@@ -744,7 +744,7 @@ export function FileTextTabView({ paneId, tabId }: FileTextTabViewProps) {
                                 color: "var(--text-secondary)",
                             }}
                         >
-                            Keep Local
+                            {translate("Keep Local")}
                         </button>
                     </div>
                 </div>
@@ -788,29 +788,29 @@ export function FileTextTabView({ paneId, tabId }: FileTextTabViewProps) {
                                 backgroundColor:
                                     "color-mix(in srgb, var(--bg-secondary) 72%, var(--bg-primary))",
                             }}
-                            aria-label="Mermaid file mode"
+                            aria-label={translate("Mermaid file mode")}
                         >
                             <FileTabModeButton
                                 active={mermaidMode === "source"}
                                 onClick={() => setMermaidMode("source")}
                             >
-                                Source
+                                {translate("Source")}
                             </FileTabModeButton>
                             <FileTabModeButton
                                 active={mermaidMode === "preview"}
                                 onClick={() => setMermaidMode("preview")}
                             >
-                                Preview
+                                {translate("Preview")}
                             </FileTabModeButton>
                         </div>
                     ) : null}
                     <FileTabStripButton onClick={() => void openPath(tab.path)}>
-                        Open Externally
+                        {translate("Open Externally")}
                     </FileTabStripButton>
                     <FileTabStripButton
                         onClick={() => void revealItemInDir(tab.path)}
                     >
-                        Reveal in Finder
+                        {translate("Reveal in Finder")}
                     </FileTabStripButton>
                 </div>
             </div>

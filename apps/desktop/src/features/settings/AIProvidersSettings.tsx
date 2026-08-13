@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { openUrl } from "@bifrostwrite/runtime";
 import { useVaultStore } from "../../app/store/vaultStore";
@@ -422,13 +423,15 @@ function DiagnosticsPathBlock({
                     color: "var(--text-primary)",
                 }}
             >
-                {label}
+                {translate(label)}
             </div>
             <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
-                {helper}
+                {translate(helper)}
             </div>
             <pre style={diagnosticCodeStyle}>
-                {entries.length > 0 ? entries.join("\n") : "No entries"}
+                {entries.length > 0
+                    ? entries.join("\n")
+                    : translate("No entries")}
             </pre>
         </div>
     );
@@ -482,13 +485,13 @@ function DiagnosticsRuntimeCard({
                     }}
                 >
                     {setupStatus?.binaryReady
-                        ? "Binary ready"
-                        : "Binary missing"}
+                        ? translate("Binary ready")
+                        : translate("Binary missing")}
                 </div>
             </div>
 
             <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
-                Launch command
+                {translate("Launch command")}
             </div>
             <pre style={diagnosticCodeStyle}>
                 {formatCommand(runtime.launchProgram, runtime.launchArgs)}
@@ -499,7 +502,7 @@ function DiagnosticsRuntimeCard({
                     <div
                         style={{ fontSize: 11, color: "var(--text-secondary)" }}
                     >
-                        Resolution source
+                        {translate("Resolution source")}
                     </div>
                     <pre style={diagnosticCodeStyle}>
                         {runtime.resolutionDisplay}
@@ -512,7 +515,7 @@ function DiagnosticsRuntimeCard({
                     <div
                         style={{ fontSize: 11, color: "var(--text-secondary)" }}
                     >
-                        Setup binary path
+                        {translate("Setup binary path")}
                     </div>
                     <pre style={diagnosticCodeStyle}>
                         {setupStatus.binaryPath}
@@ -521,9 +524,9 @@ function DiagnosticsRuntimeCard({
             )}
 
             <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
-                Source: {setupStatus?.binarySource ?? "unknown"}
+                {translate("Source:")} {setupStatus?.binarySource ?? translate("unknown")}
                 {setupStatus?.authMethod
-                    ? `  •  Auth: ${setupStatus.authMethod}`
+                    ? translate(`  •  Auth: ${setupStatus.authMethod}`)
                     : ""}
             </div>
 
@@ -757,7 +760,7 @@ function ProviderExpandedPanel({
                             color: "var(--text-primary)",
                         }}
                     >
-                        Runtime binary
+                        {translate("Runtime binary")}
                     </label>
                     <input
                         id={`${setupStatus.runtimeId}-runtime-binary`}
@@ -798,13 +801,13 @@ function ProviderExpandedPanel({
                         type="url"
                         value={gatewayUrl}
                         onChange={(e) => setGatewayUrl(e.target.value)}
-                        placeholder="Gateway base URL"
+                        placeholder={translate("Gateway base URL")}
                         style={inputStyle}
                     />
                     <textarea
                         value={gatewayHeaders}
                         onChange={(e) => setGatewayHeaders(e.target.value)}
-                        placeholder={"Headers, one per line\nx-api-key: secret"}
+                        placeholder={translate("Headers, one per line\nx-api-key: secret")}
                         style={{
                             ...inputStyle,
                             minHeight: 60,
@@ -816,7 +819,7 @@ function ProviderExpandedPanel({
                             type="password"
                             value={gatewayToken}
                             onChange={(e) => setGatewayToken(e.target.value)}
-                            placeholder="Auth token (optional)"
+                            placeholder={translate("Auth token (optional)")}
                             style={inputStyle}
                         />
                     )}
@@ -827,10 +830,9 @@ function ProviderExpandedPanel({
                             marginTop: -2,
                         }}
                     >
-                        Use HTTPS for remote gateways. Plain HTTP is only
-                        allowed for localhost.
+                        {translate("Use HTTPS for remote gateways. Plain HTTP is only allowed for localhost.")}
                         {bedrockGatewaySelected
-                            ? " Bedrock gateways use the configured headers and do not require an Anthropic auth token."
+                            ? translate(" Bedrock gateways use the configured headers and do not require an Anthropic auth token.")
                             : ""}
                     </div>
                     {gatewayUrlError && (
@@ -876,7 +878,7 @@ function ProviderExpandedPanel({
                                     opacity: saving ? 0.5 : 1,
                                 }}
                             >
-                                Clear gateway settings
+                                {translate("Clear gateway settings")}
                             </button>
                         </div>
                     )}
@@ -900,7 +902,7 @@ function ProviderExpandedPanel({
                                 color: "var(--text-primary)",
                             }}
                         >
-                            Vertex endpoint
+                            {translate("Vertex endpoint")}
                         </label>
                         <input
                             id={`${setupStatus.runtimeId}-vertex-endpoint`}
@@ -909,7 +911,7 @@ function ProviderExpandedPanel({
                             onChange={(event) =>
                                 setVertexEndpoint(event.target.value)
                             }
-                            placeholder="https://vertex.example.com"
+                            placeholder={translate("https://vertex.example.com")}
                             style={inputStyle}
                         />
                     </div>
@@ -928,7 +930,7 @@ function ProviderExpandedPanel({
                                 color: "var(--text-primary)",
                             }}
                         >
-                            Project ID
+                            {translate("Project ID")}
                         </label>
                         <input
                             id={`${setupStatus.runtimeId}-vertex-project-id`}
@@ -937,7 +939,7 @@ function ProviderExpandedPanel({
                             onChange={(event) =>
                                 setVertexProjectId(event.target.value)
                             }
-                            placeholder="my-google-cloud-project"
+                            placeholder={translate("my-google-cloud-project")}
                             style={inputStyle}
                         />
                     </div>
@@ -956,7 +958,7 @@ function ProviderExpandedPanel({
                                 color: "var(--text-primary)",
                             }}
                         >
-                            Region
+                            {translate("Region")}
                         </label>
                         <input
                             id={`${setupStatus.runtimeId}-vertex-region`}
@@ -965,7 +967,7 @@ function ProviderExpandedPanel({
                             onChange={(event) =>
                                 setVertexRegion(event.target.value)
                             }
-                            placeholder="us-east5"
+                            placeholder={translate("us-east5")}
                             style={inputStyle}
                         />
                     </div>
@@ -984,7 +986,7 @@ function ProviderExpandedPanel({
                                 color: "var(--text-primary)",
                             }}
                         >
-                            Custom headers (optional)
+                            {translate("Custom headers (optional)")}
                         </label>
                         <textarea
                             id={`${setupStatus.runtimeId}-vertex-headers`}
@@ -993,7 +995,7 @@ function ProviderExpandedPanel({
                                 setGatewayHeaders(event.target.value)
                             }
                             placeholder={
-                                "Headers, one per line\nx-api-key: secret"
+                                translate("Headers, one per line\nx-api-key: secret")
                             }
                             style={{
                                 ...inputStyle,
@@ -1008,8 +1010,7 @@ function ProviderExpandedPanel({
                             color: "var(--text-secondary)",
                         }}
                     >
-                        Authentication is provided by Google Application Default
-                        Credentials.
+                        {translate("Authentication is provided by Google Application Default Credentials.")}
                     </div>
                     <div
                         style={{
@@ -1017,8 +1018,7 @@ function ProviderExpandedPanel({
                             color: "var(--text-secondary)",
                         }}
                     >
-                        Changes apply to new or reopened sessions. Active chats
-                        keep their current provider configuration.
+                        {translate("Changes apply to new or reopened sessions. Active chats keep their current provider configuration.")}
                     </div>
                     {(vertexEndpointError ||
                         vertexProjectIdError ||
@@ -1070,7 +1070,7 @@ function ProviderExpandedPanel({
                                     opacity: saving ? 0.5 : 1,
                                 }}
                             >
-                                Clear Vertex settings
+                                {translate("Clear Vertex settings")}
                             </button>
                         </div>
                     )}
@@ -1171,8 +1171,8 @@ function ProviderExpandedPanel({
                 >
                     {saving
                         ? vertexSelected
-                            ? "Saving…"
-                            : "Connecting…"
+                            ? translate("Saving…")
+                            : translate("Connecting…")
                         : getActionLabel(selectedMethodId, setupStatus)}
                 </button>
             </div>
@@ -1210,9 +1210,9 @@ function ProviderSetupUnavailablePanel({
                 }}
             >
                 {loading
-                    ? "Loading provider setup…"
+                    ? translate("Loading provider setup…")
                     : (error ??
-                      "Provider setup status is not available yet. Check diagnostics or retry loading this provider.")}
+                      translate("Provider setup status is not available yet. Check diagnostics or retry loading this provider."))}
             </div>
             {!loading && (
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -1230,7 +1230,7 @@ function ProviderSetupUnavailablePanel({
                             cursor: "pointer",
                         }}
                     >
-                        Retry
+                        {translate("Retry")}
                     </button>
                 </div>
             )}
@@ -1709,7 +1709,7 @@ export function AIProvidersSettings({
                             paddingBottom: 6,
                         }}
                     >
-                        Default agent
+                        {translate("Default agent")}
                     </div>
                     <div
                         style={{
@@ -1733,17 +1733,15 @@ export function AIProvidersSettings({
                                     lineHeight: 1.5,
                                 }}
                             >
-                                The default agent opens when you start a new chat
-                                or use{" "}
+                                {translate("The default agent opens when you start a new chat or use")}{" "}
                                 <strong style={{ color: "var(--text-primary)" }}>
-                                    Add to chat
+                                    {translate("Add to chat")}
                                 </strong>{" "}
-                                from the file tree. Select{" "}
+                                {translate("from the file tree. Select")}{" "}
                                 <strong style={{ color: "var(--text-primary)" }}>
-                                    Claude Code
+                                    {translate("Claude Code")}
                                 </strong>{" "}
-                                to route notes and files directly into a terminal
-                                session — no API key required.
+                                {translate("to route notes and files directly into a terminal session — no API key required.")}
                             </p>
                             <select
                                 value={defaultRuntimeId ?? ""}
@@ -1766,13 +1764,13 @@ export function AIProvidersSettings({
                                 }}
                             >
                                 <option value="">
-                                    Automatic (current or last used provider)
+                                    {translate("Automatic (current or last used provider)")}
                                 </option>
                                 {selectableProviders.map((p) => (
                                     <option key={p.id} value={p.id}>
                                         {p.name}
                                         {p.id === CLAUDE_TERMINAL_RUNTIME_ID
-                                            ? " — terminal (no API key)"
+                                            ? translate(" — terminal (no API key)")
                                             : ""}
                                     </option>
                                 ))}
@@ -1786,9 +1784,7 @@ export function AIProvidersSettings({
                                         lineHeight: 1.4,
                                     }}
                                 >
-                                    Claude Code will open in a new terminal tab.
-                                    Attached files appear as @mentions in the
-                                    input — add your question and press Enter.
+                                    {translate("Claude Code will open in a new terminal tab. Attached files appear as @mentions in the input — add your question and press Enter.")}
                                 </p>
                             )}
                         </div>
@@ -1809,7 +1805,7 @@ export function AIProvidersSettings({
                             paddingBottom: 6,
                         }}
                     >
-                        Installed
+                        {translate("Installed")}
                     </div>
 
                     <div
@@ -1828,7 +1824,7 @@ export function AIProvidersSettings({
                                     backgroundColor: "var(--bg-secondary)",
                                 }}
                             >
-                                Loading providers…
+                                {translate("Loading providers…")}
                             </div>
                         ) : (
                             filteredInstalledProviders.map((provider, i) => {
@@ -1994,12 +1990,12 @@ export function AIProvidersSettings({
                                                     }}
                                                 >
                                                     {isTerminalRuntime
-                                                        ? "Ready"
+                                                        ? translate("Ready")
                                                         : vertexConfigured
-                                                          ? "Configured"
+                                                          ? translate("Configured")
                                                           : connected
-                                                          ? "Connected"
-                                                          : "Not configured"}
+                                                          ? translate("Connected")
+                                                          : translate("Not configured")}
                                                 </div>
                                             </div>
 
@@ -2015,15 +2011,13 @@ export function AIProvidersSettings({
                                                             "1px solid var(--border)",
                                                     }}
                                                 >
-                                                    Model, skip permissions,
-                                                    and other Claude Code
-                                                    options are in{" "}
+                                                    {translate("Model, skip permissions, and other Claude Code options are in")}{" "}
                                                     <strong
                                                         style={{
                                                             color: "var(--text-primary)",
                                                         }}
                                                     >
-                                                        Settings → Terminal
+                                                        {translate("Settings → Terminal")}
                                                     </strong>
                                                     .
                                                 </div>
@@ -2049,28 +2043,25 @@ export function AIProvidersSettings({
                                                                 color: "var(--text-primary)",
                                                             }}
                                                         >
-                                                            Claude subscription
+                                                            {translate("Claude subscription")}
                                                         </strong>{" "}
-                                                        authentication only
-                                                        works with{" "}
+                                                        {translate("authentication only works with")}{" "}
                                                         <strong
                                                             style={{
                                                                 color: "var(--text-primary)",
                                                             }}
                                                         >
-                                                            Claude Code
+                                                            {translate("Claude Code")}
                                                         </strong>{" "}
-                                                        in the terminal. To use
-                                                        this provider, configure
-                                                        an{" "}
+                                                        {translate("in the terminal. To use this provider, configure an")}{" "}
                                                         <strong
                                                             style={{
                                                                 color: "var(--text-primary)",
                                                             }}
                                                         >
-                                                            Anthropic API key
+                                                            {translate("Anthropic API key")}
                                                         </strong>{" "}
-                                                        below.
+                                                        {translate("below.")}
                                                     </div>
                                                 )}
                                             {!isTerminalRuntime && isExpanded &&
@@ -2140,7 +2131,7 @@ export function AIProvidersSettings({
                             paddingBottom: 6,
                         }}
                     >
-                        Diagnostics
+                        {translate("Diagnostics")}
                     </div>
 
                     <div
@@ -2173,7 +2164,7 @@ export function AIProvidersSettings({
                                         color: "var(--text-primary)",
                                     }}
                                 >
-                                    AI runtime environment
+                                    {translate("AI runtime environment")}
                                 </div>
                                 <div
                                     style={{
@@ -2182,10 +2173,8 @@ export function AIProvidersSettings({
                                         marginTop: 2,
                                     }}
                                 >
-                                    Inspect the PATH inherited by{" "}
-                                    {APP_BRAND_NAME}, the PATH injected into
-                                    runtimes, and which binaries are actually
-                                    resolvable.
+                                    {translate("Inspect the PATH inherited by")}{" "}
+                                    {APP_BRAND_NAME}{translate(", the PATH injected into runtimes, and which binaries are actually resolvable.")}
                                 </div>
                             </div>
                             <div
@@ -2215,8 +2204,8 @@ export function AIProvidersSettings({
                                     }}
                                 >
                                     {diagnosticsLoading
-                                        ? "Refreshing…"
-                                        : "Refresh"}
+                                        ? translate("Refreshing…")
+                                        : translate("Refresh")}
                                 </button>
                                 <button
                                     type="button"
@@ -2232,7 +2221,7 @@ export function AIProvidersSettings({
                                         cursor: "pointer",
                                     }}
                                 >
-                                    {showDiagnostics ? "Hide" : "Show"}
+                                    {showDiagnostics ? translate("Hide") : translate("Show")}
                                 </button>
                             </div>
                         </div>
@@ -2265,14 +2254,14 @@ export function AIProvidersSettings({
                                 {diagnostics && (
                                     <>
                                         <DiagnosticsPathBlock
-                                            label="Process PATH"
+                                            label={translate("Process PATH")}
                                             helper={`This is the PATH inherited by the ${APP_BRAND_NAME} desktop process itself.`}
                                             entries={
                                                 diagnostics.inheritedEntries
                                             }
                                         />
                                         <DiagnosticsPathBlock
-                                            label="Injected Runtime PATH"
+                                            label={translate("Injected Runtime PATH")}
                                             helper={`This is the normalized PATH that ${APP_BRAND_NAME} now injects into Codex, Claude, Grok, Kilo, and OpenCode child processes.`}
                                             entries={
                                                 diagnostics.preferredEntries
@@ -2293,7 +2282,7 @@ export function AIProvidersSettings({
                                                     color: "var(--text-primary)",
                                                 }}
                                             >
-                                                Tool resolution
+                                                {translate("Tool resolution")}
                                             </div>
                                             <div
                                                 style={{
@@ -2334,7 +2323,7 @@ export function AIProvidersSettings({
                                                                 }
                                                             >
                                                                 {item.path ??
-                                                                    "Not found"}
+                                                                    translate("Not found")}
                                                             </pre>
                                                         </div>
                                                     ),
@@ -2356,7 +2345,7 @@ export function AIProvidersSettings({
                                                     color: "var(--text-primary)",
                                                 }}
                                             >
-                                                Runtime launch resolution
+                                                {translate("Runtime launch resolution")}
                                             </div>
                                             <div
                                                 style={{
@@ -2395,7 +2384,7 @@ export function AIProvidersSettings({
                                                 border: "1px solid var(--border)",
                                             }}
                                         >
-                                            Loading diagnostics…
+                                            {translate("Loading diagnostics…")}
                                         </div>
                                     )}
                             </div>
@@ -2418,7 +2407,7 @@ export function AIProvidersSettings({
                             paddingBottom: 6,
                         }}
                     >
-                        All
+                        {translate("All")}
                     </div>
 
                     <div
@@ -2487,7 +2476,7 @@ export function AIProvidersSettings({
                                                     color: "var(--text-secondary)",
                                                 }}
                                             >
-                                                Checking…
+                                                {translate("Checking…")}
                                             </span>
                                         ) : installed ? (
                                             <span
@@ -2497,7 +2486,7 @@ export function AIProvidersSettings({
                                                     color: "#34d399",
                                                 }}
                                             >
-                                                Installed
+                                                {translate("Installed")}
                                             </span>
                                         ) : (
                                             <button
@@ -2524,7 +2513,7 @@ export function AIProvidersSettings({
                                                     cursor: "pointer",
                                                 }}
                                             >
-                                                Install
+                                                {translate("Install")}
                                             </button>
                                         )}
                                     </div>

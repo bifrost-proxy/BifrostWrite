@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 /**
  * AIChatSessionView — renders a single chat session inside an editor workspace pane.
  *
@@ -805,7 +806,7 @@ export function AIChatSessionView({ paneId, tabId }: AIChatSessionViewProps) {
                 className="flex h-full items-center justify-center"
                 style={{ color: "var(--text-secondary)" }}
             >
-                No active chat session
+                {translate("No active chat session")}
             </div>
         );
     }
@@ -857,8 +858,8 @@ export function AIChatSessionView({ paneId, tabId }: AIChatSessionViewProps) {
                         onDoubleClick={startTitleEdit}
                         title={
                             isSubagent
-                                ? "Subagents are named by their parent run"
-                                : "Double-click to rename"
+                                ? translate("Subagents are named by their parent run")
+                                : translate("Double-click to rename")
                         }
                         style={{ color: "var(--text-primary)" }}
                     >
@@ -870,8 +871,8 @@ export function AIChatSessionView({ paneId, tabId }: AIChatSessionViewProps) {
                         className="max-w-[45%] truncate rounded px-1.5 py-0.5 text-[10px]"
                         title={
                             parentTitle
-                                ? `Subagent of ${parentTitle}`
-                                : "Subagent"
+                                ? translate(`Subagent of ${parentTitle}`)
+                                : translate("Subagent")
                         }
                         style={{
                             color: "var(--accent)",
@@ -880,16 +881,16 @@ export function AIChatSessionView({ paneId, tabId }: AIChatSessionViewProps) {
                         }}
                     >
                         {parentTitle
-                            ? `Subagent of ${parentTitle}`
-                            : "Subagent"}
+                            ? translate(`Subagent of ${parentTitle}`)
+                            : translate("Subagent")}
                     </span>
                 ) : null}
                 {!isSubagent && editingKey !== sessionId ? (
                     <button
                         type="button"
                         onClick={startTitleEdit}
-                        aria-label="Rename chat"
-                        title="Rename chat"
+                        aria-label={translate("Rename chat")}
+                        title={translate("Rename chat")}
                         className="nw-control-trigger flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
                         style={{
                             color: "var(--text-secondary)",
@@ -920,12 +921,12 @@ export function AIChatSessionView({ paneId, tabId }: AIChatSessionViewProps) {
                         setPromptOutlineOpen((value) => !value);
                     }}
                     disabled={promptOutlineDisabled}
-                    aria-label="User prompts"
+                    aria-label={translate("User prompts")}
                     aria-pressed={promptOutlineOpen}
                     title={
                         promptOutlineDisabled
-                            ? "User prompts are unavailable while the composer is expanded"
-                            : "User prompts"
+                            ? translate("User prompts are unavailable while the composer is expanded")
+                            : translate("User prompts")
                     }
                     className="nw-control-trigger flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
                     style={{
@@ -962,15 +963,15 @@ export function AIChatSessionView({ paneId, tabId }: AIChatSessionViewProps) {
                         setFindOpen((value) => !value);
                     }}
                     disabled={findDisabled}
-                    aria-label="Find in chat"
+                    aria-label={translate("Find in chat")}
                     aria-pressed={findOpen}
                     title={
                         findDisabled
-                            ? "Find is unavailable while the composer is expanded"
-                            : `Find in chat (${formatShortcutAction(
+                            ? translate("Find is unavailable while the composer is expanded")
+                            : translate(`Find in chat (${formatShortcutAction(
                                   "find_in_note",
                                   getDesktopPlatform(),
-                              )})`
+                              )})`)
                     }
                     className="nw-control-trigger flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
                     style={{

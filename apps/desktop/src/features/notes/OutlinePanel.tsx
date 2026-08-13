@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import {
     ContextMenu,
@@ -389,7 +390,7 @@ export function OutlinePanel({
                         className="px-3 py-2 text-xs"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        No headings found
+                        {translate("No headings found")}
                     </div>
                 ) : (
                     <OutlineTree

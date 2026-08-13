@@ -72,6 +72,10 @@ pub struct VaultEntryDto {
     pub open_in_app: Option<bool>,
     #[serde(default)]
     pub viewer_kind: Option<String>,
+    /// Whether this entry is a macOS dataless cloud placeholder whose content
+    /// has not been downloaded to the device yet.
+    #[serde(default)]
+    pub is_cloud_placeholder: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -87,6 +91,10 @@ pub struct NoteDto {
     /// Raw OKF `type` frontmatter field (trimmed string, else null).
     #[serde(default)]
     pub okf_type: Option<String>,
+    /// Whether this note currently has only lightweight catalog metadata and
+    /// will be downloaded and fully indexed when opened.
+    #[serde(default)]
+    pub is_cloud_placeholder: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

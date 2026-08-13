@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useEffect, useRef } from "react";
 
 export interface GraphContextMenuState {
@@ -116,7 +117,7 @@ export function GraphContextMenu({
                             e.currentTarget.style.background = "transparent";
                         }}
                     >
-                        {item.label}
+                        {translate(String(item.label))}
                     </button>
                 ),
             )}

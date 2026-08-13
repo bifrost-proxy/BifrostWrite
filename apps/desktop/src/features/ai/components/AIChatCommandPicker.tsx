@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useComposerPickerPosition } from "./useComposerPickerPosition";
@@ -156,7 +157,7 @@ export function AIChatCommandPicker({
                                         minWidth: 0,
                                     }}
                                 >
-                                    {item.label}
+                                    {translate(String(item.label))}
                                 </span>
                                 <span
                                     style={{
@@ -170,7 +171,7 @@ export function AIChatCommandPicker({
                                         whiteSpace: "nowrap",
                                     }}
                                 >
-                                    {item.description}
+                                    {translate(String(item.description))}
                                 </span>
                             </button>
                         );
@@ -184,7 +185,7 @@ export function AIChatCommandPicker({
                             textAlign: "center",
                         }}
                     >
-                        No commands found
+                        {translate("No commands found")}
                     </div>
                 )}
             </div>

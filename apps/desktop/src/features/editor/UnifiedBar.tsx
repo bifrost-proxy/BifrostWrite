@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     Fragment,
     useCallback,
@@ -241,8 +242,8 @@ export function UnifiedBar({ windowMode }: UnifiedBarProps) {
             const relativePath = path
                 .slice(vaultPath.length)
                 .replace(/^[/\\]+/, "");
-            const approved = await confirm(`Move "${title}" to Trash?`, {
-                title: "Move File to Trash",
+            const approved = await confirm(translate(`Move "${title}" to Trash?`), {
+                title: translate("Move File to Trash"),
                 kind: "warning",
             });
             if (!approved) return;
@@ -983,8 +984,8 @@ export function UnifiedBar({ windowMode }: UnifiedBarProps) {
                             onClick={toggleSidebar}
                             title={
                                 sidebarCollapsed
-                                    ? "Show sidebar"
-                                    : "Hide sidebar"
+                                    ? translate("Show sidebar")
+                                    : translate("Hide sidebar")
                             }
                             className="no-drag flex items-center justify-center shrink-0 ub-nav-btn"
                             style={{
@@ -1062,7 +1063,7 @@ export function UnifiedBar({ windowMode }: UnifiedBarProps) {
                                         });
                                     }}
                                     disabled={!canGoBack}
-                                    title="Go back"
+                                    title={translate("Go back")}
                                     className="no-drag flex items-center justify-center shrink-0 ub-nav-btn"
                                     style={{
                                         alignSelf: "center",
@@ -1090,7 +1091,7 @@ export function UnifiedBar({ windowMode }: UnifiedBarProps) {
                                     onMouseDown={(e) => e.stopPropagation()}
                                     onClick={goForward}
                                     disabled={!canGoForward}
-                                    title="Go forward"
+                                    title={translate("Go forward")}
                                     className="no-drag flex items-center justify-center shrink-0 ub-nav-btn"
                                     style={{
                                         alignSelf: "center",
@@ -1419,7 +1420,7 @@ export function UnifiedBar({ windowMode }: UnifiedBarProps) {
                                                 payload: undefined,
                                             });
                                         }}
-                                        title="New tab"
+                                        title={translate("New tab")}
                                         className="no-drag flex items-center justify-center shrink-0 ub-chrome-btn"
                                         style={{
                                             fontSize: 18,
@@ -1538,13 +1539,13 @@ export function UnifiedBar({ windowMode }: UnifiedBarProps) {
                                     onClick={toggleRightPanel}
                                     title={
                                         rightPanelCollapsed
-                                            ? "Show right panel"
-                                            : "Hide right panel"
+                                            ? translate("Show right panel")
+                                            : translate("Hide right panel")
                                     }
                                     aria-label={
                                         rightPanelCollapsed
-                                            ? "Show right panel"
-                                            : "Hide right panel"
+                                            ? translate("Show right panel")
+                                            : translate("Hide right panel")
                                     }
                                     className="no-drag flex items-center justify-center shrink-0 ub-nav-btn"
                                     style={{
@@ -1647,13 +1648,13 @@ export function UnifiedBar({ windowMode }: UnifiedBarProps) {
                                     onClick={toggleRightPanel}
                                     title={
                                         rightPanelCollapsed
-                                            ? "Show right panel"
-                                            : "Hide right panel"
+                                            ? translate("Show right panel")
+                                            : translate("Hide right panel")
                                     }
                                     aria-label={
                                         rightPanelCollapsed
-                                            ? "Show right panel"
-                                            : "Hide right panel"
+                                            ? translate("Show right panel")
+                                            : translate("Hide right panel")
                                     }
                                     className="no-drag flex items-center justify-center shrink-0 ub-nav-btn"
                                     style={{

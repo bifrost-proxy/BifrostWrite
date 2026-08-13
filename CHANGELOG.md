@@ -32,6 +32,23 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.1.0] - 2026-08-13
+
+### Added
+
+- Added complete Simplified Chinese interface support, automatic language selection from the operating system, and a language selector under Settings > General.
+- Added iCloud placeholder awareness on macOS so cloud-only files remain visible without being downloaded during vault discovery.
+
+### Changed
+
+- Moved vault discovery and indexing to a cancellable background task so the desktop backend remains responsive while large vaults open.
+- Deferred downloading and indexing cloud-only Markdown files until they are opened, then incrementally refreshed their metadata, links, and tags.
+
+### Fixed
+
+- Fixed the main window frame following the macOS system appearance instead of the theme selected in BifrostWrite.
+- Fixed iCloud-backed vaults becoming stuck while startup indexing implicitly downloaded unavailable files.
+
 ## [1.0.0] - 2026-08-13
 
 ### Added

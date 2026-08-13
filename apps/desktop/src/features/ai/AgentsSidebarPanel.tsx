@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     useCallback,
     useEffect,
@@ -589,8 +590,8 @@ export function AgentsSidebarPanel() {
                     ? `Delete "${title}"?\n\nThis deletes only this thread's history and workspace snapshot. ${preservedAgents}\n\nThis cannot be undone.`
                     : `Delete "${title}"?\n\nThis deletes the thread history and workspace snapshot.\n\nThis cannot be undone.`;
 
-            const approved = await confirm(message, {
-                title: "Delete thread?",
+            const approved = await confirm(translate(message), {
+                title: translate("Delete thread?"),
                 kind: "warning",
             });
             if (!approved) return;
@@ -605,9 +606,9 @@ export function AgentsSidebarPanel() {
         async (session: AIChatSession) => {
             const title = getSessionTitleText(session);
             const approved = await confirm(
-                `Close terminal "${title}"?\n\nThis closes the Claude Code terminal backing this Agents entry. The entry will disappear from the sidebar when the terminal closes.`,
+                translate(`Close terminal "${title}"?\n\nThis closes the Claude Code terminal backing this Agents entry. The entry will disappear from the sidebar when the terminal closes.`),
                 {
-                    title: "Close terminal?",
+                    title: translate("Close terminal?"),
                     kind: "warning",
                 },
             );
@@ -1098,7 +1099,7 @@ export function AgentsSidebarPanel() {
                         fontSize: metrics.header.fontSize,
                         padding: `${scaleMetric(4, agentsSidebarScale / 100, 3)}px ${metrics.header.paddingX}px ${scaleMetric(3, agentsSidebarScale / 100, 2)}px`,
                     }}
-                    title={collapsed ? "Expand folder" : "Collapse folder"}
+                    title={collapsed ? translate("Expand folder") : translate("Collapse folder")}
                     onClick={() => {
                         if (suppressFolderClickRef.current) return;
                         toggleFolderCollapsed(folder.id);
@@ -1152,7 +1153,7 @@ export function AgentsSidebarPanel() {
                     {isRenaming ? (
                         <input
                             autoFocus
-                            aria-label="Folder name"
+                            aria-label={translate("Folder name")}
                             className="min-w-0 flex-1 rounded px-1 py-0.5 text-[10px] font-semibold normal-case tracking-normal outline-none"
                             style={{
                                 color: "var(--text-primary)",
@@ -1207,7 +1208,7 @@ export function AgentsSidebarPanel() {
                                 className="px-3 py-1 text-[10.5px]"
                                 style={{ color: "var(--text-secondary)" }}
                             >
-                                Drop chats here from their menu.
+                                {translate("Drop chats here from their menu.")}
                             </p>
                         )}
                     </div>
@@ -1222,7 +1223,7 @@ export function AgentsSidebarPanel() {
                 <SidebarFilterInput
                     value={filterText}
                     onChange={setFilterText}
-                    placeholder="Filter threads..."
+                    placeholder={translate("Filter threads...")}
                     ariaLabel="Filter threads"
                 />
             </div>
@@ -1237,17 +1238,17 @@ export function AgentsSidebarPanel() {
             >
                 <span>
                     {hasFilter
-                        ? `${filteredCount} of ${totalCount}`
+                        ? translate(`${filteredCount} of ${totalCount}`)
                         : totalCount === 1
-                          ? "1 thread"
-                          : `${totalCount} threads`}
+                          ? translate("1 thread")
+                          : translate(`${totalCount} threads`)}
                 </span>
                 <div className="flex items-center gap-1">
                     <button
                         type="button"
                         onClick={handleCreateFolder}
-                        title="New folder"
-                        aria-label="New folder"
+                        title={translate("New folder")}
+                        aria-label={translate("New folder")}
                         className="ub-chrome-btn flex h-5 w-5 cursor-pointer items-center justify-center rounded"
                         style={{
                             width: metrics.actionButtonSize,
@@ -1285,8 +1286,8 @@ export function AgentsSidebarPanel() {
                                 payload: undefined,
                             });
                         }}
-                        title="New chat"
-                        aria-label="New chat"
+                        title={translate("New chat")}
+                        aria-label={translate("New chat")}
                         className="ub-chrome-btn flex h-5 w-5 cursor-pointer items-center justify-center rounded"
                         style={{
                             width: metrics.actionButtonSize,
@@ -1311,7 +1312,7 @@ export function AgentsSidebarPanel() {
                     <button
                         type="button"
                         onClick={() => openChatHistoryInWorkspace()}
-                        title="Open chat history"
+                        title={translate("Open chat history")}
                         className="ub-chrome-btn cursor-pointer rounded px-1.5 py-0.5 text-[10.5px]"
                         style={{
                             color: "var(--text-secondary)",
@@ -1320,7 +1321,7 @@ export function AgentsSidebarPanel() {
                             fontSize: metrics.summaryFontSize,
                         }}
                     >
-                        History
+                        {translate("History")}
                     </button>
                 </div>
             </div>
@@ -1344,14 +1345,14 @@ export function AgentsSidebarPanel() {
                 ) : (
                     <>
                         <AgentsSidebarSection
-                            title="Pinned"
+                            title={translate("Pinned")}
                             count={pinnedGroups.length}
                             headerMetrics={metrics.header}
                         >
                             {pinnedGroups.map(renderGroup)}
                         </AgentsSidebarSection>
                         <AgentsSidebarSection
-                            title="Open"
+                            title={translate("Open")}
                             count={openGroups.length}
                             showHeader={showOpenAllHeaders}
                             headerMetrics={metrics.header}
@@ -1360,7 +1361,7 @@ export function AgentsSidebarPanel() {
                         </AgentsSidebarSection>
                         {orderedFolders.map(renderFolder)}
                         <AgentsSidebarSection
-                            title="All"
+                            title={translate("All")}
                             count={unfiledGroups.length}
                             showHeader={showOpenAllHeaders || orderedFolders.length > 0}
                             showWhenEmpty={orderedFolders.length > 0}

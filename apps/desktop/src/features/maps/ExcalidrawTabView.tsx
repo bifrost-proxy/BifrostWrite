@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import type { MutableRefObject } from "react";
 import { invoke } from "@bifrostwrite/runtime";
@@ -380,7 +381,7 @@ export function ExcalidrawTabView({ paneId }: ExcalidrawTabViewProps) {
     if (!ready) {
         return (
             <div className="flex items-center justify-center h-full text-(--text-secondary)">
-                Loading map…
+                {translate("Loading map…")}
             </div>
         );
     }
@@ -389,7 +390,7 @@ export function ExcalidrawTabView({ paneId }: ExcalidrawTabViewProps) {
         <React.Suspense
             fallback={
                 <div className="flex items-center justify-center h-full text-(--text-secondary)">
-                    Loading editor…
+                    {translate("Loading editor…")}
                 </div>
             }
         >

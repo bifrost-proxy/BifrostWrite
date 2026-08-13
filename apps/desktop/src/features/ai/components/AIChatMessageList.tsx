@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import {
     memo,
     useCallback,
@@ -973,8 +974,8 @@ export const AIChatMessageList = memo(function AIChatMessageList({
                             }}
                         >
                             {isLoadingOlderMessages
-                                ? "Loading earlier messages..."
-                                : "Scroll up to load earlier messages"}
+                                ? translate("Loading earlier messages...")
+                                : translate("Scroll up to load earlier messages")}
                         </div>
                     )}
                     <div className="min-w-0 space-y-2">
@@ -1031,7 +1032,7 @@ export const AIChatMessageList = memo(function AIChatMessageList({
                         color: "var(--text-secondary)",
                         boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
                     }}
-                    aria-label="Scroll to bottom"
+                    aria-label={translate("Scroll to bottom")}
                 >
                     <svg
                         width="14"

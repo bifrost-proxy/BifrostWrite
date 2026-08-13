@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useCallback, useMemo, useState, type MouseEvent } from "react";
 import {
     ContextMenu,
@@ -264,7 +265,7 @@ export function HistorySessionCard({
                             }}
                         >
                             {childCount}{" "}
-                            {childCount === 1 ? "agent" : "agents"}
+                            {childCount === 1 ? translate("agent") : translate("agents")}
                         </span>
                     ) : null}
 
@@ -283,7 +284,7 @@ export function HistorySessionCard({
                             opacity: 0.6,
                             visibility: hovered ? "visible" : "hidden",
                         }}
-                        title="Export to note"
+                        title={translate("Export to note")}
                     >
                         <svg
                             width="14"
@@ -314,7 +315,7 @@ export function HistorySessionCard({
                             opacity: 0.6,
                             visibility: hovered ? "visible" : "hidden",
                         }}
-                        title="Fork chat"
+                        title={translate("Fork chat")}
                     >
                         <svg
                             width="14"
@@ -345,7 +346,7 @@ export function HistorySessionCard({
                             opacity: 0.6,
                             visibility: hovered ? "visible" : "hidden",
                         }}
-                        title="Delete chat"
+                        title={translate("Delete chat")}
                     >
                         <svg
                             width="14"
@@ -376,13 +377,13 @@ export function HistorySessionCard({
                     style={{ color: "var(--text-secondary)", opacity: 0.6 }}
                 >
                     <span className="shrink-0">
-                        {badgeLabel ? `${runtimeLabel} agent` : runtimeLabel}
+                        {badgeLabel ? translate(`${runtimeLabel} agent`) : runtimeLabel}
                     </span>
                     {parentTitle ? (
                         <>
                             <span>·</span>
                             <span className="min-w-0 truncate">
-                                Subagent of {parentTitle}
+                                {translate("Subagent of")} {parentTitle}
                             </span>
                         </>
                     ) : null}
@@ -404,7 +405,7 @@ export function HistorySessionCard({
                     {stats.messageCount > 0 && (
                         <span className="shrink-0">
                             {stats.messageCount}{" "}
-                            {stats.messageCount === 1 ? "msg" : "msgs"}
+                            {stats.messageCount === 1 ? translate("msg") : translate("msgs")}
                         </span>
                     )}
                     {updatedAt > 0 && (

@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     useEffect,
     useRef,
@@ -4157,8 +4158,7 @@ export function Editor({
                         className="min-w-0 text-[12px]"
                         style={{ color: "var(--text-primary)" }}
                     >
-                        This note changed on disk while you still have unsaved
-                        edits.
+                        {translate("This note changed on disk while you still have unsaved edits.")}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         <button
@@ -4171,7 +4171,7 @@ export function Editor({
                                 color: "var(--text-primary)",
                             }}
                         >
-                            Reload from Disk
+                            {translate("Reload from Disk")}
                         </button>
                         <button
                             type="button"
@@ -4183,7 +4183,7 @@ export function Editor({
                                 color: "var(--text-secondary)",
                             }}
                         >
-                            Keep Local
+                            {translate("Keep Local")}
                         </button>
                     </div>
                 </div>
@@ -4214,7 +4214,7 @@ export function Editor({
                             }}
                         >
                             {isDraggingVault
-                                ? "Drop folder to open as vault"
+                                ? translate("Drop folder to open as vault")
                                 : emptyStateMessage}
                         </p>
                     </div>

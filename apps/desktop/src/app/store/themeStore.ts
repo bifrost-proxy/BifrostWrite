@@ -110,16 +110,34 @@ function applyDark(isDark: boolean) {
     document.documentElement.classList.toggle("dark", isDark);
 }
 
-// Windows / Linux: keep the native titleBarOverlay caption buttons legible by
-// retinting their symbol color whenever the theme (palette or light/dark
-// mode) changes. Background stays transparent so the renderer-painted chrome
-// shows through — only the symbol color needs to follow the theme.
-function syncDesktopTitleBarOverlay(themeName: ThemeName, isDark: boolean) {
+// Renderer CSS does not style the native frame/titlebar. Keep the native
+// window appearance and its backing color synchronized with the selected
+// palette so overlay titlebars blend into the app on every window.
+function syncDesktopWindowChrome(themeName: ThemeName, isDark: boolean) {
+    const palette = themes[themeName];
+    const colors = isDark ? palette.dark : palette.light;
+    const runtimeWindow = getCurrentWindow();
+
+    if (typeof runtimeWindow.setTheme === "function") {
+        void runtimeWindow.setTheme(isDark ? "dark" : "light").catch(() => {
+            // Best effort on platforms/runtime versions without native theme
+            // switching support.
+        });
+    }
+
+    if (typeof runtimeWindow.setBackgroundColor === "function") {
+        void runtimeWindow.setBackgroundColor(colors.bgPrimary).catch(() => {
+            // Best effort on platforms/runtime versions without native
+            // background-color support.
+        });
+    }
+
+    // Windows / Linux: keep titleBarOverlay caption symbols legible. The
+    // overlay itself stays transparent so the renderer-painted chrome shows
+    // through.
     const platform = getDesktopPlatform();
     if (platform !== "windows" && platform !== "linux") return;
-    const palette = themes[themeName];
-    const symbolColor = (isDark ? palette.dark : palette.light).textPrimary;
-    const runtimeWindow = getCurrentWindow();
+    const symbolColor = colors.textPrimary;
     if (typeof runtimeWindow.setTitleBarOverlay !== "function") return;
     void runtimeWindow
         .setTitleBarOverlay({ color: "#00000000", symbolColor })
@@ -133,7 +151,7 @@ function resolveTheme(mode: ThemeMode, themeName: ThemeName) {
     const isDark = getIsDark(mode);
     applyDark(isDark);
     applyThemeColors(themeName, isDark);
-    syncDesktopTitleBarOverlay(themeName, isDark);
+    syncDesktopWindowChrome(themeName, isDark);
     return { mode, themeName, isDark };
 }
 
@@ -224,7 +242,7 @@ export function initializeThemeStore() {
     stopThemePersistence = useThemeStore.subscribe((state) => {
         applyDark(state.isDark);
         applyThemeColors(state.themeName, state.isDark);
-        syncDesktopTitleBarOverlay(state.themeName, state.isDark);
+        syncDesktopWindowChrome(state.themeName, state.isDark);
         if (!isApplyingExternal) {
             saveTheme(currentVaultPath, {
                 mode: state.mode,

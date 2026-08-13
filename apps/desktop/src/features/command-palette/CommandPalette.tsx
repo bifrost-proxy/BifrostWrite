@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     useState,
     useEffect,
@@ -96,7 +97,7 @@ function CommandPaletteDialog() {
                         setSelectedIndex(0);
                     }}
                     onKeyDown={handleKeyDown}
-                    placeholder="Type a command..."
+                    placeholder={translate("Type a command...")}
                     className="w-full px-4 py-3 text-sm outline-none"
                     style={{
                         backgroundColor: "transparent",
@@ -110,7 +111,7 @@ function CommandPaletteDialog() {
                             className="px-4 py-3 text-sm"
                             style={{ color: "var(--text-secondary)" }}
                         >
-                            No commands found
+                            {translate("No commands found")}
                         </div>
                     ) : (
                         results.map((cmd, i) => (
@@ -148,9 +149,9 @@ function CommandPaletteDialog() {
                                                 i === selectedIndex ? 0.8 : 0.5,
                                         }}
                                     >
-                                        {cmd.category}
+                                        {translate(String(cmd.category))}
                                     </span>
-                                    {cmd.label}
+                                    {translate(String(cmd.label))}
                                 </span>
                                 {cmd.shortcut && (
                                     <span

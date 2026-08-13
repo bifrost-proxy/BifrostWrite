@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useEditorStore } from "../../../app/store/editorStore";
 import { useSettingsStore } from "../../../app/store/settingsStore";
@@ -30,8 +31,8 @@ function CollapseToggle({
         <button
             type="button"
             aria-expanded={expanded}
-            aria-label={expanded ? "Collapse edits" : "Expand edits"}
-            title={expanded ? "Collapse edits" : "Expand edits"}
+            aria-label={expanded ? translate("Collapse edits") : translate("Expand edits")}
+            title={expanded ? translate("Collapse edits") : translate("Expand edits")}
             onClick={onToggle}
             className="nw-strip-icon-btn flex shrink-0 items-center justify-center rounded-sm border-0 bg-transparent p-0"
             style={{
@@ -184,7 +185,7 @@ export function EditedFilesBufferPanel({
                 <div className="flex items-center gap-1.5 px-3 py-1">
                     <button
                         type="button"
-                        title="Undo last reject"
+                        title={translate("Undo last reject")}
                         onClick={() => void undoLastReject(activeSessionId)}
                         className="nw-strip-icon-btn flex items-center justify-center rounded-sm border-0 bg-transparent p-1"
                         style={{
@@ -216,7 +217,7 @@ export function EditedFilesBufferPanel({
                             fontWeight: 600,
                         }}
                     >
-                        Undo last reject
+                        {translate("Undo last reject")}
                     </span>
                 </div>
             </section>
@@ -255,7 +256,7 @@ export function EditedFilesBufferPanel({
                         fontWeight: 600,
                     }}
                 >
-                    Edits
+                    {translate("Edits")}
                 </span>
                 <span
                     style={{
@@ -310,7 +311,7 @@ export function EditedFilesBufferPanel({
                     {hasUndoReject && (
                         <button
                             type="button"
-                            title="Undo last reject"
+                            title={translate("Undo last reject")}
                             onClick={() => void undoLastReject(activeSessionId)}
                             className="nw-strip-icon-btn flex items-center justify-center rounded-sm border-0 bg-transparent p-1"
                             style={{
@@ -337,7 +338,7 @@ export function EditedFilesBufferPanel({
                     {/* Review All — text button */}
                     <button
                         type="button"
-                        title="Review All"
+                        title={translate("Review All")}
                         onClick={() =>
                             openReview(activeSessionId, {
                                 title: getReviewTabTitle(
@@ -353,12 +354,12 @@ export function EditedFilesBufferPanel({
                             letterSpacing: "0.1em",
                         }}
                     >
-                        Review
+                        {translate("Review")}
                     </button>
                     {/* Reject All — X icon */}
                     <button
                         type="button"
-                        title="Reject All"
+                        title={translate("Reject All")}
                         onClick={() =>
                             void rejectAllEditedFiles(activeSessionId)
                         }
@@ -390,7 +391,7 @@ export function EditedFilesBufferPanel({
                     {/* Keep All — checkmark icon */}
                     <button
                         type="button"
-                        title="Keep All"
+                        title={translate("Keep All")}
                         onClick={() => keepAllEditedFiles(activeSessionId)}
                         className="nw-strip-icon-btn flex items-center justify-center rounded-sm border-0 bg-transparent p-1"
                         style={{

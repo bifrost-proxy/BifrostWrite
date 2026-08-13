@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useState } from "react";
 import {
     useGraphSettingsStore,
@@ -28,7 +29,7 @@ function Slider({
     return (
         <label style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <span style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>{label}</span>
+                <span>{translate(label)}</span>
                 <span style={{ opacity: 0.6 }}>{value}</span>
             </span>
             <input
@@ -62,7 +63,7 @@ function Toggle({
                 cursor: "pointer",
             }}
         >
-            <span>{label}</span>
+            <span>{translate(label)}</span>
             <div
                 onClick={() => set(settingKey, !value)}
                 style={{
@@ -101,7 +102,7 @@ function SearchFilterInput() {
             type="text"
             value={searchFilter}
             onChange={(e) => set("searchFilter", e.target.value)}
-            placeholder="Filter nodes... (e.g. tag:project)"
+            placeholder={translate("Filter nodes... (e.g. tag:project)")}
             style={{
                 width: "100%",
                 padding: "5px 8px",
@@ -140,7 +141,7 @@ function NumberInput({
     return (
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <span style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>{label}</span>
+                <span>{translate(label)}</span>
                 <span style={{ opacity: 0.6 }}>
                     {value.toLocaleString("en-US")}
                 </span>
@@ -169,11 +170,11 @@ function NumberInput({
 function ModeSection() {
     const graphMode = useGraphSettingsStore((s) => s.graphMode);
     return (
-        <Section title="Mode">
+        <Section title={translate("Mode")}>
             <ModeToggle />
             {graphMode === "local" && (
                 <Slider
-                    label="Depth"
+                    label={translate("Depth")}
                     settingKey="localDepth"
                     min={1}
                     max={5}
@@ -228,7 +229,7 @@ function QualitySection({
     const set = useGraphSettingsStore((s) => s.set);
 
     return (
-        <Section title="Quality">
+        <Section title={translate("Quality")}>
             <label
                 style={{
                     display: "flex",
@@ -242,7 +243,7 @@ function QualitySection({
                         color: "var(--text-secondary)",
                     }}
                 >
-                    Render mode
+                    {translate("Render mode")}
                 </span>
                 <select
                     value={qualityMode}
@@ -263,8 +264,8 @@ function QualitySection({
             </label>
             <div style={hintStyle}>
                 {qualityMode === "auto" && effectiveQualityMode
-                    ? `Auto is using ${formatQualityLabel(effectiveQualityMode)}${typeof totalNodes === "number" ? ` for ${totalNodes.toLocaleString("en-US")} nodes` : ""}.`
-                    : "Quality mode only affects rendering detail and interaction cost."}
+                    ? translate(`Auto is using ${formatQualityLabel(effectiveQualityMode)}${typeof totalNodes === "number" ? ` for ${totalNodes.toLocaleString("en-US")} nodes` : ""}.`)
+                    : translate("Quality mode only affects rendering detail and interaction cost.")}
             </div>
         </Section>
     );
@@ -275,7 +276,7 @@ function LayoutSection() {
     const set = useGraphSettingsStore((s) => s.set);
 
     return (
-        <Section title="Layout">
+        <Section title={translate("Layout")}>
             <label
                 style={{
                     display: "flex",
@@ -289,7 +290,7 @@ function LayoutSection() {
                         color: "var(--text-secondary)",
                     }}
                 >
-                    Strategy
+                    {translate("Strategy")}
                 </span>
                 <select
                     value={layoutStrategy}
@@ -309,8 +310,7 @@ function LayoutSection() {
                 </select>
             </label>
             <div style={hintStyle}>
-                Preset reuses saved positions; Force always simulates; Overview
-                Packed and Clustered start from deterministic layouts.
+                {translate("Preset reuses saved positions; Force always simulates; Overview Packed and Clustered start from deterministic layouts.")}
             </div>
         </Section>
     );
@@ -318,52 +318,51 @@ function LayoutSection() {
 
 function LimitsSection() {
     return (
-        <Section title="Limits">
+        <Section title={translate("Limits")}>
             <NumberInput
-                label="Global max nodes"
+                label={translate("Global max nodes")}
                 settingKey="maxGlobalNodes"
                 min={500}
                 max={100_000}
                 step={100}
             />
             <NumberInput
-                label="Global max links"
+                label={translate("Global max links")}
                 settingKey="maxGlobalLinks"
                 min={1_000}
                 max={300_000}
                 step={500}
             />
             <NumberInput
-                label="Overview max nodes"
+                label={translate("Overview max nodes")}
                 settingKey="maxOverviewNodes"
                 min={50}
                 max={10_000}
                 step={50}
             />
             <NumberInput
-                label="Overview max links"
+                label={translate("Overview max links")}
                 settingKey="maxOverviewLinks"
                 min={100}
                 max={50_000}
                 step={100}
             />
             <NumberInput
-                label="Local max nodes"
+                label={translate("Local max nodes")}
                 settingKey="maxLocalNodes"
                 min={100}
                 max={20_000}
                 step={100}
             />
             <NumberInput
-                label="Local max links"
+                label={translate("Local max links")}
                 settingKey="maxLocalLinks"
                 min={500}
                 max={100_000}
                 step={500}
             />
             <div style={hintStyle}>
-                Truncation limits are applied before rendering to keep large
-                vaults responsive.
+                {translate("Truncation limits are applied before rendering to keep large vaults responsive.")}
             </div>
         </Section>
     );
@@ -374,7 +373,7 @@ function RendererSection() {
     const set = useGraphSettingsStore((s) => s.set);
 
     return (
-        <Section title="Renderer">
+        <Section title={translate("Renderer")}>
             <label
                 style={{
                     display: "flex",
@@ -382,7 +381,7 @@ function RendererSection() {
                     gap: 6,
                 }}
             >
-                <span style={hintStyle}>Mode</span>
+                <span style={hintStyle}>{translate("Mode")}</span>
                 <select
                     value={rendererMode}
                     onChange={(e) =>
@@ -398,8 +397,7 @@ function RendererSection() {
                 </select>
             </label>
             <div style={hintStyle}>
-                2D is the default workflow. 3D is experimental and reuses the
-                same snapshot and layout pipeline.
+                {translate("2D is the default workflow. 3D is experimental and reuses the same snapshot and layout pipeline.")}
             </div>
         </Section>
     );
@@ -418,7 +416,7 @@ function VaultDefaultsSection({ vaultPath }: { vaultPath: string | null }) {
         : "global";
 
     return (
-        <Section title="Vault">
+        <Section title={translate("Vault")}>
             <label
                 style={{
                     display: "flex",
@@ -432,7 +430,7 @@ function VaultDefaultsSection({ vaultPath }: { vaultPath: string | null }) {
                         color: "var(--text-secondary)",
                     }}
                 >
-                    Default mode for this vault
+                    {translate("Default mode for this vault")}
                 </span>
                 <select
                     value={defaultMode}
@@ -473,10 +471,10 @@ function VaultDefaultsSection({ vaultPath }: { vaultPath: string | null }) {
                     opacity: vaultPath ? 1 : 0.5,
                 }}
             >
-                Use current mode as default
+                {translate("Use current mode as default")}
             </button>
             <div style={hintStyle}>
-                The saved mode is applied when this vault is reopened.
+                {translate("The saved mode is applied when this vault is reopened.")}
             </div>
         </Section>
     );
@@ -607,14 +605,14 @@ function GroupItem({ group }: { group: GraphGroup }) {
                         whiteSpace: "nowrap",
                     }}
                 >
-                    {group.name || "Untitled"}
+                    {group.name || translate("Untitled")}
                 </span>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         moveGroup(group.id, "up");
                     }}
-                    title="Move up"
+                    title={translate("Move up")}
                     style={arrowBtnStyle}
                 >
                     ↑
@@ -624,7 +622,7 @@ function GroupItem({ group }: { group: GraphGroup }) {
                         e.stopPropagation();
                         moveGroup(group.id, "down");
                     }}
-                    title="Move down"
+                    title={translate("Move down")}
                     style={arrowBtnStyle}
                 >
                     ↓
@@ -634,7 +632,7 @@ function GroupItem({ group }: { group: GraphGroup }) {
                         e.stopPropagation();
                         removeGroup(group.id);
                     }}
-                    title="Delete group"
+                    title={translate("Delete group")}
                     style={{
                         ...arrowBtnStyle,
                         color: "#ef4444",
@@ -661,7 +659,7 @@ function GroupItem({ group }: { group: GraphGroup }) {
                         onChange={(e) =>
                             updateGroup(group.id, { name: e.target.value })
                         }
-                        placeholder="Group name"
+                        placeholder={translate("Group name")}
                         style={inputStyle}
                     />
                     <input
@@ -670,7 +668,7 @@ function GroupItem({ group }: { group: GraphGroup }) {
                         onChange={(e) =>
                             updateGroup(group.id, { query: e.target.value })
                         }
-                        placeholder="Query (e.g. tag:project path:daily)"
+                        placeholder={translate("Query (e.g. tag:project path:daily)")}
                         style={inputStyle}
                     />
                     <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
@@ -752,7 +750,7 @@ function GroupsSection() {
     };
 
     return (
-        <Section title="Groups">
+        <Section title={translate("Groups")}>
             {groups.map((g) => (
                 <GroupItem key={g.id} group={g} />
             ))}
@@ -769,7 +767,7 @@ function GroupsSection() {
                     fontSize: 11,
                 }}
             >
-                + Add group
+                {translate("+ Add group")}
             </button>
         </Section>
     );
@@ -826,30 +824,30 @@ export function GraphSettingsPanel({
                 <LimitsSection />
                 <VaultDefaultsSection vaultPath={vaultPath} />
 
-                <Section title="Forces">
+                <Section title={translate("Forces")}>
                     <Slider
-                        label="Center"
+                        label={translate("Center")}
                         settingKey="centerForce"
                         min={0}
                         max={1}
                         step={0.05}
                     />
                     <Slider
-                        label="Repel"
+                        label={translate("Repel")}
                         settingKey="repelForce"
                         min={0}
                         max={200}
                         step={5}
                     />
                     <Slider
-                        label="Link strength"
+                        label={translate("Link strength")}
                         settingKey="linkForce"
                         min={0}
                         max={1}
                         step={0.05}
                     />
                     <Slider
-                        label="Link distance"
+                        label={translate("Link distance")}
                         settingKey="linkDistance"
                         min={10}
                         max={200}
@@ -857,45 +855,45 @@ export function GraphSettingsPanel({
                     />
                 </Section>
 
-                <Section title="Display">
+                <Section title={translate("Display")}>
                     <Slider
-                        label="Node size"
+                        label={translate("Node size")}
                         settingKey="nodeSize"
                         min={1}
                         max={10}
                         step={0.5}
                     />
                     <Slider
-                        label="Link width"
+                        label={translate("Link width")}
                         settingKey="linkThickness"
                         min={0.1}
                         max={5}
                         step={0.1}
                     />
-                    <Toggle label="Show titles" settingKey="showTitles" />
+                    <Toggle label={translate("Show titles")} settingKey="showTitles" />
                     <Slider
-                        label="Text zoom"
+                        label={translate("Text zoom")}
                         settingKey="textFadeThreshold"
                         min={0}
                         max={2}
                         step={0.1}
                     />
                     <Slider
-                        label="Glow"
+                        label={translate("Glow")}
                         settingKey="glowIntensity"
                         min={0}
                         max={100}
                         step={5}
                     />
-                    <Toggle label="Arrows" settingKey="arrows" />
+                    <Toggle label={translate("Arrows")} settingKey="arrows" />
                 </Section>
 
-                <Section title="Filters">
+                <Section title={translate("Filters")}>
                     <SearchFilterInput />
-                    <Toggle label="Show orphans" settingKey="showOrphans" />
-                    <Toggle label="Tags as nodes" settingKey="showTagNodes" />
+                    <Toggle label={translate("Show orphans")} settingKey="showOrphans" />
+                    <Toggle label={translate("Tags as nodes")} settingKey="showTagNodes" />
                     <Toggle
-                        label="Attachments"
+                        label={translate("Attachments")}
                         settingKey="showAttachmentNodes"
                     />
                 </Section>

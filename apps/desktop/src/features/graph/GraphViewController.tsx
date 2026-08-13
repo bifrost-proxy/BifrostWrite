@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     startTransition,
     useCallback,
@@ -664,7 +665,7 @@ export function GraphViewController({
     const toggleButton = (
         <button
             onClick={togglePanel}
-            title={panelOpen ? "Hide settings" : "Show settings"}
+            title={panelOpen ? translate("Hide settings") : translate("Show settings")}
             style={{
                 position: "absolute",
                 top: 12,
@@ -729,7 +730,7 @@ export function GraphViewController({
                         background: "var(--bg-primary)",
                     }}
                 >
-                    {message}
+                    {translate(String(message))}
                     {preparedPipelineError && (
                         <div
                             style={{
@@ -838,7 +839,7 @@ export function GraphViewController({
                                         lineHeight: 1.35,
                                     }}
                                 >
-                                    {graphStatusMessage.title}
+                                    {translate(String(graphStatusMessage.title))}
                                 </div>
                                 <div
                                     style={{
@@ -862,10 +863,10 @@ export function GraphViewController({
                                         "1px solid rgba(255, 255, 255, 0.08)",
                                 }}
                             >
-                                {truncationMessage.title}.{" "}
-                                {truncationMessage.detail}. Current mode limit:{" "}
+                                {translate(String(truncationMessage.title))}.{" "}
+                                {translate(String(truncationMessage.detail))}{translate(". Current mode limit:")}{" "}
                                 {GRAPH_NUMBER_FORMAT.format(currentLimit)}{" "}
-                                nodes.
+                                {translate("nodes.")}
                             </div>
                         )}
                         {suggestionActions.length > 0 && (
@@ -878,7 +879,7 @@ export function GraphViewController({
                             >
                                 {suggestionActions.map((suggestion) => (
                                     <button
-                                        key={suggestion.label}
+                                        key={translate(String(suggestion.label))}
                                         onClick={suggestion.action}
                                         style={{
                                             padding: "6px 8px",
@@ -891,7 +892,7 @@ export function GraphViewController({
                                             cursor: "pointer",
                                         }}
                                     >
-                                        {suggestion.label}
+                                        {translate(String(suggestion.label))}
                                     </button>
                                 ))}
                             </div>

@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import {
     useCallback,
     useEffect,
@@ -300,7 +301,7 @@ export function HistorySessionList({
                     </svg>
                     <input
                         type="text"
-                        placeholder="Search chats…"
+                        placeholder={translate("Search chats…")}
                         value={search}
                         onChange={(e) => {
                             setSearch(e.target.value);
@@ -358,7 +359,7 @@ export function HistorySessionList({
                         className="min-w-0 flex-1 text-[10px] font-medium"
                         style={{ color: "var(--text-primary)" }}
                     >
-                        {batchSelectedSessionIds.length} chats selected
+                        {batchSelectedSessionIds.length} {translate("chats selected")}
                     </span>
                     <button
                         type="button"
@@ -372,7 +373,7 @@ export function HistorySessionList({
                             color: "#fff",
                         }}
                     >
-                        Delete selected
+                        {translate("Delete selected")}
                     </button>
                     <button
                         type="button"
@@ -384,7 +385,7 @@ export function HistorySessionList({
                             color: "var(--text-primary)",
                         }}
                     >
-                        Clear
+                        {translate("Clear")}
                     </button>
                 </div>
             )}
@@ -399,7 +400,7 @@ export function HistorySessionList({
                         className="px-3 py-8 text-center text-xs"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        Searching…
+                        {translate("Searching…")}
                     </div>
                 )}
 
@@ -419,8 +420,8 @@ export function HistorySessionList({
                                 style={{ color: "var(--text-secondary)" }}
                             >
                                 {search
-                                    ? "No chats match your search."
-                                    : "No chat history yet."}
+                                    ? translate("No chats match your search.")
+                                    : translate("No chat history yet.")}
                             </div>
                         )}
 
@@ -590,7 +591,7 @@ function ContentSearchResults({
                 className="px-3 py-8 text-center text-xs"
                 style={{ color: "var(--text-secondary)" }}
             >
-                No results found in message content.
+                {translate("No results found in message content.")}
             </div>
         );
     }
@@ -604,8 +605,8 @@ function ContentSearchResults({
                     opacity: 0.6,
                 }}
             >
-                {results.length} {results.length === 1 ? "session" : "sessions"}{" "}
-                found
+                {results.length} {results.length === 1 ? translate("session") : translate("sessions")}{" "}
+                {translate("found")}
             </div>
             {results.map((result) => (
                 <SearchResultCard
@@ -688,7 +689,7 @@ function SearchResultCard({
                                     "color-mix(in srgb, var(--text-secondary) 12%, transparent)",
                             }}
                         >
-                            {msg.role === "user" ? "you" : "ai"}
+                            {msg.role === "user" ? translate("you") : translate("ai")}
                         </span>
                         <span
                             className="min-w-0 flex-1"

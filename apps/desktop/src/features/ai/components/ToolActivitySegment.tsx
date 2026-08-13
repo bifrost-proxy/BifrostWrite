@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import {
     memo,
     useCallback,
@@ -185,7 +186,7 @@ export const ToolActivitySegment = memo(function ToolActivitySegment({
                             data-activity-rail-current="true"
                             title={latestLabel}
                         >
-                            {isCurrentTurnTail ? "Current" : "Latest"}: {latestLabel}
+                            {isCurrentTurnTail ? translate("Current") : translate("Latest")}: {latestLabel}
                         </span>
                     </span>
                 </span>
@@ -212,7 +213,7 @@ export const ToolActivitySegment = memo(function ToolActivitySegment({
                                 )}
                             </span>
                         ) : null}
-                        <span className="text-text-secondary">Changed</span>
+                        <span className="text-text-secondary">{translate("Changed")}</span>
                     </span>
                 ) : null}
                 <span className="shrink-0 text-text-secondary">
@@ -223,7 +224,7 @@ export const ToolActivitySegment = memo(function ToolActivitySegment({
             {visibleEntries.length > 0 ? (
                 <div
                     aria-label={
-                        expanded ? "Full tool activity" : "Important tool activity"
+                        expanded ? translate("Full tool activity") : translate("Important tool activity")
                     }
                     className="pt-1"
                     id={contentId}

@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     useState,
     useRef,
@@ -163,6 +164,42 @@ const TREE_GUIDE_COLOR = "var(--tree-guide-color)";
 const FILE_TREE_CONTEXT_MENU_VIEWPORT_MARGIN = 32;
 const FILE_TREE_CONTEXT_MENU_MIN_HEIGHT = 180;
 const FILE_TREE_SCROLL_RESTORE_MAX_ATTEMPTS = 12;
+
+function CloudPlaceholderIndicator() {
+    const label = translate("Stored in iCloud; downloads when opened");
+    return (
+        <span
+            title={label}
+            aria-label={label}
+            style={{
+                display: "inline-flex",
+                flexShrink: 0,
+                width: 14,
+                height: 14,
+                marginLeft: 2,
+                color: "var(--text-secondary)",
+                opacity: 0.8,
+            }}
+        >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                    d="M7.5 18.5h9.25a4.25 4.25 0 0 0 .55-8.46A5.75 5.75 0 0 0 6.35 8.7 4.9 4.9 0 0 0 7.5 18.5Z"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+                <path
+                    d="M12 10.5v5m0 0-2-2m2 2 2-2"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+            </svg>
+        </span>
+    );
+}
 
 // --- Tree building ---
 
@@ -826,7 +863,7 @@ function SortMenu({
         <div
             ref={ref}
             role="menu"
-            aria-label="Sort order"
+            aria-label={translate("Sort order")}
             onKeyDown={handleKeyDown}
             style={{
                 position: "absolute",
@@ -873,7 +910,7 @@ function SortMenu({
                     >
                         {opt.id === current ? "✓" : ""}
                     </span>
-                    {opt.label}
+                    {translate(String(opt.label))}
                 </button>
             ))}
         </div>
@@ -1230,7 +1267,7 @@ const FlatTreeRowView = memo(
                         }}
                         onBlur={onCreateConfirm}
                         placeholder={
-                            row.mode === "folder" ? "New folder" : "New note"
+                            row.mode === "folder" ? translate("New folder") : translate("New note")
                         }
                         className="flex-1 text-xs px-1.5 py-0.5 rounded outline-none min-w-0"
                         style={{
@@ -1310,6 +1347,9 @@ const FlatTreeRowView = memo(
                     <span className={TREE_LABEL_CLASSNAME}>
                         {getVaultEntryDisplayName(entry, showExtensions)}
                     </span>
+                    {entry.is_cloud_placeholder && (
+                        <CloudPlaceholderIndicator />
+                    )}
                 </div>
             );
         }
@@ -1441,6 +1481,9 @@ const FlatTreeRowView = memo(
                     <span className={TREE_LABEL_CLASSNAME}>
                         {getVaultEntryDisplayName(entry, showExtensions)}
                     </span>
+                    {entry.is_cloud_placeholder && (
+                        <CloudPlaceholderIndicator />
+                    )}
                 </div>
             );
         }
@@ -1580,6 +1623,7 @@ const FlatTreeRowView = memo(
                 >
                     {getNoteDisplayName(note, showExtensions)}
                 </span>
+                {note.is_cloud_placeholder && <CloudPlaceholderIndicator />}
                 {documentStatus && (
                     <span
                         data-document-status={documentStatus}
@@ -1714,7 +1758,7 @@ function OpenVaultForm() {
                 className="text-sm font-medium"
                 style={{ color: "var(--text-primary)" }}
             >
-                Open vault
+                {translate("Open vault")}
             </p>
             <button
                 onClick={handleOpen}
@@ -1722,7 +1766,7 @@ function OpenVaultForm() {
                 className="text-sm py-1.5 rounded font-medium cursor-pointer"
                 style={{ backgroundColor: "var(--accent)", color: "#fff" }}
             >
-                {isLoading ? "Opening…" : "Select folder"}
+                {isLoading ? translate("Opening…") : translate("Select folder")}
             </button>
             {isLoading && (
                 <div
@@ -1734,12 +1778,16 @@ function OpenVaultForm() {
                     }}
                 >
                     <div style={{ color: "var(--text-primary)" }}>
-                        {vaultOpenState.message || "Preparing vault..."}
+                        {translate(
+                            String(
+                                vaultOpenState.message || "Preparing vault...",
+                            ),
+                        )}
                     </div>
                     <div className="mt-1">
                         {vaultOpenState.total > 0
                             ? `${vaultOpenState.processed.toLocaleString()} / ${vaultOpenState.total.toLocaleString()} ${progressUnit}`
-                            : "Calculating progress..."}
+                            : translate("Calculating progress...")}
                     </div>
                     <button
                         type="button"
@@ -1750,13 +1798,13 @@ function OpenVaultForm() {
                             color: "var(--text-primary)",
                         }}
                     >
-                        Cancel
+                        {translate("Cancel")}
                     </button>
                 </div>
             )}
             {error && (
                 <p className="text-xs" style={{ color: "#ef4444" }}>
-                    {error}
+                    {translate(String(error))}
                 </p>
             )}
         </div>
@@ -2011,7 +2059,7 @@ function MoveDestinationPicker({
                                 maxWidth: "100%",
                             }}
                         >
-                            {getParentPath(folderPath) || "/ Root"}
+                            {getParentPath(folderPath) || translate("/ Root")}
                         </span>
                     ) : null}
                 </span>
@@ -2023,7 +2071,7 @@ function MoveDestinationPicker({
         <div
             ref={ref}
             role="dialog"
-            aria-label="Move to Folder"
+            aria-label={translate("Move to Folder")}
             style={{
                 position: "fixed",
                 top: position.y,
@@ -2049,13 +2097,13 @@ function MoveDestinationPicker({
                     padding: "0 2px",
                 }}
             >
-                Move to Folder
+                {translate("Move to Folder")}
             </div>
             <input
                 ref={inputRef}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search folders..."
+                placeholder={translate("Search folders...")}
                 style={{
                     width: "100%",
                     borderRadius: 7,
@@ -2088,7 +2136,7 @@ function MoveDestinationPicker({
                             fontSize: 12,
                         }}
                     >
-                        No matching folders
+                        {translate("No matching folders")}
                     </div>
                 ) : null}
             </div>
@@ -3647,8 +3695,8 @@ export function FileTree() {
     );
 
     const handleMoveEntryToTrash = useCallback(async (entry: VaultEntryDto) => {
-        const approved = await confirm(`Move "${entry.file_name}" to Trash?`, {
-            title: "Move File to Trash",
+        const approved = await confirm(translate(`Move "${entry.file_name}" to Trash?`), {
+            title: translate("Move File to Trash"),
             kind: "warning",
         });
         if (!approved) return;
@@ -3742,7 +3790,9 @@ export function FileTree() {
 
     const readNoteContent = useCallback(
         (noteId: string) =>
-            vaultInvoke<{ content: string }>("read_note", { noteId }),
+            vaultInvoke<{ title: string; content: string }>("read_note", {
+                noteId,
+            }),
         [],
     );
 
@@ -3754,13 +3804,13 @@ export function FileTree() {
                 (tab): tab is NoteTab =>
                     isNoteTab(tab) && tab.noteId === note.id,
             );
-            if (existing) {
+            if (existing && !note.is_cloud_placeholder) {
                 openNote(note.id, note.title, existing.content);
                 return;
             }
             try {
                 const detail = await readNoteContent(note.id);
-                openNote(note.id, note.title, detail.content);
+                openNote(note.id, detail.title, detail.content);
             } catch (error) {
                 logError("file-tree", "Failed to open tree note", error);
             }
@@ -3777,15 +3827,16 @@ export function FileTree() {
                     (tab): tab is NoteTab =>
                         isNoteTab(tab) && tab.noteId === note.id,
                 );
-                const content =
-                    existing?.content ??
-                    (await readNoteContent(note.id)).content;
+                const detail =
+                    existing && !note.is_cloud_placeholder
+                        ? { title: note.title, content: existing.content }
+                        : await readNoteContent(note.id);
 
                 insertExternalTab({
                     id: crypto.randomUUID(),
                     noteId: note.id,
-                    title: note.title,
-                    content,
+                    title: detail.title,
+                    content: detail.content,
                 });
             } catch (error) {
                 logError(
@@ -4272,8 +4323,8 @@ export function FileTree() {
     const handleDeleteFolder = useCallback(
         async (relativePath: string, folderName: string) => {
             const approved = await confirm(
-                `Delete folder "${folderName}" and all its contents?`,
-                { title: "Delete Folder", kind: "warning" },
+                translate(`Delete folder "${folderName}" and all its contents?`),
+                { title: translate("Delete Folder"), kind: "warning" },
             );
             if (!approved) return;
 
@@ -5447,7 +5498,7 @@ export function FileTree() {
                 }}
             >
                 <ToolbarBtn
-                    title="New note"
+                    title={translate("New note")}
                     onClick={() => startCreating("note")}
                     size={metrics.toolbarButton}
                     iconScale={metrics.toolbarIconScale}
@@ -5464,7 +5515,7 @@ export function FileTree() {
                 </ToolbarBtn>
 
                 <ToolbarBtn
-                    title="New folder"
+                    title={translate("New folder")}
                     onClick={() => startCreating("folder")}
                     size={metrics.toolbarButton}
                     iconScale={metrics.toolbarIconScale}
@@ -5485,7 +5536,7 @@ export function FileTree() {
                 </ToolbarBtn>
 
                 <ToolbarBtn
-                    title="Sort order"
+                    title={translate("Sort order")}
                     active={sortMenuOpen}
                     onClick={() => setSortMenuOpen((v) => !v)}
                     size={metrics.toolbarButton}
@@ -5505,8 +5556,8 @@ export function FileTree() {
                 <ToolbarBtn
                     title={
                         revealActive
-                            ? "Don't reveal active file"
-                            : "Reveal active file"
+                            ? translate("Don't reveal active file")
+                            : translate("Reveal active file")
                     }
                     active={revealActive}
                     onClick={handleRevealToggle}
@@ -5538,7 +5589,7 @@ export function FileTree() {
                 </ToolbarBtn>
 
                 <ToolbarBtn
-                    title={canCollapseAll ? "Collapse all" : "Expand all"}
+                    title={canCollapseAll ? translate("Collapse all") : translate("Expand all")}
                     onClick={handleCollapseExpandAll}
                     size={metrics.toolbarButton}
                     iconScale={metrics.toolbarIconScale}
@@ -5592,8 +5643,8 @@ export function FileTree() {
                 <ToolbarBtn
                     title={
                         livePreviewEnabled
-                            ? "Disable Live Preview"
-                            : "Enable Live Preview"
+                            ? translate("Disable Live Preview")
+                            : translate("Enable Live Preview")
                     }
                     active={livePreviewEnabled}
                     onClick={() =>
@@ -5637,8 +5688,8 @@ export function FileTree() {
                 <ToolbarBtn
                     title={
                         lineWrapping
-                            ? "Disable Line Wrapping"
-                            : "Enable Line Wrapping"
+                            ? translate("Disable Line Wrapping")
+                            : translate("Enable Line Wrapping")
                     }
                     active={lineWrapping}
                     onClick={() => setSetting("lineWrapping", !lineWrapping)}
@@ -5680,7 +5731,7 @@ export function FileTree() {
                 <SidebarFilterInput
                     value={filterText}
                     onChange={setFilterText}
-                    placeholder="Filter files..."
+                    placeholder={translate("Filter files...")}
                 />
             </div>
 
@@ -5735,8 +5786,8 @@ export function FileTree() {
                         }}
                     >
                         {normalizedFilter
-                            ? `No files match "${filterText}"`
-                            : "No notes"}
+                            ? translate(`No files match "${filterText}"`)
+                            : translate("No notes")}
                     </p>
                 ) : (
                     <>

@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     useState,
     useEffect,
@@ -616,9 +617,9 @@ function QuickSwitcherDialog() {
                         >
                             {isEmptyQuery
                                 ? vaultName
-                                    ? "Type to search your vault"
-                                    : "Open a vault to start searching"
-                                : "No matching items"}
+                                    ? translate("Type to search your vault")
+                                    : translate("Open a vault to start searching")
+                                : translate("No matching items")}
                         </div>
                     ) : (
                         <div
@@ -705,8 +706,8 @@ function QuickSwitcherDialog() {
                 >
                     <span>
                         {showLoader
-                            ? "Searching\u2026"
-                            : "\u2191\u2193 Navigate \u00b7 Enter Open \u00b7 Esc Close"}
+                            ? translate("Searching…")
+                            : translate("↑↓ Navigate · Enter Open · Esc Close")}
                     </span>
                     {results.length > 0 && (
                         <span>
@@ -767,7 +768,7 @@ function renderQuickSwitcherIcon(item: QuickSwitcherItem): ReactNode {
                     stroke="none"
                     fontFamily="sans-serif"
                 >
-                    PDF
+                    {translate("PDF")}
                 </text>
             </svg>
         );

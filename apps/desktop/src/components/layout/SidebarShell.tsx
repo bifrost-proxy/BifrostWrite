@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     useCallback,
     type CSSProperties,
@@ -202,8 +203,8 @@ export function SidebarShell({ onOpenSettings }: SidebarShellProps) {
                     type="button"
                     onMouseDown={(event) => event.stopPropagation()}
                     onClick={toggleSidebar}
-                    title="Hide sidebar"
-                    aria-label="Hide sidebar"
+                    title={translate("Hide sidebar")}
+                    aria-label={translate("Hide sidebar")}
                     className="no-drag ub-chrome-btn flex items-center justify-center rounded-md"
                     style={{
                         width: 32,

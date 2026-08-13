@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useMemo, useRef, useState, type RefObject } from "react";
 import { MetaBadge, EditableNoteTitle } from "./EditorHeader";
 import { LocationBreadcrumb } from "./LocationBreadcrumb";
@@ -219,7 +220,7 @@ export function MarkdownNoteHeader({
                         <MetaBadge
                             label={statusLabel(status)}
                             tone={statusTone(status)}
-                            title="Change status"
+                            title={translate("Change status")}
                             onClick={openStatusMenu}
                             leading={
                                 <StatusDot color={statusDotColor(status)} />
@@ -231,9 +232,9 @@ export function MarkdownNoteHeader({
                     {typeValue && <MetaBadge label={typeValue} tone="muted" />}
                     {showMissingTypeHint && (
                         <MetaBadge
-                            label="No OKF type"
+                            label={translate("No OKF type")}
                             tone="muted"
-                            title="OKF vaults expect a type field in frontmatter"
+                            title={translate("OKF vaults expect a type field in frontmatter")}
                             onClick={() => {
                                 if (!propertiesExpanded) onToggleProperties();
                             }}
@@ -262,13 +263,13 @@ export function MarkdownNoteHeader({
                     }}
                 >
                     <ToolbarButton
-                        label="Properties"
+                        label={translate("Properties")}
                         icon={<PropertiesIcon />}
                         active={propertiesExpanded}
                         onClick={onToggleProperties}
                     />
                     <ToolbarButton
-                        label="Search"
+                        label={translate("Search")}
                         icon={<SearchIcon />}
                         onClick={onSearchClick}
                     />
@@ -339,7 +340,7 @@ function SetStatusButton({
         <button
             type="button"
             onClick={onClick}
-            title="Set status"
+            title={translate("Set status")}
             style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -358,7 +359,7 @@ function SetStatusButton({
             }}
         >
             <StatusDot color="var(--text-secondary)" />
-            Set status
+            {translate("Set status")}
         </button>
     );
 }
@@ -440,7 +441,7 @@ function ToolbarButton({
             }}
         >
             {icon}
-            {label}
+            {translate(label)}
         </button>
     );
 }

@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { getViewportSafeMenuPosition } from "../../app/utils/menuPosition";
@@ -185,7 +186,7 @@ export function WikilinkSuggester({
                             textAlign: "center",
                         }}
                     >
-                        No matches found
+                        {translate("No matches found")}
                     </div>
                 )}
             </div>

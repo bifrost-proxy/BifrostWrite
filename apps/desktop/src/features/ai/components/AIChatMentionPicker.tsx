@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { FileTypeIcon } from "../../../components/icons/FileTypeIcon";
@@ -259,9 +260,9 @@ export function AIChatMentionPicker({
                                     }}
                                 >
                                     {isFetch
-                                        ? "fetch"
+                                        ? translate("fetch")
                                         : isPlan
-                                          ? "/plan"
+                                          ? translate("/plan")
                                           : item.kind === "note"
                                             ? item.label
                                             : item.kind === "file"
@@ -298,7 +299,7 @@ export function AIChatMentionPicker({
                             textAlign: "center",
                         }}
                     >
-                        No matches found
+                        {translate("No matches found")}
                     </div>
                 )}
             </div>

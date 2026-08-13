@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     useDeferredValue,
     useState,
@@ -156,7 +157,7 @@ function SectionHeader({ label, count }: { label: string; count: number }) {
             className="flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider"
             style={{ color: "var(--text-secondary)" }}
         >
-            <span>{label}</span>
+            <span>{translate(label)}</span>
             {count > 0 && <span>{count}</span>}
         </div>
     );
@@ -229,7 +230,7 @@ function BacklinksContextMenu({
                 background: "transparent",
             }}
         >
-            {label}
+            {translate(label)}
         </button>
     );
 
@@ -333,7 +334,7 @@ function OutgoingLinksContextMenu({
                 background: "transparent",
             }}
         >
-            {label}
+            {translate(label)}
         </button>
     );
 
@@ -654,20 +655,20 @@ export function LinksPanel() {
                 className="flex items-center justify-center h-full text-xs"
                 style={{ color: "var(--text-secondary)" }}
             >
-                No note open
+                {translate("No note open")}
             </div>
         );
     }
 
     return (
         <div className="flex flex-col h-full overflow-y-auto">
-            <SectionHeader label="Backlinks" count={backlinks.length} />
+            <SectionHeader label={translate("Backlinks")} count={backlinks.length} />
             {backlinks.length === 0 ? (
                 <div
                     className="px-3 pb-2 text-xs"
                     style={{ color: "var(--text-secondary)" }}
                 >
-                    No backlinks
+                    {translate("No backlinks")}
                 </div>
             ) : (
                 <div className="px-1 pb-1">
@@ -704,7 +705,7 @@ export function LinksPanel() {
             />
 
             <SectionHeader
-                label="Outgoing Links"
+                label={translate("Outgoing Links")}
                 count={outgoingLinks.length}
             />
             {outgoingLinks.length === 0 ? (
@@ -712,7 +713,7 @@ export function LinksPanel() {
                     className="px-3 pb-2 text-xs"
                     style={{ color: "var(--text-secondary)" }}
                 >
-                    No outgoing links
+                    {translate("No outgoing links")}
                 </div>
             ) : (
                 <div className="px-1 pb-1">
@@ -744,7 +745,7 @@ export function LinksPanel() {
                             <NoteItem
                                 key={target}
                                 title={target}
-                                subtitle="Not found"
+                                subtitle={translate("Not found")}
                                 broken
                                 onClick={() => {
                                     void useVaultStore
