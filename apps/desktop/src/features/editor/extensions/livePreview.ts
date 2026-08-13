@@ -1,4 +1,7 @@
-import { EditorView } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
+import { syntaxTree } from "@codemirror/language";
+import { Prec } from "@codemirror/state";
+import type { SyntaxNode } from "@lezer/common";
 import { openUrl } from "@bifrostwrite/runtime";
 
 import {
@@ -229,6 +232,125 @@ function collapsePreviewSelection(view: EditorView) {
     if (touchesEditor) {
         domSelection.removeAllRanges();
     }
+}
+
+function appendTrailingNewline(view: EditorView) {
+    const end = view.state.doc.length;
+    const needsNewline =
+        end > 0 && view.state.doc.sliceString(end - 1) !== "\n";
+
+    view.dispatch({
+        changes: needsNewline ? { from: end, insert: "\n" } : undefined,
+        selection: { anchor: end + (needsNewline ? 1 : 0) },
+        scrollIntoView: true,
+        userEvent: "input",
+    });
+    view.focus();
+}
+
+export function exitFencedCodeBlock(view: EditorView): boolean {
+    const selection = view.state.selection.main;
+    if (!selection.empty) return false;
+
+    let node: SyntaxNode | null = syntaxTree(view.state).resolveInner(
+        selection.head,
+        -1,
+    );
+    while (node && node.name !== "FencedCode") {
+        node = node.parent;
+    }
+    if (!node) return false;
+
+    const cursor = node.cursor();
+    let closeFrom = -1;
+    if (cursor.firstChild()) {
+        do {
+            if (cursor.name !== "CodeMark") continue;
+            if (closeFrom < 0) {
+                closeFrom = cursor.from;
+            } else {
+                closeFrom = cursor.from;
+            }
+        } while (cursor.nextSibling());
+    }
+
+    // An incomplete fence has only its opening CodeMark. Keep the shortcut's
+    // normal behavior until the block has a real closing fence to jump past.
+    if (closeFrom <= node.from) return false;
+
+    const closeLine = view.state.doc.lineAt(closeFrom);
+    const afterFence = closeLine.to;
+    const doc = view.state.doc;
+
+    if (afterFence === doc.length) {
+        view.dispatch({
+            changes: { from: afterFence, insert: "\n" },
+            selection: { anchor: afterFence + 1 },
+            scrollIntoView: true,
+            userEvent: "input",
+        });
+        return true;
+    }
+
+    const nextLineStart = afterFence + 1;
+    if (nextLineStart === doc.length) {
+        view.dispatch({
+            selection: { anchor: nextLineStart },
+            scrollIntoView: true,
+        });
+        return true;
+    }
+
+    const nextLine = doc.lineAt(nextLineStart);
+    if (nextLine.length === 0) {
+        view.dispatch({
+            selection: { anchor: nextLineStart },
+            scrollIntoView: true,
+        });
+        return true;
+    }
+
+    view.dispatch({
+        changes: { from: nextLineStart, insert: "\n" },
+        selection: { anchor: nextLineStart },
+        scrollIntoView: true,
+        userEvent: "input",
+    });
+    return true;
+}
+
+const exitFencedCodeBlockKeymap = Prec.high(
+    keymap.of([
+        { key: "Shift-Enter", run: exitFencedCodeBlock },
+        { key: "Mod-Enter", run: exitFencedCodeBlock },
+    ]),
+);
+
+export function isTrailingEditorBlankClick(
+    view: EditorView,
+    target: HTMLElement,
+    clientY: number,
+): boolean {
+    const interactiveFormTarget = target.closest(
+        "button, input, select, textarea, [contenteditable='true']",
+    );
+    if (
+        view.state.doc.length === 0 ||
+        view.state.doc.sliceString(view.state.doc.length - 1) === "\n" ||
+        target.closest(POINTER_INTERACTIVE_PREVIEW_SELECTOR) ||
+        (interactiveFormTarget !== null &&
+            interactiveFormTarget !== view.contentDOM)
+    ) {
+        return false;
+    }
+
+    const renderedLines = view.contentDOM.querySelectorAll<HTMLElement>(
+        ":scope > .cm-line",
+    );
+    const lastRenderedLine = renderedLines.item(renderedLines.length - 1);
+    if (!lastRenderedLine) return false;
+
+    return clientY > lastRenderedLine.getBoundingClientRect().bottom;
 }
 
 function toggleTaskAtLine(
@@ -467,22 +589,24 @@ export function livePreviewExtension(
             const trailingAppendLine = target.closest(
                 "[data-live-preview-trailing-append='true']",
             );
-            if (trailingAppendLine) {
+            if (event.button === 0 && trailingAppendLine) {
                 event.preventDefault();
                 collapsePreviewSelection(view);
+                appendTrailingNewline(view);
+                return true;
+            }
 
-                const end = view.state.doc.length;
-                const needsNewline =
-                    end > 0 && view.state.doc.sliceString(end - 1) !== "\n";
-                view.dispatch({
-                    changes: needsNewline
-                        ? { from: end, insert: "\n" }
-                        : undefined,
-                    selection: { anchor: end + (needsNewline ? 1 : 0) },
-                    scrollIntoView: true,
-                    userEvent: "input",
-                });
-                view.focus();
+            if (
+                event.button === 0 &&
+                isTrailingEditorBlankClick(
+                    view,
+                    target,
+                    event.clientY,
+                )
+            ) {
+                event.preventDefault();
+                collapsePreviewSelection(view);
+                appendTrailingNewline(view);
                 return true;
             }
 
@@ -638,6 +762,7 @@ export function livePreviewExtension(
         createImageLivePreviewExtension(vaultRoot),
         createImageResizeExtension(),
         createTableLivePreviewExtension(interactions),
+        exitFencedCodeBlockKeymap,
         clickHandler,
         livePreviewTheme,
     ];

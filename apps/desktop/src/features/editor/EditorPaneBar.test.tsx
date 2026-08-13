@@ -1,6 +1,6 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     getMockCurrentWindow,
     renderComponent,
@@ -11,6 +11,24 @@ import { useLayoutStore } from "../../app/store/layoutStore";
 import { useVaultStore } from "../../app/store/vaultStore";
 import { useChatStore } from "../ai/store/chatStore";
 import { EditorPaneBar } from "./EditorPaneBar";
+
+const originalUserAgent = navigator.userAgent;
+const originalPlatform = navigator.platform;
+
+function setNavigatorIdentity(userAgent: string, platform: string) {
+    Object.defineProperty(window.navigator, "userAgent", {
+        configurable: true,
+        value: userAgent,
+    });
+    Object.defineProperty(window.navigator, "platform", {
+        configurable: true,
+        value: platform,
+    });
+}
+
+afterEach(() => {
+    setNavigatorIdentity(originalUserAgent, originalPlatform);
+});
 
 function rect({
     left,
@@ -222,6 +240,10 @@ describe("EditorPaneBar", () => {
     });
 
     it("reserves the macOS traffic-light area in the top-left pane when the sidebar is collapsed", () => {
+        setNavigatorIdentity(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_0) AppleWebKit/605.1.15",
+            "MacIntel",
+        );
         useLayoutStore.setState({ sidebarCollapsed: true });
 
         const { container } = renderComponent(
