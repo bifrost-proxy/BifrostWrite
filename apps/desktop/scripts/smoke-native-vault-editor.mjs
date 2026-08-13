@@ -159,6 +159,24 @@ function waitForWatcherSettle() {
     return new Promise((resolve) => setTimeout(resolve, 500));
 }
 
+async function waitForVaultReady(client, vaultPath, timeoutMs = 5_000) {
+    const deadline = Date.now() + timeoutMs;
+    let openState;
+    while (Date.now() < deadline) {
+        openState = await client.invoke("get_vault_open_state", { vaultPath });
+        if (openState.stage === "ready") return openState;
+        if (openState.stage === "error" || openState.stage === "cancelled") {
+            throw new Error(
+                `Vault open stopped in ${openState.stage}: ${openState.error ?? openState.message ?? "unknown error"}`,
+            );
+        }
+        await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    throw new Error(
+        `Timed out waiting for vault to open (last stage: ${openState?.stage ?? "unknown"})`,
+    );
+}
+
 async function writeFixtureVault(vaultPath) {
     await fs.mkdir(path.join(vaultPath, "Notes"), { recursive: true });
     await fs.mkdir(path.join(vaultPath, "Files"), { recursive: true });
@@ -213,10 +231,7 @@ async function main() {
     try {
         assert((await client.invoke("ping")).ok === true, "ping failed");
         await client.invoke("start_open_vault", { path: vaultPath });
-        const openState = await client.invoke("get_vault_open_state", {
-            vaultPath,
-        });
-        assert(openState.stage === "ready", "vault did not open");
+        await waitForVaultReady(client, vaultPath);
         await waitForWatcherSettle();
 
         const notes = await client.invoke("list_notes", { vaultPath });
