@@ -147,17 +147,55 @@ jobs:
           cat ./*.sha256 > "BifrostWrite-${{ needs.prepare.outputs.tag }}-checksums.txt"
 
       - name: Publish release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.prepare.outputs.tag }}
-          name: BifrostWrite ${{ needs.prepare.outputs.tag }}
-          prerelease: ${{ contains(needs.prepare.outputs.version, '-') }}
-          generate_release_notes: true
-          files: release/*
-          body: |
-            ## Install with Homebrew
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          RELEASE_TITLE="BifrostWrite $RELEASE_TAG"
+          RELEASE_NOTES=$'## Install with Homebrew\n\n```bash\nbrew tap bifrost-proxy/bifrost\nbrew install --cask bifrostwrite\n```'
 
-            ```bash
-            brew tap bifrost-proxy/bifrost
-            brew install --cask bifrostwrite
-            ```
+          release_exists() {
+            gh release view "$RELEASE_TAG" >/dev/null 2>&1
+          }
+
+          if ! release_exists; then
+            CREATED=0
+            for ATTEMPT in 1 2 3 4 5; do
+              if gh release create "$RELEASE_TAG" \
+                --draft \
+                --generate-notes \
+                --title "$RELEASE_TITLE" \
+                --notes "$RELEASE_NOTES"; then
+                CREATED=1
+                break
+              fi
+              if release_exists; then
+                CREATED=1
+                break
+              fi
+              sleep $((ATTEMPT * 5))
+            done
+            test "$CREATED" -eq 1
+          fi
+
+          for ASSET in release/*; do
+            UPLOADED=0
+            for ATTEMPT in 1 2 3 4 5; do
+              if gh release upload "$RELEASE_TAG" "$ASSET" --clobber; then
+                UPLOADED=1
+                break
+              fi
+              sleep $((ATTEMPT * 5))
+            done
+            test "$UPLOADED" -eq 1
+          done
+
+          PRERELEASE=false
+          if [[ "$RELEASE_VERSION" == *-* ]]; then
+            PRERELEASE=true
+          fi
+          gh release edit "$RELEASE_TAG" \
+            --title "$RELEASE_TITLE" \
+            --draft=false \
+            --prerelease="$PRERELEASE"
