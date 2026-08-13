@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { formatShortcutAction } from "../../app/shortcuts/format";
 import type { ShortcutActionId } from "../../app/shortcuts/registry";
 import { useShortcutOverrides } from "../../app/shortcuts/useShortcutOverrides";
@@ -24,7 +25,7 @@ function ShortcutHint({ action }: { action: ShortcutActionId }) {
                 whiteSpace: "nowrap",
             }}
         >
-            {label}
+            {translate(label)}
         </kbd>
     );
 }
@@ -43,10 +44,10 @@ export function WorkspacePaneEmptyState({
                 className="max-w-md text-center text-sm leading-8"
                 style={{ color: "var(--text-secondary)" }}
             >
-                Open a file
-                <ShortcutHint action="quick_switcher" />, browse commands
-                <ShortcutHint action="command_palette" />, start a chat
-                <ShortcutHint action="new_agent" />, or launch a terminal
+                {translate("Open a file")}
+                <ShortcutHint action="quick_switcher" />{translate(", browse commands")}
+                <ShortcutHint action="command_palette" />{translate(", start a chat")}
+                <ShortcutHint action="new_agent" />{translate(", or launch a terminal")}
                 <ShortcutHint action="new_terminal" />.
             </p>
         </div>

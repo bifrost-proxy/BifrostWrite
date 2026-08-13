@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import React from "react";
 import {
     useEditorStore,
@@ -82,13 +83,10 @@ function UnsupportedMapView() {
                     className="text-sm font-semibold"
                     style={{ color: "var(--text-primary)" }}
                 >
-                    Map view is unavailable in this hardened build
+                    {translate("Map view is unavailable in this hardened build")}
                 </div>
                 <div className="mt-2 text-sm leading-6">
-                    The current release disables dynamic code execution required
-                    by Excalidraw. Existing map tabs are preserved in session
-                    data, but they are not restored automatically and cannot be
-                    rendered until a CSP-compatible runtime is wired in.
+                    {translate("The current release disables dynamic code execution required by Excalidraw. Existing map tabs are preserved in session data, but they are not restored automatically and cannot be rendered until a CSP-compatible runtime is wired in.")}
                 </div>
             </div>
         </div>

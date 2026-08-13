@@ -10,6 +10,7 @@ import { useVaultStore } from "./vaultStore";
 
 export interface Settings {
     // General
+    appLanguage: AppLanguage;
     openLastVaultOnLaunch: boolean;
 
     // Editor
@@ -68,6 +69,7 @@ const SETTINGS_KEY_PREFIX = "bifrostwrite:settings:";
 const SETTINGS_KEY_FALLBACK = "bifrostwrite:settings";
 const LAST_VAULT_KEY = "bifrostwrite:lastVaultPath";
 const GLOBAL_SETTING_KEYS = [
+    "appLanguage",
     "vimModeEnabled",
     "vimRelativeLineNumbers",
     "hoverPreviewEnabled",
@@ -102,6 +104,7 @@ export type EditorFontFamily =
     | "andale";
 
 export type TabOpenBehavior = "history" | "new_tab";
+export type AppLanguage = "system" | "en" | "zh-CN";
 export type SpellcheckLanguage = "system" | string;
 export type SpellcheckSecondaryLanguage = string | null;
 export type PdfFilterMode = "none" | "dark" | "sepia" | "grayscale";
@@ -187,6 +190,7 @@ export const EDITOR_FONT_FAMILY_OPTIONS: {
 ];
 
 const defaults: Settings = {
+    appLanguage: "system",
     openLastVaultOnLaunch: true,
     editorFontSize: 14,
     editorFontFamily: "system",
@@ -254,6 +258,10 @@ function normalizeFileTreeExtensionFilter(value: unknown): string[] {
 
 function normalizeTabOpenBehavior(value: unknown): TabOpenBehavior {
     return value === "new_tab" ? "new_tab" : "history";
+}
+
+function normalizeAppLanguage(value: unknown): AppLanguage {
+    return value === "en" || value === "zh-CN" ? value : "system";
 }
 
 function normalizeIntInRange(
@@ -461,6 +469,7 @@ function extractSettingsFromStorage(raw: string | null): Settings | null {
         );
 
         return {
+            appLanguage: normalizeAppLanguage(parsed.state.appLanguage),
             openLastVaultOnLaunch:
                 parsed.state.openLastVaultOnLaunch ??
                 defaults.openLastVaultOnLaunch,
@@ -631,6 +640,7 @@ function hasStoredSpellcheckSettings(raw: string | null) {
 
 function pickSettings(state: SettingsStore): Settings {
     return {
+        appLanguage: state.appLanguage,
         openLastVaultOnLaunch: state.openLastVaultOnLaunch,
         editorFontSize: state.editorFontSize,
         editorFontFamily: state.editorFontFamily,
@@ -685,6 +695,7 @@ function pickGlobalSettings(
     settings: Settings,
 ): Pick<Settings, GlobalSettingKey> {
     return {
+        appLanguage: settings.appLanguage,
         vimModeEnabled: settings.vimModeEnabled,
         vimRelativeLineNumbers: settings.vimRelativeLineNumbers,
         hoverPreviewEnabled: settings.hoverPreviewEnabled,

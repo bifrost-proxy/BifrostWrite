@@ -65,7 +65,7 @@ export function MetaBadge({
                         whiteSpace: "nowrap",
                     }}
                 >
-                    {label}
+                    {translate(label)}
                 </span>
             ) : (
                 label
@@ -257,3 +257,4 @@ export function EditableNoteTitle({
         </div>
     );
 }
+import { translate } from "../../app/i18n";

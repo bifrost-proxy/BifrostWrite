@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "BifrostWrite",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "identifier": "com.bifrostwrite.desktop",
   "build": {
     "beforeDevCommand": "npm run renderer:dev",
@@ -29,6 +29,12 @@
         "minHeight": 640,
         "center": true,
         "decorations": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "trafficLightPosition": {
+          "x": 14,
+          "y": 11
+        },
         "transparent": false,
         "dragDropEnabled": true
       }

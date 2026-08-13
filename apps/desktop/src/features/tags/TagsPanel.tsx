@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { vaultInvoke } from "../../app/utils/vaultInvoke";
 import { SidebarFilterInput } from "../../components/layout/SidebarFilterInput";
@@ -185,14 +186,14 @@ export function TagsPanel() {
                         className="text-xs font-semibold uppercase tracking-wider"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        Tags
+                        {translate("Tags")}
                     </span>
                 </div>
                 <div className="px-2 pb-2">
                     <SidebarFilterInput
                         value={filterText}
                         onChange={setFilterText}
-                        placeholder="Filter tags..."
+                        placeholder={translate("Filter tags...")}
                     />
                 </div>
             </div>
@@ -204,21 +205,21 @@ export function TagsPanel() {
                         className="text-xs px-3 py-2"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        No vault open
+                        {translate("No vault open")}
                     </p>
                 ) : tags.length === 0 ? (
                     <p
                         className="text-xs px-3 py-2"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        No tags found
+                        {translate("No tags found")}
                     </p>
                 ) : filteredTags.length === 0 ? (
                     <p
                         className="text-xs px-3 py-2"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        No tags match &ldquo;{filterText}&rdquo;
+                        {translate("No tags match")} "{filterText}"
                     </p>
                 ) : (
                     <div

@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useMemo } from "react";
 import type { TerminalTab } from "../../app/store/editorStore";
 import { TerminalViewport } from "./TerminalViewport";
@@ -51,7 +52,7 @@ export function WorkspaceTerminalView({
                         color: "var(--text-secondary)",
                     }}
                 >
-                    Starting shell...
+                    {translate("Starting shell...")}
                 </div>
             )}
         </div>

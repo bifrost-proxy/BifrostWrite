@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -259,7 +260,7 @@ export function Dropdown<T extends string>({
                                         "transparent")
                                 }
                             >
-                                {opt.label}
+                                {translate(String(opt.label))}
                             </button>
                         ))}
                     </div>,
@@ -366,7 +367,7 @@ export function QueryBuilder({ query, onQueryChange }: QueryBuilderProps) {
                     className="text-[11px] font-medium uppercase tracking-wider"
                     style={{ color: "var(--text-secondary)" }}
                 >
-                    Query Builder
+                    {translate("Query Builder")}
                 </span>
                 <div className="flex items-center gap-1.5">
                     {!collapsed && (
@@ -375,7 +376,7 @@ export function QueryBuilder({ query, onQueryChange }: QueryBuilderProps) {
                                 className="text-[11px]"
                                 style={{ color: "var(--text-secondary)" }}
                             >
-                                Match
+                                {translate("Match")}
                             </span>
                             <button
                                 onClick={() => handleBoolChange("all")}
@@ -392,7 +393,7 @@ export function QueryBuilder({ query, onQueryChange }: QueryBuilderProps) {
                                     border: `1px solid ${boolMode === "all" ? "var(--accent)" : "var(--border)"}`,
                                 }}
                             >
-                                ALL
+                                {translate("ALL")}
                             </button>
                             <button
                                 onClick={() => handleBoolChange("any")}
@@ -409,13 +410,13 @@ export function QueryBuilder({ query, onQueryChange }: QueryBuilderProps) {
                                     border: `1px solid ${boolMode === "any" ? "var(--accent)" : "var(--border)"}`,
                                 }}
                             >
-                                ANY
+                                {translate("ANY")}
                             </button>
                         </>
                     )}
                     <button
                         onClick={() => setCollapsed((v) => !v)}
-                        title={collapsed ? "Expand" : "Collapse"}
+                        title={collapsed ? translate("Expand") : translate("Collapse")}
                         className="opacity-40 hover:opacity-100 transition-opacity p-0.5 rounded"
                         style={{ color: "var(--text-secondary)" }}
                     >
@@ -477,7 +478,7 @@ export function QueryBuilder({ query, onQueryChange }: QueryBuilderProps) {
                                             propertyKey: e.target.value,
                                         })
                                     }
-                                    placeholder="key"
+                                    placeholder={translate("key")}
                                     className="shrink-0 px-1.5 rounded text-[11px] outline-none"
                                     style={{
                                         ...inputStyle,
@@ -504,7 +505,7 @@ export function QueryBuilder({ query, onQueryChange }: QueryBuilderProps) {
                                 onChange={(e) =>
                                     updateRow(row.id, { value: e.target.value })
                                 }
-                                placeholder="value..."
+                                placeholder={translate("value...")}
                                 className="flex-1 min-w-0 px-2 rounded text-[11px] outline-none"
                                 style={{ ...inputStyle, height: 26 }}
                                 spellCheck={false}
@@ -521,7 +522,7 @@ export function QueryBuilder({ query, onQueryChange }: QueryBuilderProps) {
                                 onClick={() => removeRow(row.id)}
                                 className="shrink-0 p-1 rounded opacity-40 hover:opacity-100 transition-opacity"
                                 style={{ color: "var(--text-secondary)" }}
-                                title="Remove filter"
+                                title={translate("Remove filter")}
                             >
                                 <svg
                                     width="12"
@@ -569,7 +570,7 @@ export function QueryBuilder({ query, onQueryChange }: QueryBuilderProps) {
                         >
                             <path d="M8 3v10M3 8h10" />
                         </svg>
-                        Add filter
+                        {translate("Add filter")}
                     </button>
                     <button
                         onClick={() => {
@@ -596,7 +597,7 @@ export function QueryBuilder({ query, onQueryChange }: QueryBuilderProps) {
                                 "transparent")
                         }
                     >
-                        Clear all
+                        {translate("Clear all")}
                     </button>
                 </div>
             )}

@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useState, useMemo, useRef, useCallback } from "react";
 import {
     useVaultStore,
@@ -708,11 +709,11 @@ export function BookmarksPanel() {
                         className="text-xs font-semibold uppercase tracking-wider"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        Bookmarks
+                        {translate("Bookmarks")}
                     </span>
                     <button
                         onClick={startCreatingFolder}
-                        title="New Folder"
+                        title={translate("New Folder")}
                         className="flex items-center justify-center rounded transition-opacity"
                         style={{
                             width: 18,
@@ -744,7 +745,7 @@ export function BookmarksPanel() {
                     <SidebarFilterInput
                         value={filterText}
                         onChange={setFilterText}
-                        placeholder="Filter bookmarks..."
+                        placeholder={translate("Filter bookmarks...")}
                     />
                 </div>
             </div>
@@ -772,7 +773,7 @@ export function BookmarksPanel() {
                         className="text-xs px-3 py-2"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        No vault open
+                        {translate("No vault open")}
                     </p>
                 ) : rows.length === 0 && !creatingFolder ? (
                     <p
@@ -780,8 +781,8 @@ export function BookmarksPanel() {
                         style={{ color: "var(--text-secondary)" }}
                     >
                         {filterText.trim()
-                            ? `No bookmarks match "${filterText}"`
-                            : "No bookmarks yet. Right-click a note in the file tree to add one."}
+                            ? translate(`No bookmarks match "${filterText}"`)
+                            : translate("No bookmarks yet. Right-click a note in the file tree to add one.")}
                     </p>
                 ) : (
                     <div
@@ -815,7 +816,7 @@ export function BookmarksPanel() {
                                         }
                                     }}
                                     onBlur={confirmCreateFolder}
-                                    placeholder="Folder name…"
+                                    placeholder={translate("Folder name…")}
                                     className="flex-1 bg-transparent outline-none"
                                     style={{
                                         fontSize: m.fontSize,

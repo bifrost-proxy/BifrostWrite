@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     useEffect,
     useLayoutEffect,
@@ -270,7 +271,7 @@ export function FloatingSelectionToolbar({
                         event.currentTarget.style.background = "transparent";
                     }}
                 >
-                    {button.label}
+                    {translate(String(button.label))}
                 </button>
             ))}
             {onAddToChat && (
@@ -286,8 +287,8 @@ export function FloatingSelectionToolbar({
                     />
                     <button
                         type="button"
-                        title={`Add to Chat (${addToChatShortcut})`}
-                        aria-label="Add to Chat"
+                        title={translate(`Add to Chat (${addToChatShortcut})`)}
+                        aria-label={translate("Add to Chat")}
                         onMouseDown={(event) => {
                             event.preventDefault();
                         }}
@@ -334,7 +335,7 @@ export function FloatingSelectionToolbar({
                         >
                             <path d="M14 1H2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h3l3 3 3-3h3a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1Z" />
                         </svg>
-                        Chat
+                        {translate("Chat")}
                     </button>
                 </>
             )}

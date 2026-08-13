@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getCurrentWebview } from "@bifrostwrite/runtime";
 import {
@@ -1795,10 +1796,10 @@ export function AIChatComposer({
                                 "background-color 100ms ease, color 100ms ease, opacity 100ms ease",
                         }}
                         title={
-                            expanded ? "Collapse composer" : "Expand composer"
+                            expanded ? translate("Collapse composer") : translate("Expand composer")
                         }
                         aria-label={
-                            expanded ? "Collapse composer" : "Expand composer"
+                            expanded ? translate("Collapse composer") : translate("Expand composer")
                         }
                     >
                         {expanded ? (
@@ -1853,8 +1854,8 @@ export function AIChatComposer({
                     >
                         {placeholderText ??
                             (disabled
-                                ? "Set up a provider in Settings → AI providers"
-                                : `Message ${runtimeName} — @ to include context, / for commands`)}
+                                ? translate("Set up a provider in Settings → AI providers")
+                                : translate(`Message ${runtimeName} — @ to include context, / for commands`))}
                     </div>
                     )}
                     <div

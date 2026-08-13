@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import {
     memo,
     useMemo,
@@ -297,7 +298,7 @@ function renderReferencePill(params: {
                           ? "note"
                           : "file"
                 }
-                label={params.label}
+                label={translate(String(params.label))}
                 line={params.line}
                 endLine={params.endLine}
                 metrics={params.metrics}
@@ -313,7 +314,7 @@ function renderReferencePill(params: {
         <ChatInlinePill
             interactive={params.onClick != null}
             key={params.key}
-            label={params.label}
+            label={translate(String(params.label))}
             metrics={params.metrics}
             onClick={params.onClick}
             onContextMenu={params.onContextMenu}
@@ -1548,22 +1549,22 @@ function CodeBlock({
                 {isMarkdownFence ? (
                     <button
                         type="button"
-                        aria-label="Toggle markdown display mode"
-                        title={showMarkdownSource ? "Show preview" : "Show source"}
+                        aria-label={translate("Toggle markdown display mode")}
+                        title={showMarkdownSource ? translate("Show preview") : translate("Show source")}
                         onClick={() =>
                             setShowMarkdownSource((value) => !value)
                         }
                         className="chat-code-mode-button"
                         style={{ fontSize: languageLabelFontSize }}
                     >
-                        {showMarkdownSource ? "Preview" : "Source"}
+                        {showMarkdownSource ? translate("Preview") : translate("Source")}
                     </button>
                 ) : null}
                 <button
                     type="button"
                     onClick={handleCopy}
-                    aria-label="Copy code block"
-                    title={copied ? "Copied" : "Copy"}
+                    aria-label={translate("Copy code block")}
+                    title={copied ? translate("Copied") : translate("Copy")}
                     className="chat-code-copy-button flex items-center justify-center"
                     style={{
                         color: copied

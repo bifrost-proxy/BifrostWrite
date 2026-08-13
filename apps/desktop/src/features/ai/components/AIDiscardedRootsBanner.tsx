@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import type {
     DiscardedAdditionalRoot,
     DiscardedAdditionalRootReason,
@@ -49,8 +50,8 @@ export function AIDiscardedRootsBanner({
                             style={{ color: "#fbbf24" }}
                         >
                             {roots.length === 1
-                                ? "An approved directory was removed from this session"
-                                : `${roots.length} approved directories were removed from this session`}
+                                ? translate("An approved directory was removed from this session")
+                                : translate(`${roots.length} approved directories were removed from this session`)}
                         </div>
                         <ul className="space-y-0.5">
                             {roots.map((root) => (
@@ -80,9 +81,9 @@ export function AIDiscardedRootsBanner({
                             color: "var(--text-secondary)",
                             backgroundColor: "transparent",
                         }}
-                        aria-label="Dismiss discarded roots notice"
+                        aria-label={translate("Dismiss discarded roots notice")}
                     >
-                        Dismiss
+                        {translate("Dismiss")}
                     </button>
                 </div>
             </div>

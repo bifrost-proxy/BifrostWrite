@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useState, type MouseEvent } from "react";
 import {
     ContextMenu,
@@ -148,7 +149,7 @@ function StatusIndicator({
     if (status === "error") {
         return (
             <span
-                title={errorMessage ?? "Error"}
+                title={errorMessage ?? translate("Error")}
                 style={{ color: "#ef4444", fontSize: 10, lineHeight: 1 }}
             >
                 !
@@ -298,7 +299,7 @@ export function AIChatContextBar({
                                 border: "none",
                                 opacity: 0.6,
                             }}
-                            aria-label={`Remove ${displayLabel}`}
+                            aria-label={translate(`Remove ${displayLabel}`)}
                             disabled={attachment.removable === false}
                         >
                             {attachment.removable === false ? "•" : "×"}
@@ -317,10 +318,10 @@ export function AIChatContextBar({
                         border: "none",
                         opacity: 0.6,
                     }}
-                    title="Remove all context notes"
-                    aria-label="Clear all attachments"
+                    title={translate("Remove all context notes")}
+                    aria-label={translate("Clear all attachments")}
                 >
-                    Clear all
+                    {translate("Clear all")}
                 </button>
             )}
             {contextMenu ? (

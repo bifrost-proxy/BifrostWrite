@@ -83,6 +83,7 @@ import { MarkdownContent } from "../ai/components/MarkdownContent";
 import { getChatPillMetrics } from "../ai/components/chatPillMetrics";
 import { SCREENSHOT_RETENTION_OPTIONS } from "../ai/screenshotRetention";
 import { PROVIDER_CATALOG } from "../ai/utils/runtimeMetadata";
+import { translate } from "../../app/i18n";
 import { AIProvidersSettings } from "./AIProvidersSettings";
 import { AIHistoryStorageControl } from "../ai/components/AIHistoryStorageControl";
 import { ShortcutRecorder } from "./ShortcutRecorder";
@@ -97,11 +98,31 @@ import {
 import {
     EMPTY_SEARCH_QUERY,
     createSettingsSearchQuery,
-    matchesSettingsSearch,
-    sectionHasSettingsSearchMatches,
+    matchesSettingsSearch as matchesSettingsSearchBase,
     type SearchValue,
     type SettingsSearchQuery,
 } from "./settingsSearch";
+
+function matchesSettingsSearch(
+    query: SettingsSearchQuery,
+    ...values: readonly SearchValue[]
+) {
+    return matchesSettingsSearchBase(
+        query,
+        ...values,
+        ...values.map((value) =>
+            typeof value === "string" ? translate(value) : value,
+        ),
+    );
+}
+
+function sectionHasSettingsSearchMatches(
+    query: SettingsSearchQuery,
+    section: string,
+    rows: readonly (readonly SearchValue[])[],
+) {
+    return rows.some((row) => matchesSettingsSearch(query, section, ...row));
+}
 
 // --- Primitives ---
 
@@ -196,7 +217,7 @@ function SegmentedControl<T extends string | number>({
                             fontWeight: active ? 500 : 400,
                         }}
                     >
-                        {opt.label}
+                        {translate(String(opt.label))}
                     </button>
                 );
             })}
@@ -410,7 +431,7 @@ function SelectField<T extends string | number | null>({
                                             whiteSpace: "nowrap",
                                         }}
                                     >
-                                        {opt.label}
+                                        {translate(String(opt.label))}
                                     </button>
                                 </div>
                             );
@@ -459,7 +480,7 @@ function NumberStepper({
         >
             <button
                 type="button"
-                aria-label="Decrement"
+                aria-label={translate("Decrement")}
                 disabled={value <= min}
                 onClick={() => onChange(Math.max(min, value - step))}
                 className="nw-settings-stepper-btn"
@@ -518,7 +539,7 @@ function NumberStepper({
             />
             <button
                 type="button"
-                aria-label="Increment"
+                aria-label={translate("Increment")}
                 disabled={value >= max}
                 onClick={() => onChange(Math.min(max, value + step))}
                 className="nw-settings-stepper-btn"
@@ -700,7 +721,7 @@ function ThemePicker({
                                     : "var(--text-secondary)",
                             }}
                         >
-                            {theme.label}
+                            {translate(String(theme.label))}
                         </span>
                     </button>
                 );
@@ -743,7 +764,7 @@ function Row({
                         lineHeight: 1.3,
                     }}
                 >
-                    {label}
+                    {translate(label)}
                 </div>
                 {description && (
                     <div
@@ -754,7 +775,7 @@ function Row({
                             lineHeight: 1.4,
                         }}
                     >
-                        {description}
+                        {translate(description)}
                     </div>
                 )}
             </div>
@@ -783,7 +804,7 @@ function SectionLabel({
                 paddingBottom: 4,
             }}
         >
-            {children}
+            {translate(children)}
         </div>
     );
 }
@@ -798,7 +819,7 @@ function EmptySettingsSearch({ search }: { search: string }) {
                 padding: "24px 0",
             }}
         >
-            No settings match "{search.trim()}".
+            {translate("No settings match")} "{search.trim()}".
         </div>
     );
 }
@@ -813,7 +834,7 @@ function EmptyPanelSearchResult() {
                 padding: "24px 0",
             }}
         >
-            No matching settings in this panel.
+            {translate("No matching settings in this panel.")}
         </div>
     );
 }
@@ -836,7 +857,16 @@ function SearchableRow({
     section: string;
 }) {
     if (
-        !matchesSettingsSearch(searchQuery, section, label, description, ...keywords)
+        !matchesSettingsSearch(
+            searchQuery,
+            section,
+            label,
+            description,
+            translate(section),
+            translate(label),
+            description ? translate(description) : undefined,
+            ...keywords,
+        )
     ) {
         return null;
     }
@@ -886,8 +916,21 @@ function GeneralSettings({
 }: {
     searchQuery: SettingsSearchQuery;
 }) {
-    const { openLastVaultOnLaunch, tabOpenBehavior, setSetting } =
+    const { appLanguage, openLastVaultOnLaunch, tabOpenBehavior, setSetting } =
         useSettingsStore();
+    const showLanguage = sectionHasSettingsSearchMatches(
+        searchQuery,
+        "Language",
+        [
+            [
+                "Language",
+                "Choose the language used by the application.",
+                "System default",
+                "English",
+                "Simplified Chinese",
+            ],
+        ],
+    );
     const showStartup = sectionHasSettingsSearchMatches(searchQuery, "Startup", [
         [
             "Open last vault on launch",
@@ -903,18 +946,56 @@ function GeneralSettings({
         ],
     ]);
 
-    if (!showStartup && !showTabs) {
+    if (!showLanguage && !showStartup && !showTabs) {
         return <EmptyPanelSearchResult />;
     }
 
     return (
         <div>
-            {showStartup ? <SectionLabel>Startup</SectionLabel> : null}
+            {showLanguage ? <SectionLabel>{translate("Language")}</SectionLabel> : null}
+            {showLanguage ? (
+                <SearchableRow
+                    searchQuery={searchQuery}
+                    section="Language"
+                    label={translate("Language")}
+                    description={translate(
+                        "Choose the language used by the application.",
+                    )}
+                    keywords={[
+                        "System default",
+                        "English",
+                        "Simplified Chinese",
+                        "跟随系统",
+                        "简体中文",
+                    ]}
+                    control={
+                        <SegmentedControl
+                            value={appLanguage}
+                            options={[
+                                {
+                                    value: "system",
+                                    label: translate("System default"),
+                                },
+                                { value: "en", label: translate("English") },
+                                {
+                                    value: "zh-CN",
+                                    label: translate("Simplified Chinese"),
+                                },
+                            ]}
+                            onChange={(value) =>
+                                setSetting("appLanguage", value)
+                            }
+                        />
+                    }
+                />
+            ) : null}
+
+            {showStartup ? <SectionLabel>{translate("Startup")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Startup"
-                label="Open last vault on launch"
-                description={`Automatically reopen the last vault when ${APP_BRAND_NAME} starts.`}
+                label={translate("Open last vault on launch")}
+                description={translate(`Automatically reopen the last vault when ${APP_BRAND_NAME} starts.`)}
                 control={
                     <Toggle
                         value={openLastVaultOnLaunch}
@@ -923,12 +1004,12 @@ function GeneralSettings({
                 }
             />
 
-            {showTabs ? <SectionLabel>Tabs</SectionLabel> : null}
+            {showTabs ? <SectionLabel>{translate("Tabs")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Tabs"
-                label="Open behavior"
-                description="Choose whether opening notes, files, and AI chats reuses the current tab history or creates a new tab."
+                label={translate("Open behavior")}
+                description={translate("Choose whether opening notes, files, and AI chats reuses the current tab history or creates a new tab.")}
                 keywords={["History", "New tab"]}
                 control={
                     <SegmentedControl
@@ -1048,12 +1129,12 @@ function AppearanceSettings({
 
     return (
         <div>
-            {showMode ? <SectionLabel>Mode</SectionLabel> : null}
+            {showMode ? <SectionLabel>{translate("Mode")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Mode"
-                label="System theme"
-                description={`Choose how ${APP_BRAND_NAME} looks. 'System' follows your OS preference.`}
+                label={translate("System theme")}
+                description={translate(`Choose how ${APP_BRAND_NAME} looks. 'System' follows your OS preference.`)}
                 keywords={["System", "Light", "Dark"]}
                 control={
                     <SegmentedControl
@@ -1070,17 +1151,17 @@ function AppearanceSettings({
 
             {showTheme ? (
                 <>
-                    <SectionLabel>Theme</SectionLabel>
+                    <SectionLabel>{translate("Theme")}</SectionLabel>
                     <ThemePicker value={themeName} onChange={setThemeName} />
                 </>
             ) : null}
 
-            {showNavigation ? <SectionLabel>Navigation</SectionLabel> : null}
+            {showNavigation ? <SectionLabel>{translate("Navigation")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Navigation"
-                label="File tree size"
-                description="Scale text and rows in the file tree, in percent."
+                label={translate("File tree size")}
+                description={translate("Scale text and rows in the file tree, in percent.")}
                 control={
                     <NumberStepper
                         value={fileTreeScale}
@@ -1093,8 +1174,8 @@ function AppearanceSettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Navigation"
-                label="Agents size"
-                description="Scale text and rows in the Agents sidebar, in percent."
+                label={translate("Agents size")}
+                description={translate("Scale text and rows in the Agents sidebar, in percent.")}
                 control={
                     <NumberStepper
                         value={agentsSidebarScale}
@@ -1107,8 +1188,8 @@ function AppearanceSettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Navigation"
-                label="Sticky folders"
-                description="Keep parent folders pinned at the top while scrolling the file tree."
+                label={translate("Sticky folders")}
+                description={translate("Keep parent folders pinned at the top while scrolling the file tree.")}
                 control={
                     <Toggle
                         value={fileTreeStickyFolders}
@@ -1119,12 +1200,12 @@ function AppearanceSettings({
                 }
             />
 
-            {showChat ? <SectionLabel>Chat</SectionLabel> : null}
+            {showChat ? <SectionLabel>{translate("Chat")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Chat"
-                label="Chat content width"
-                description="Maximum width of AI chat messages, composer, and related panels, in pixels."
+                label={translate("Chat content width")}
+                description={translate("Maximum width of AI chat messages, composer, and related panels, in pixels.")}
                 control={
                     <SliderField
                         value={aiChatContentWidth}
@@ -1137,12 +1218,12 @@ function AppearanceSettings({
                 }
             />
 
-            {showZoom ? <SectionLabel>Zoom</SectionLabel> : null}
+            {showZoom ? <SectionLabel>{translate("Zoom")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Zoom"
-                label="App zoom"
-                description={`Scale the entire app UI, in percent. Use ${appZoomShortcut} from the keyboard or the View menu. Editor, chat, and composer font sizes stay independent.`}
+                label={translate("App zoom")}
+                description={translate(`Scale the entire app UI, in percent. Use ${appZoomShortcut} from the keyboard or the View menu. Editor, chat, and composer font sizes stay independent.`)}
                 keywords={[appZoomShortcut]}
                 control={
                     <NumberStepper
@@ -1275,12 +1356,12 @@ function EditorSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
 
     return (
         <div>
-            {showTypography ? <SectionLabel>Typography</SectionLabel> : null}
+            {showTypography ? <SectionLabel>{translate("Typography")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Typography"
-                label="Font size"
-                description="Text size in the editor, in pixels."
+                label={translate("Font size")}
+                description={translate("Text size in the editor, in pixels.")}
                 control={
                     <NumberStepper
                         value={editorFontSize}
@@ -1293,8 +1374,8 @@ function EditorSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Typography"
-                label="Font family"
-                description="Font used in the editor."
+                label={translate("Font family")}
+                description={translate("Font used in the editor.")}
                 keywords={EDITOR_FONT_FAMILY_OPTIONS.flatMap((option) => [
                     option.value,
                     option.label,
@@ -1316,8 +1397,8 @@ function EditorSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Typography"
-                label="Line spacing"
-                description="Line height in the editor. 150 means 1.5×."
+                label={translate("Line spacing")}
+                description={translate("Line height in the editor. 150 means 1.5×.")}
                 control={
                     <SliderField
                         value={editorLineHeight}
@@ -1332,8 +1413,8 @@ function EditorSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Typography"
-                label="Autosave delay"
-                description="Delay before saving note and text-file edits automatically, in milliseconds."
+                label={translate("Autosave delay")}
+                description={translate("Delay before saving note and text-file edits automatically, in milliseconds.")}
                 control={
                     <NumberStepper
                         value={editorAutosaveDelayMs}
@@ -1346,12 +1427,12 @@ function EditorSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                 }
             />
 
-            {showFormatting ? <SectionLabel>Formatting</SectionLabel> : null}
+            {showFormatting ? <SectionLabel>{translate("Formatting")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Formatting"
-                label="Line wrapping"
-                description="Wrap long lines to fit the editor width."
+                label={translate("Line wrapping")}
+                description={translate("Wrap long lines to fit the editor width.")}
                 control={
                     <Toggle
                         value={lineWrapping}
@@ -1362,8 +1443,8 @@ function EditorSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Formatting"
-                label="Highlight active line"
-                description="Highlight the line containing the cursor."
+                label={translate("Highlight active line")}
+                description={translate("Highlight the line containing the cursor.")}
                 keywords={["current line", "cursor line"]}
                 control={
                     <Toggle
@@ -1377,8 +1458,8 @@ function EditorSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Formatting"
-                label="Justify text"
-                description="Distribute wrapped lines evenly across the editor width."
+                label={translate("Justify text")}
+                description={translate("Distribute wrapped lines evenly across the editor width.")}
                 control={
                     <Toggle
                         value={justifyText}
@@ -1389,8 +1470,8 @@ function EditorSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Formatting"
-                label="Tab size"
-                description="Number of spaces inserted when pressing Tab."
+                label={translate("Tab size")}
+                description={translate("Number of spaces inserted when pressing Tab.")}
                 keywords={[2, 4]}
                 control={
                     <SegmentedControl
@@ -1404,12 +1485,12 @@ function EditorSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                 }
             />
 
-            {showPreview ? <SectionLabel>Preview</SectionLabel> : null}
+            {showPreview ? <SectionLabel>{translate("Preview")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Preview"
-                label="Note preview on hover"
-                description="Show a floating preview of the linked note when hovering over a [[wikilink]]. This preference applies to all vaults."
+                label={translate("Note preview on hover")}
+                description={translate("Show a floating preview of the linked note when hovering over a [[wikilink]]. This preference applies to all vaults.")}
                 keywords={["wikilink", "popover", "tooltip"]}
                 control={
                     <Toggle
@@ -1421,8 +1502,8 @@ function EditorSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Preview"
-                label="Hover delay"
-                description="Time the pointer must rest on a wikilink before the preview opens, in milliseconds."
+                label={translate("Hover delay")}
+                description={translate("Time the pointer must rest on a wikilink before the preview opens, in milliseconds.")}
                 control={
                     <SliderField
                         value={hoverPreviewDelayMs}
@@ -1437,12 +1518,12 @@ function EditorSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                 }
             />
 
-            {showVim ? <SectionLabel>Vim</SectionLabel> : null}
+            {showVim ? <SectionLabel>{translate("Vim")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Vim"
-                label="Vim key bindings"
-                description="Use modal (vim) editing in the note editor."
+                label={translate("Vim key bindings")}
+                description={translate("Use modal (vim) editing in the note editor.")}
                 keywords={["vim"]}
                 control={
                     <Toggle
@@ -1454,8 +1535,8 @@ function EditorSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Vim"
-                label="Relative line numbers"
-                description="Show line numbers as distance from the cursor line. Applies in code (non–live-preview) mode."
+                label={translate("Relative line numbers")}
+                description={translate("Show line numbers as distance from the cursor line. Applies in code (non–live-preview) mode.")}
                 control={
                     <Toggle
                         value={vimRelativeLineNumbers}
@@ -1466,12 +1547,12 @@ function EditorSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                 }
             />
 
-            {showLayout ? <SectionLabel>Layout</SectionLabel> : null}
+            {showLayout ? <SectionLabel>{translate("Layout")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Layout"
-                label="Text width"
-                description="Maximum width of the editor content, in pixels."
+                label={translate("Text width")}
+                description={translate("Maximum width of the editor content, in pixels.")}
                 control={
                     <SliderField
                         value={editorContentWidth}
@@ -1484,12 +1565,12 @@ function EditorSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                 }
             />
 
-            {showPdf ? <SectionLabel>PDF</SectionLabel> : null}
+            {showPdf ? <SectionLabel>{translate("PDF")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="PDF"
-                label="Default zoom"
-                description="Zoom level applied when a PDF is opened. Fit width scales the page to the viewport."
+                label={translate("Default zoom")}
+                description={translate("Zoom level applied when a PDF is opened. Fit width scales the page to the viewport.")}
                 keywords={PDF_DEFAULT_ZOOM_OPTIONS.map((option) => option.label)}
                 control={
                     <SelectField
@@ -1766,7 +1847,7 @@ function SpellcheckSettings({
         <div>
             {showLanguages ? (
                 <>
-                    <SectionLabel>Languages</SectionLabel>
+                    <SectionLabel>{translate("Languages")}</SectionLabel>
                     <p
                         style={{
                             fontSize: 11,
@@ -1775,15 +1856,15 @@ function SpellcheckSettings({
                             fontStyle: "italic",
                         }}
                     >
-                        These settings apply to the current vault only.
+                        {translate("These settings apply to the current vault only.")}
                     </p>
                 </>
             ) : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Languages"
-                label="Spellcheck"
-                description="Use the app spellcheck engine in Markdown notes and note titles."
+                label={translate("Spellcheck")}
+                description={translate("Use the app spellcheck engine in Markdown notes and note titles.")}
                 control={
                     <Toggle
                         value={editorSpellcheck}
@@ -1794,7 +1875,7 @@ function SpellcheckSettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Languages"
-                label="Primary language"
+                label={translate("Primary language")}
                 description={spellcheckPrimaryLanguageDescription}
                 disabled={!editorSpellcheck}
                 keywords={[
@@ -1821,7 +1902,7 @@ function SpellcheckSettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Languages"
-                label="Secondary language"
+                label={translate("Secondary language")}
                 description={spellcheckSecondaryLanguageDescription}
                 disabled={!editorSpellcheck}
                 keywords={[
@@ -1845,12 +1926,12 @@ function SpellcheckSettings({
                     />
                 }
             />
-            {showGrammar ? <SectionLabel>Grammar Check</SectionLabel> : null}
+            {showGrammar ? <SectionLabel>{translate("Grammar Check")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Grammar Check"
-                label="Grammar check"
-                description="Check grammar and style using LanguageTool. Uses the spellcheck primary language."
+                label={translate("Grammar check")}
+                description={translate("Check grammar and style using LanguageTool. Uses the spellcheck primary language.")}
                 keywords={["LanguageTool"]}
                 control={
                     <Toggle
@@ -1862,8 +1943,8 @@ function SpellcheckSettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Grammar Check"
-                label="Server URL"
-                description="Leave empty to use the public LanguageTool API. For privacy, run a local server (e.g. localhost:8081)."
+                label={translate("Server URL")}
+                description={translate("Leave empty to use the public LanguageTool API. For privacy, run a local server (e.g. localhost:8081).")}
                 disabled={!grammarCheckEnabled}
                 keywords={[
                     grammarCheckServerUrl,
@@ -1873,7 +1954,7 @@ function SpellcheckSettings({
                 control={
                     <input
                         type="text"
-                        placeholder="https://api.languagetool.org"
+                        placeholder={translate("https://api.languagetool.org")}
                         value={grammarCheckServerUrl}
                         disabled={!grammarCheckEnabled}
                         onChange={(e) =>
@@ -1909,8 +1990,7 @@ function SpellcheckSettings({
                         fontStyle: "italic",
                     }}
                 >
-                    The public API sends text to languagetool.org for
-                    processing. For sensitive content, consider a{" "}
+                    {translate("The public API sends text to languagetool.org for processing. For sensitive content, consider a")}{" "}
                     <a
                         href="https://dev.languagetool.org/http-server"
                         target="_blank"
@@ -1920,17 +2000,17 @@ function SpellcheckSettings({
                             textDecoration: "underline",
                         }}
                     >
-                        local server
+                        {translate("local server")}
                     </a>
                     .
                 </p>
             )}
-            {showDictionaries ? <SectionLabel>Dictionaries</SectionLabel> : null}
+            {showDictionaries ? <SectionLabel>{translate("Dictionaries")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Dictionaries"
-                label="Spellcheck dictionaries"
-                description="Bundled dictionaries are ready immediately. Downloadable Hunspell packs live in the app spellcheck folder and can be managed even while spellcheck is off."
+                label={translate("Spellcheck dictionaries")}
+                description={translate("Bundled dictionaries are ready immediately. Downloadable Hunspell packs live in the app spellcheck folder and can be managed even while spellcheck is off.")}
                 keywords={[
                     spellcheckLanguagesSummary,
                     spellcheckRuntimeDirectory,
@@ -1995,7 +2075,7 @@ function SpellcheckSettings({
                                         cursor: "pointer",
                                     }}
                                 >
-                                    Open Folder
+                                    {translate("Open Folder")}
                                 </button>
                             )}
                             <button
@@ -2018,7 +2098,7 @@ function SpellcheckSettings({
                                     opacity: refreshingCatalog ? 0.5 : 1,
                                 }}
                             >
-                                {refreshingCatalog ? "Refreshing..." : "Reload"}
+                                {refreshingCatalog ? translate("Refreshing...") : translate("Reload")}
                             </button>
                         </div>
                     </div>
@@ -2026,11 +2106,11 @@ function SpellcheckSettings({
             />
             {showCatalog && (
                 <>
-                    <SectionLabel>Dictionary Catalog</SectionLabel>
+                    <SectionLabel>{translate("Dictionary Catalog")}</SectionLabel>
                     <div style={{ marginBottom: 8 }}>
                         <input
                             type="text"
-                            placeholder="Search languages..."
+                            placeholder={translate("Search languages...")}
                             value={catalogSearch}
                             onChange={(e) => setCatalogSearch(e.target.value)}
                             style={{
@@ -2078,12 +2158,12 @@ function SpellcheckSettings({
                         return (
                             <Row
                                 key={entry.id}
-                                label={entry.label}
-                                description={`${entry.source} · ${description}${
+                                label={translate(String(entry.label))}
+                                description={translate(`${entry.source} · ${description}${
                                     entry.update_available
                                         ? " · Update available"
                                         : ""
-                                }`}
+                                }`)}
                                 disabled={pendingInstall || pendingRemove}
                                 control={
                                     <div
@@ -2155,7 +2235,7 @@ function SpellcheckSettings({
                                             }}
                                         >
                                             {pendingInstall
-                                                ? "Working..."
+                                                ? translate("Working...")
                                                 : installLabel}
                                         </button>
                                         {entry.installed && (
@@ -2223,8 +2303,8 @@ function SpellcheckSettings({
                                                 }}
                                             >
                                                 {pendingRemove
-                                                    ? "Working..."
-                                                    : "Remove"}
+                                                    ? translate("Working...")
+                                                    : translate("Remove")}
                                             </button>
                                         )}
                                     </div>
@@ -2258,7 +2338,7 @@ function SpellcheckSettings({
                         lineHeight: 1.5,
                     }}
                 >
-                    {spellcheckCatalogNotice.message}
+                    {translate(String(spellcheckCatalogNotice.message))}
                 </div>
             )}
         </div>
@@ -2348,12 +2428,12 @@ function VaultSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
 
     return (
         <div>
-            {showCurrentVault ? <SectionLabel>Current Vault</SectionLabel> : null}
+            {showCurrentVault ? <SectionLabel>{translate("Current Vault")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Current Vault"
-                label="Vault path"
-                description="The folder currently open as your vault."
+                label={translate("Vault path")}
+                description={translate("The folder currently open as your vault.")}
                 keywords={[vaultPath, "No vault open"]}
                 control={
                     <span
@@ -2369,12 +2449,12 @@ function VaultSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                         }}
                         title={vaultPath ?? ""}
                     >
-                        {vaultPath ?? "No vault open"}
+                        {vaultPath ?? translate("No vault open")}
                     </span>
                 }
             />
 
-            {showRecentVaults ? <SectionLabel>Recent Vaults</SectionLabel> : null}
+            {showRecentVaults ? <SectionLabel>{translate("Recent Vaults")}</SectionLabel> : null}
             {showRecentVaults && recents.length === 0 ? (
                 <p
                     style={{
@@ -2383,7 +2463,7 @@ function VaultSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                         padding: "12px 0",
                     }}
                 >
-                    No recent vaults.
+                    {translate("No recent vaults.")}
                 </p>
             ) : null}
             {showRecentVaults && recents.length > 0 ? (
@@ -2426,8 +2506,8 @@ function VaultSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                             onChange={(event) =>
                                 setRecentSearch(event.target.value)
                             }
-                            aria-label="Search recent vaults"
-                            placeholder="Search recent vaults…"
+                            aria-label={translate("Search recent vaults")}
+                            placeholder={translate("Search recent vaults…")}
                             style={{
                                 flex: 1,
                                 border: "none",
@@ -2451,7 +2531,7 @@ function VaultSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                     </div>
                     <div
                         role="list"
-                        aria-label="Recent vaults"
+                        aria-label={translate("Recent vaults")}
                         style={{
                             maxHeight: 420,
                             overflowY: "auto",
@@ -2467,7 +2547,7 @@ function VaultSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                                     padding: "12px 0",
                                 }}
                             >
-                                No vaults match your search.
+                                {translate("No vaults match your search.")}
                             </p>
                         ) : (
                             filteredRecents.map((vault) => (
@@ -2522,9 +2602,7 @@ function VaultSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                                                     color: "var(--text-secondary)",
                                                 }}
                                             >
-                                                Device-local AI chats will be
-                                                deleted. Chats stored inside
-                                                the vault remain.
+                                                {translate("Device-local AI chats will be deleted. Chats stored inside the vault remain.")}
                                             </span>
                                             {removeRecentError ? (
                                                 <span
@@ -2555,7 +2633,7 @@ function VaultSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                                                     cursor: "pointer",
                                                 }}
                                             >
-                                                Confirm
+                                                {translate("Confirm")}
                                             </button>
                                             <button
                                                 onClick={() =>
@@ -2572,13 +2650,13 @@ function VaultSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                                                     cursor: "pointer",
                                                 }}
                                             >
-                                                Cancel
+                                                {translate("Cancel")}
                                             </button>
                                         </div>
                                     ) : (
                                         <button
                                             type="button"
-                                            aria-label={`Remove ${vault.name} from Recents`}
+                                            aria-label={translate(`Remove ${vault.name} from Recents`)}
                                             disabled={vault.path === vaultPath}
                                             onClick={() => {
                                                 setRemoveRecentError(null);
@@ -2586,8 +2664,8 @@ function VaultSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                                             }}
                                             title={
                                                 vault.path === vaultPath
-                                                    ? "Switch to another vault before removing this one from Recents"
-                                                    : "Remove vault from Recents and delete device-local data"
+                                                    ? translate("Switch to another vault before removing this one from Recents")
+                                                    : translate("Remove vault from Recents and delete device-local data")
                                             }
                                             style={{
                                                 width: 24,
@@ -2658,7 +2736,7 @@ function VaultSettings({ searchQuery }: { searchQuery: SettingsSearchQuery }) {
                                 cursor: "pointer",
                             }}
                         >
-                            Clear recent vaults
+                            {translate("Clear recent vaults")}
                         </button>
                     </div>
                 </>
@@ -2876,12 +2954,12 @@ function UpdatesSettings({
 
     return (
         <div>
-            {showVersion ? <SectionLabel>Version</SectionLabel> : null}
+            {showVersion ? <SectionLabel>{translate("Version")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Version"
-                label="Current version"
-                description={`You're on ${currentVersionLabel}. Last checked ${lastCheckedLabel}.`}
+                label={translate("Current version")}
+                description={translate(`You're on ${currentVersionLabel}. Last checked ${lastCheckedLabel}.`)}
                 keywords={[
                     currentVersionLabel,
                     primaryAction.label,
@@ -2904,14 +2982,14 @@ function UpdatesSettings({
                                 void openUrl(RELEASE_NOTES_URL);
                             }}
                         >
-                            release notes
+                            {translate("release notes")}
                         </SettingsActionButton>
                         <SettingsActionButton
                             active={primaryAction.active}
                             disabled={primaryAction.disabled}
                             onClick={primaryAction.onClick}
                         >
-                            {primaryAction.label}
+                            {translate(String(primaryAction.label))}
                         </SettingsActionButton>
                     </div>
                 }
@@ -2919,25 +2997,25 @@ function UpdatesSettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Version"
-                label="Channel"
-                description="Release track used when querying the update feed."
+                label={translate("Channel")}
+                description={translate("Release track used when querying the update feed.")}
                 keywords={[status?.channel, "stable"]}
-                control={<VersionPill label={status?.channel ?? "stable"} />}
+                control={<VersionPill label={status?.channel ?? translate("stable")} />}
             />
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Version"
-                label="Automatic updates"
+                label={translate("Automatic updates")}
                 description={automaticUpdatesDescription}
                 keywords={["automatic check", "verified install"]}
                 control={
-                    <VersionPill label={updaterConfigured ? "On" : "Off"} />
+                    <VersionPill label={updaterConfigured ? translate("On") : translate("Off")} />
                 }
             />
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Version"
-                label="Update status"
+                label={translate("Update status")}
                 description={statusDescription}
                 keywords={[
                     stateKind,
@@ -2964,7 +3042,7 @@ function UpdatesSettings({
                                     fontSize: 10,
                                 }}
                             >
-                                {`target ${formatVersionPillLabel(status.update.version)}`}
+                                {translate(`target ${formatVersionPillLabel(status.update.version)}`)}
                             </span>
                         ) : null}
                     </div>
@@ -2989,7 +3067,7 @@ function UpdatesSettings({
                             marginBottom: 6,
                         }}
                     >
-                        This update may interrupt active work.
+                        {translate("This update may interrupt active work.")}
                     </div>
                     <div
                         style={{
@@ -3028,14 +3106,14 @@ function UpdatesSettings({
                                 })();
                             }}
                         >
-                            {installing ? "installing..." : "install anyway"}
+                            {installing ? translate("installing...") : translate("install anyway")}
                         </SettingsActionButton>
                         <SettingsActionButton
                             active={false}
                             disabled={installing}
                             onClick={() => setConfirmInstall(false)}
                         >
-                            cancel
+                            {translate("cancel")}
                         </SettingsActionButton>
                     </div>
                 </div>
@@ -3043,11 +3121,11 @@ function UpdatesSettings({
 
             {showAvailableUpdate && status?.update ? (
                 <>
-                    <SectionLabel>Available update</SectionLabel>
+                    <SectionLabel>{translate("Available update")}</SectionLabel>
                     <SearchableRow
                         searchQuery={searchQuery}
                         section="Available update"
-                        label="Version"
+                        label={translate("Version")}
                         keywords={[updateVersionLabel]}
                         control={
                             <VersionPill
@@ -3060,7 +3138,7 @@ function UpdatesSettings({
                     <SearchableRow
                         searchQuery={searchQuery}
                         section="Available update"
-                        label="Published"
+                        label={translate("Published")}
                         keywords={[updateDateLabel, status.update.date]}
                         control={
                             <span
@@ -3121,7 +3199,7 @@ function VersionPill({ label }: { label: string }) {
                 textTransform: "uppercase",
             }}
         >
-            {label}
+            {translate(label)}
         </span>
     );
 }
@@ -3142,7 +3220,7 @@ function UpdateStatusBadge({ kind }: { kind: UpdateStateKind }) {
                 textTransform: "uppercase",
             }}
         >
-            {label}
+            {translate(label)}
         </span>
     );
 }
@@ -3233,12 +3311,12 @@ function FeedbackSettings({
 
     return (
         <div>
-            {showCommunity ? <SectionLabel>Community</SectionLabel> : null}
+            {showCommunity ? <SectionLabel>{translate("Community")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Community"
-                label="Issues"
-                description="Browse open bug reports, feature requests, and support threads on GitHub."
+                label={translate("Issues")}
+                description={translate("Browse open bug reports, feature requests, and support threads on GitHub.")}
                 keywords={["github", "bugs", "feature requests"]}
                 control={
                     <SettingsActionButton
@@ -3247,15 +3325,15 @@ function FeedbackSettings({
                             void openUrl(REPOSITORY_ISSUES_URL);
                         }}
                     >
-                        open issues
+                        {translate("open issues")}
                     </SettingsActionButton>
                 }
             />
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Community"
-                label="Discussions"
-                description="Read community questions, ideas, and longer-form conversations on GitHub."
+                label={translate("Discussions")}
+                description={translate("Read community questions, ideas, and longer-form conversations on GitHub.")}
                 keywords={["github", "community", "questions", "ideas"]}
                 control={
                     <SettingsActionButton
@@ -3264,17 +3342,17 @@ function FeedbackSettings({
                             void openUrl(REPOSITORY_DISCUSSIONS_URL);
                         }}
                     >
-                        open discussions
+                        {translate("open discussions")}
                     </SettingsActionButton>
                 }
             />
 
-            {showCreate ? <SectionLabel>Create</SectionLabel> : null}
+            {showCreate ? <SectionLabel>{translate("Create")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Create"
-                label="Create issue"
-                description="Open GitHub to file a bug report or request a focused change."
+                label={translate("Create issue")}
+                description={translate("Open GitHub to file a bug report or request a focused change.")}
                 keywords={["github", "report bug", "request feature"]}
                 control={
                     <SettingsActionButton
@@ -3283,15 +3361,15 @@ function FeedbackSettings({
                             void openUrl(NEW_REPOSITORY_ISSUE_URL);
                         }}
                     >
-                        new issue
+                        {translate("new issue")}
                     </SettingsActionButton>
                 }
             />
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Create"
-                label="Start discussion"
-                description="Open GitHub to start a broader question, idea, or product conversation."
+                label={translate("Start discussion")}
+                description={translate("Open GitHub to start a broader question, idea, or product conversation.")}
                 keywords={["github", "question", "idea"]}
                 control={
                     <SettingsActionButton
@@ -3300,7 +3378,7 @@ function FeedbackSettings({
                             void openUrl(NEW_REPOSITORY_DISCUSSION_URL);
                         }}
                     >
-                        new discussion
+                        {translate("new discussion")}
                     </SettingsActionButton>
                 }
             />
@@ -3347,12 +3425,12 @@ function SponsorsSettings({
 
     return (
         <div>
-            <SectionLabel>Support</SectionLabel>
+            <SectionLabel>{translate("Support")}</SectionLabel>
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Support"
-                label="Project repository"
-                description="View BifrostWrite source code, releases, and project activity."
+                label={translate("Project repository")}
+                description={translate("View BifrostWrite source code, releases, and project activity.")}
                 keywords={["source", "repository", "project"]}
                 control={
                     <SettingsActionButton
@@ -3361,15 +3439,15 @@ function SponsorsSettings({
                             void openUrl(PROJECT_HOME_URL);
                         }}
                     >
-                        open project
+                        {translate("open project")}
                     </SettingsActionButton>
                 }
             />
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Support"
-                label="Bifrost organization"
-                description="Explore the Bifrost open-source organization on GitHub."
+                label={translate("Bifrost organization")}
+                description={translate("Explore the Bifrost open-source organization on GitHub.")}
                 keywords={["github", "organization", "bifrost"]}
                 control={
                     <SettingsActionButton
@@ -3378,7 +3456,7 @@ function SponsorsSettings({
                             void openUrl(ORGANIZATION_URL);
                         }}
                     >
-                        open organization
+                        {translate("open organization")}
                     </SettingsActionButton>
                 }
             />
@@ -3396,10 +3474,9 @@ function SponsorsSettings({
                 }}
             >
                 <span style={{ fontWeight: 600 }}>
-                    BifrostWrite is developed as part of the Bifrost open-source ecosystem.
+                    {translate("BifrostWrite is developed as part of the Bifrost open-source ecosystem.")}
                 </span>{" "}
-                Issues, discussions, and code contributions are welcome through
-                GitHub.
+                {translate("Issues, discussions, and code contributions are welcome through GitHub.")}
             </div>
         </div>
     );
@@ -3650,18 +3727,18 @@ function TerminalSettings({
 
     return (
         <div>
-            {showFont ? <SectionLabel>Font</SectionLabel> : null}
+            {showFont ? <SectionLabel>{translate("Font")}</SectionLabel> : null}
             {showFont && (
                 <SearchableRow
                     searchQuery={searchQuery}
                     section="Font"
-                    label="Font family"
-                    description="Monospace font for the terminal. Must be installed on this system. Nerd Fonts are supported."
+                    label={translate("Font family")}
+                    description={translate("Monospace font for the terminal. Must be installed on this system. Nerd Fonts are supported.")}
                     keywords={["monospace", "nerd font", "firacode", "jetbrains"]}
                     control={
                         <input
                             type="text"
-                            placeholder="e.g. FiraCode Nerd Font"
+                            placeholder={translate("e.g. FiraCode Nerd Font")}
                             value={terminalFontFamily}
                             onChange={(e) =>
                                 setSetting("terminalFontFamily", e.target.value)
@@ -3685,8 +3762,8 @@ function TerminalSettings({
                 <SearchableRow
                     searchQuery={searchQuery}
                     section="Font"
-                    label="Font size"
-                    description="Terminal text size in pixels."
+                    label={translate("Font size")}
+                    description={translate("Terminal text size in pixels.")}
                     control={
                         <NumberStepper
                             value={terminalFontSize}
@@ -3698,14 +3775,14 @@ function TerminalSettings({
                 />
             )}
             {showShell ? (
-                <SectionLabel>Shell Environment</SectionLabel>
+                <SectionLabel>{translate("Shell Environment")}</SectionLabel>
             ) : null}
             {showShell && (
                 <SearchableRow
                     searchQuery={searchQuery}
                     section="Shell Environment"
-                    label="Fullscreen rendering (experimental)"
-                    description="Sets CLAUDE_CODE_NO_FLICKER=1. Reduces flicker in Claude Code but disables scrollback. Applies to new terminals only."
+                    label={translate("Fullscreen rendering (experimental)")}
+                    description={translate("Sets CLAUDE_CODE_NO_FLICKER=1. Reduces flicker in Claude Code but disables scrollback. Applies to new terminals only.")}
                     keywords={["claude code", "flicker", "CLAUDE_CODE_NO_FLICKER"]}
                     control={
                         <Toggle
@@ -3718,14 +3795,14 @@ function TerminalSettings({
                 />
             )}
             {showClaudeCode ? (
-                <SectionLabel>Claude Code</SectionLabel>
+                <SectionLabel>{translate("Claude Code")}</SectionLabel>
             ) : null}
             {showClaudeCode && (
                 <SearchableRow
                     searchQuery={searchQuery}
                     section="Claude Code"
-                    label="Skip permissions"
-                    description="Passes --dangerously-skip-permissions. Claude Code will not ask for approval before running tools or writing files. Only enable if you trust the session context."
+                    label={translate("Skip permissions")}
+                    description={translate("Passes --dangerously-skip-permissions. Claude Code will not ask for approval before running tools or writing files. Only enable if you trust the session context.")}
                     keywords={["yolo", "dangerously-skip-permissions", "permissions"]}
                     control={
                         <Toggle
@@ -3741,8 +3818,8 @@ function TerminalSettings({
                 <SearchableRow
                     searchQuery={searchQuery}
                     section="Claude Code"
-                    label="Model"
-                    description="Which Claude model powers each session. Leave on Default to let Claude Code choose based on your subscription."
+                    label={translate("Model")}
+                    description={translate("Which Claude model powers each session. Leave on Default to let Claude Code choose based on your subscription.")}
                     keywords={["opus", "sonnet", "haiku", "model", "claude"]}
                     control={
                         <select
@@ -3754,7 +3831,7 @@ function TerminalSettings({
                         >
                             {CLAUDE_CODE_MODEL_OPTIONS.map((o) => (
                                 <option key={o.value} value={o.value}>
-                                    {o.label}
+                                    {translate(String(o.label))}
                                 </option>
                             ))}
                         </select>
@@ -3765,8 +3842,8 @@ function TerminalSettings({
                 <SearchableRow
                     searchQuery={searchQuery}
                     section="Claude Code"
-                    label="Continue last session"
-                    description="Passes --continue. Resumes your most recent Claude Code conversation instead of starting a new one."
+                    label={translate("Continue last session")}
+                    description={translate("Passes --continue. Resumes your most recent Claude Code conversation instead of starting a new one.")}
                     keywords={["resume", "continue", "session", "history"]}
                     control={
                         <Toggle
@@ -3829,12 +3906,12 @@ function FileTreeSettings({
 
     return (
         <div>
-            {showFileTree ? <SectionLabel>File Tree</SectionLabel> : null}
+            {showFileTree ? <SectionLabel>{translate("File Tree")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="File Tree"
-                label="Show all vault files"
-                description="Display every vault file, beyond the curated writing and media set. With this off, Markdown, Mermaid, PDFs, images, Excalidraw, CSV, TXT, and HTML files are shown."
+                label={translate("Show all vault files")}
+                description={translate("Display every vault file, beyond the curated writing and media set. With this off, Markdown, Mermaid, PDFs, images, Excalidraw, CSV, TXT, and HTML files are shown.")}
                 keywords={[
                     "File-oriented search is active",
                     "Search Files & Notes",
@@ -3856,8 +3933,8 @@ function FileTreeSettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="File Tree"
-                label="Show file extensions"
-                description="Display full file names with their extensions in the vault tree."
+                label={translate("Show file extensions")}
+                description={translate("Display full file names with their extensions in the vault tree.")}
                 control={
                     <Toggle
                         value={fileTreeShowExtensions}
@@ -3870,8 +3947,8 @@ function FileTreeSettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="File Tree"
-                label="Show document status"
-                description="Show a colored dot for the frontmatter status of each note."
+                label={translate("Show document status")}
+                description={translate("Show a colored dot for the frontmatter status of each note.")}
                 control={
                     <Toggle
                         value={fileTreeShowDocumentStatus}
@@ -3884,8 +3961,8 @@ function FileTreeSettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="File Tree"
-                label="File extension filter"
-                description="Optional allowlist for the file tree and file pickers. When set, it overrides Show all vault files; leave empty to use the current mode."
+                label={translate("File extension filter")}
+                description={translate("Optional allowlist for the file tree and file pickers. When set, it overrides Show all vault files; leave empty to use the current mode.")}
                 keywords={["allowlist", "pdf, txt, csv"]}
                 control={
                     <ExtensionFilterInput
@@ -3905,10 +3982,7 @@ function FileTreeSettings({
                         color: "var(--text-secondary)",
                     }}
                 >
-                    Normal mode already includes Markdown notes plus curated
-                    writing and media files. All-files mode expands the file
-                    tree, New Tab, `@` mentions, and wikilink suggestions to
-                    technical project files where supported.
+                    {translate("Normal mode already includes Markdown notes plus curated writing and media files. All-files mode expands the file tree, New Tab, `@` mentions, and wikilink suggestions to technical project files where supported.")}
                 </div>
             )}
         </div>
@@ -4015,7 +4089,7 @@ function ShortcutConfirmationDialog({
                         fontWeight: 600,
                     }}
                 >
-                    {title}
+                    {translate(title)}
                 </h2>
                 <p
                     id="shortcut-confirmation-description"
@@ -4026,7 +4100,7 @@ function ShortcutConfirmationDialog({
                         lineHeight: 1.55,
                     }}
                 >
-                    {description}
+                    {translate(description)}
                 </p>
                 <div
                     style={{
@@ -4050,7 +4124,7 @@ function ShortcutConfirmationDialog({
                             cursor: "pointer",
                         }}
                     >
-                        Cancel
+                        {translate("Cancel")}
                     </button>
                     <button
                         ref={confirmRef}
@@ -4067,7 +4141,7 @@ function ShortcutConfirmationDialog({
                             cursor: "pointer",
                         }}
                     >
-                        {confirmLabel}
+                        {translate(confirmLabel)}
                     </button>
                 </div>
             </div>
@@ -4102,7 +4176,7 @@ function ShortcutKeycap({ label }: { label: string }) {
                 whiteSpace: "nowrap",
             }}
         >
-            {label}
+            {translate(label)}
         </kbd>
     );
 }
@@ -4358,7 +4432,7 @@ function ShortcutsSettings({
     ) {
         return (
             <div>
-                <SectionLabel>Shortcuts</SectionLabel>
+                <SectionLabel>{translate("Shortcuts")}</SectionLabel>
                 <p
                     style={{
                         padding: "12px 0",
@@ -4366,7 +4440,7 @@ function ShortcutsSettings({
                         fontSize: 12,
                     }}
                 >
-                    No shortcuts registered yet.
+                    {translate("No shortcuts registered yet.")}
                 </p>
             </div>
         );
@@ -4395,7 +4469,7 @@ function ShortcutsSettings({
                     aria-describedby="customizable-shortcuts-description"
                 >
                     <ShortcutSectionHeader
-                        title="Customizable shortcuts"
+                        title={translate("Customizable shortcuts")}
                         id="customizable-shortcuts-heading"
                         action={
                             <button
@@ -4417,7 +4491,7 @@ function ShortcutsSettings({
                                     opacity: hasOverrides ? 1 : 0.45,
                                 }}
                             >
-                                Reset all
+                                {translate("Reset all")}
                             </button>
                         }
                     />
@@ -4430,8 +4504,7 @@ function ShortcutsSettings({
                             lineHeight: 1.45,
                         }}
                     >
-                        Global for this installation. Changes apply immediately
-                        across every vault.
+                        {translate("Global for this installation. Changes apply immediately across every vault.")}
                     </p>
                     {Object.entries(configurableGroups).map(
                         ([category, shortcuts]) => (
@@ -4469,7 +4542,7 @@ function ShortcutsSettings({
                                                         fontSize: 13,
                                                     }}
                                                 >
-                                                    {shortcut.label}
+                                                    {translate(String(shortcut.label))}
                                                 </div>
                                                 {customized && (
                                                     <div
@@ -4479,7 +4552,7 @@ function ShortcutsSettings({
                                                             fontSize: 10,
                                                         }}
                                                     >
-                                                        Customized
+                                                        {translate("Customized")}
                                                     </div>
                                                 )}
                                             </div>
@@ -4487,7 +4560,7 @@ function ShortcutsSettings({
                                                 label={shortcut.shortcut}
                                             />
                                             <ShortcutRecorder
-                                                actionLabel={shortcut.label}
+                                                actionLabel={translate(String(shortcut.label))}
                                                 platform={platform}
                                                 onRecord={(binding) =>
                                                     saveBinding(
@@ -4498,7 +4571,7 @@ function ShortcutsSettings({
                                             />
                                             <button
                                                 type="button"
-                                                aria-label={`Reset shortcut for ${shortcut.label}`}
+                                                aria-label={translate(`Reset shortcut for ${shortcut.label}`)}
                                                 disabled={!customized}
                                                 onClick={() =>
                                                     resetBinding(shortcut.id)
@@ -4521,7 +4594,7 @@ function ShortcutsSettings({
                                                         : 0.4,
                                                 }}
                                             >
-                                                Reset
+                                                {translate("Reset")}
                                             </button>
                                         </div>
                                     );
@@ -4538,7 +4611,7 @@ function ShortcutsSettings({
                     aria-describedby="fixed-shortcuts-description"
                 >
                     <ShortcutSectionHeader
-                        title="Fixed shortcuts"
+                        title={translate("Fixed shortcuts")}
                         id="fixed-shortcuts-heading"
                     />
                     <p
@@ -4550,8 +4623,7 @@ function ShortcutsSettings({
                             lineHeight: 1.45,
                         }}
                     >
-                        Contextual editor and interaction shortcuts remain fixed
-                        to preserve predictable local behavior.
+                        {translate("Contextual editor and interaction shortcuts remain fixed to preserve predictable local behavior.")}
                     </p>
                     {Object.entries(fixedGroups).map(
                         ([category, shortcuts]) => (
@@ -4578,7 +4650,7 @@ function ShortcutsSettings({
                                                 fontSize: 13,
                                             }}
                                         >
-                                            {shortcut.label}
+                                            {translate(String(shortcut.label))}
                                         </span>
                                         <ShortcutKeycap
                                             label={shortcut.shortcut}
@@ -4593,8 +4665,8 @@ function ShortcutsSettings({
 
             {pendingConflict && (
                 <ShortcutConfirmationDialog
-                    title="Shortcut already in use"
-                    description={`${formatShortcutBinding(
+                    title={translate("Shortcut already in use")}
+                    description={translate(`${formatShortcutBinding(
                         pendingConflict.requestedBinding,
                         platform,
                     )} is currently assigned to ${
@@ -4602,7 +4674,7 @@ function ShortcutsSettings({
                     }. ${pendingConflict.conflictingLabel} will move to ${formatShortcutBinding(
                         pendingConflict.previousTargetBinding,
                         platform,
-                    )}.`}
+                    )}.`)}
                     confirmLabel={
                         pendingConflict.resetsTarget
                             ? "Reset and move"
@@ -4615,8 +4687,8 @@ function ShortcutsSettings({
 
             {confirmResetAll && (
                 <ShortcutConfirmationDialog
-                    title="Reset all shortcuts?"
-                    description="All customizable shortcuts for the current platform will return to their defaults. Shortcuts saved for other platforms are preserved."
+                    title={translate("Reset all shortcuts?")}
+                    description={translate("All customizable shortcuts for the current platform will return to their defaults. Shortcuts saved for other platforms are preserved.")}
                     confirmLabel="Reset all"
                     onConfirm={() => {
                         const reset = resetAllShortcutOverrides(platform);
@@ -4773,12 +4845,12 @@ function AISettings({
 
     return (
         <div>
-            {showContext ? <SectionLabel>Context</SectionLabel> : null}
+            {showContext ? <SectionLabel>{translate("Context")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Context"
-                label="AI change review"
-                description="Track AI file changes for review. Turning this off accepts and clears pending review changes. Chat diff updates remain visible."
+                label={translate("AI change review")}
+                description={translate("Track AI file changes for review. Turning this off accepts and clears pending review changes. Chat diff updates remain visible.")}
                 keywords={["review", "edits", "changes", "accept", "reject"]}
                 control={
                     <Toggle
@@ -4792,8 +4864,8 @@ function AISettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Context"
-                label="Inline review in editor"
-                description="Show AI file changes inline in editors with accept and reject controls. Available only in source mode. This preference is saved per vault."
+                label={translate("Inline review in editor")}
+                description={translate("Show AI file changes inline in editors with accept and reject controls. Available only in source mode. This preference is saved per vault.")}
                 keywords={["review", "accept", "reject"]}
                 control={
                     <Toggle
@@ -4805,7 +4877,7 @@ function AISettings({
                     />
                 }
             />
-            {showChat ? <SectionLabel>Chat</SectionLabel> : null}
+            {showChat ? <SectionLabel>{translate("Chat")}</SectionLabel> : null}
             {showChat &&
             matchesSettingsSearch(
                 searchQuery,
@@ -4821,8 +4893,8 @@ function AISettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Chat"
-                label="Chat font family"
-                description="Font used for messages in the chat."
+                label={translate("Chat font family")}
+                description={translate("Font used for messages in the chat.")}
                 keywords={fontKeywords}
                 control={
                     <SelectField
@@ -4837,8 +4909,8 @@ function AISettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Chat"
-                label="Chat font size"
-                description="Font size of messages in the chat, in pixels."
+                label={translate("Chat font size")}
+                description={translate("Font size of messages in the chat, in pixels.")}
                 control={
                     <NumberStepper
                         value={chatFontSize}
@@ -4851,8 +4923,8 @@ function AISettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Chat"
-                label="Tool activity display"
-                description="Choose how tool activity appears between assistant messages."
+                label={translate("Tool activity display")}
+                description={translate("Choose how tool activity appears between assistant messages.")}
                 keywords={["Expanded", "Collapsed", "Hide routine activity"]}
                 control={
                     <SelectField
@@ -4876,8 +4948,8 @@ function AISettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Chat"
-                label="Chat history retention"
-                description="How long saved chat histories stay on disk before they are automatically deleted."
+                label={translate("Chat history retention")}
+                description={translate("How long saved chat histories stay on disk before they are automatically deleted.")}
                 keywords={["Forever", "1 day", "7 days", "30 days", "90 days", "1 year"]}
                 control={
                     <SelectField
@@ -4896,12 +4968,12 @@ function AISettings({
                     />
                 }
             />
-            {showComposer ? <SectionLabel>Composer</SectionLabel> : null}
+            {showComposer ? <SectionLabel>{translate("Composer")}</SectionLabel> : null}
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Composer"
-                label={`Require ${sendShortcut} to send`}
-                description={`Press ${sendShortcut} to send messages. Enter alone adds a new line, making it easier to write longer messages.`}
+                label={translate(`Require ${sendShortcut} to send`)}
+                description={translate(`Press ${sendShortcut} to send messages. Enter alone adds a new line, making it easier to write longer messages.`)}
                 keywords={[sendShortcut, "Enter", "new line"]}
                 control={
                     <Toggle
@@ -4913,8 +4985,8 @@ function AISettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Composer"
-                label="Show context usage bar"
-                description="Display a thin usage strip at the bottom of the composer to track context window consumption."
+                label={translate("Show context usage bar")}
+                description={translate("Display a thin usage strip at the bottom of the composer to track context window consumption.")}
                 keywords={["context window"]}
                 control={
                     <Toggle
@@ -4926,8 +4998,8 @@ function AISettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Composer"
-                label="Screenshot retention"
-                description="How long pasted screenshots stay in the AI composer before they are removed automatically."
+                label={translate("Screenshot retention")}
+                description={translate("How long pasted screenshots stay in the AI composer before they are removed automatically.")}
                 keywords={SCREENSHOT_RETENTION_KEYWORDS}
                 control={
                     <SelectField
@@ -4942,8 +5014,8 @@ function AISettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Composer"
-                label="Composer font family"
-                description="Font used in the message input box."
+                label={translate("Composer font family")}
+                description={translate("Font used in the message input box.")}
                 keywords={fontKeywords}
                 control={
                     <SelectField
@@ -4958,8 +5030,8 @@ function AISettings({
             <SearchableRow
                 searchQuery={searchQuery}
                 section="Composer"
-                label="Composer font size"
-                description="Font size of the message input box, in pixels."
+                label={translate("Composer font size")}
+                description={translate("Font size of the message input box, in pixels.")}
                 control={
                     <NumberStepper
                         value={composerFontSize}
@@ -5470,7 +5542,9 @@ function categoryHeaderMatchesSearch(
     return matchesSettingsSearch(
         query,
         info?.label,
+        info?.label ? translate(info.label) : undefined,
         CATEGORY_DESCRIPTIONS[category],
+        translate(CATEGORY_DESCRIPTIONS[category]),
     );
 }
 
@@ -5574,6 +5648,7 @@ export function SettingsPanel({
     initialCategory?: Category;
 }) {
     useShortcutOverrides();
+    useSettingsStore((state) => state.appLanguage);
 
     const initializeUpdates = useAppUpdateStore((state) => state.initialize);
     const updateAvailable = useAppUpdateStore(
@@ -5776,12 +5851,12 @@ export function SettingsPanel({
                         whiteSpace: "nowrap",
                     }}
                 >
-                    Settings
+                    {translate("Settings")}
                 </span>
                 {!standalone && (
                     <button
                         onClick={handleClose}
-                        title="Close settings (Esc)"
+                        title={translate("Close settings (Esc)")}
                         style={{
                             width: 24,
                             height: 24,
@@ -5877,8 +5952,8 @@ export function SettingsPanel({
                                         setSearch("");
                                     }
                                 }}
-                                aria-label="Search settings"
-                                placeholder="Search settings…"
+                                aria-label={translate("Search settings")}
+                                placeholder={translate("Search settings…")}
                                 style={{
                                     flex: 1,
                                     border: "none",
@@ -5892,7 +5967,7 @@ export function SettingsPanel({
                             {search ? (
                                 <button
                                     type="button"
-                                    aria-label="Clear search"
+                                    aria-label={translate("Clear search")}
                                     onClick={() => setSearch("")}
                                     style={{
                                         border: "none",
@@ -5981,7 +6056,7 @@ export function SettingsPanel({
                                             />
                                         ) : null}
                                     </span>
-                                    {cat.label}
+                                    {translate(String(cat.label))}
                                 </button>
                             );
                         })}
@@ -5994,7 +6069,7 @@ export function SettingsPanel({
                                     padding: "8px 10px",
                                 }}
                             >
-                                No settings found.
+                                {translate("No settings found.")}
                             </div>
                         ) : null}
                     </div>
@@ -6026,7 +6101,7 @@ export function SettingsPanel({
                                     lineHeight: 1.2,
                                 }}
                             >
-                                {activeInfo.label}
+                                {translate(String(activeInfo.label))}
                             </h2>
                             <p
                                 style={{
@@ -6036,7 +6111,9 @@ export function SettingsPanel({
                                     fontFamily: "monospace",
                                 }}
                             >
-                                {CATEGORY_DESCRIPTIONS[activeCategory]}
+                                {translate(
+                                    CATEGORY_DESCRIPTIONS[activeCategory],
+                                )}
                             </p>
                         </div>
 

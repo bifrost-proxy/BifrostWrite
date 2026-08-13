@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     useCallback,
     useEffect,
@@ -352,7 +353,7 @@ export function CsvFileTabView({ paneId, tabId }: CsvFileTabViewProps) {
                 className="h-full flex items-center justify-center"
                 style={{ color: "var(--text-secondary)" }}
             >
-                No CSV file tab active
+                {translate("No CSV file tab active")}
             </div>
         );
     }
@@ -380,8 +381,7 @@ export function CsvFileTabView({ paneId, tabId }: CsvFileTabViewProps) {
                         className="min-w-0 text-[12px]"
                         style={{ color: "var(--text-primary)" }}
                     >
-                        This file changed on disk while you still have unsaved
-                        edits.
+                        {translate("This file changed on disk while you still have unsaved edits.")}
                     </div>
                     <div className="shrink-0 flex items-center gap-2">
                         <button
@@ -394,7 +394,7 @@ export function CsvFileTabView({ paneId, tabId }: CsvFileTabViewProps) {
                                 color: "var(--text-primary)",
                             }}
                         >
-                            Reload from Disk
+                            {translate("Reload from Disk")}
                         </button>
                         <button
                             type="button"
@@ -406,7 +406,7 @@ export function CsvFileTabView({ paneId, tabId }: CsvFileTabViewProps) {
                                 color: "var(--text-secondary)",
                             }}
                         >
-                            Keep Local
+                            {translate("Keep Local")}
                         </button>
                     </div>
                 </div>
@@ -446,7 +446,7 @@ export function CsvFileTabView({ paneId, tabId }: CsvFileTabViewProps) {
                                 : savedStatusBadgeStyle
                         }
                     >
-                        {isDirty ? "Unsaved changes" : "Saved"}
+                        {isDirty ? translate("Unsaved changes") : translate("Saved")}
                     </span>
                     <button
                         type="button"
@@ -459,7 +459,7 @@ export function CsvFileTabView({ paneId, tabId }: CsvFileTabViewProps) {
                                 : headerButtonStyle
                         }
                     >
-                        Table
+                        {translate("Table")}
                     </button>
                     <button
                         type="button"
@@ -471,7 +471,7 @@ export function CsvFileTabView({ paneId, tabId }: CsvFileTabViewProps) {
                                 : headerButtonStyle
                         }
                     >
-                        Raw
+                        {translate("Raw")}
                     </button>
                     <button
                         type="button"
@@ -479,7 +479,7 @@ export function CsvFileTabView({ paneId, tabId }: CsvFileTabViewProps) {
                         className="inline-flex items-center rounded px-1.5 text-[10px]"
                         style={headerButtonStyle}
                     >
-                        Open Externally
+                        {translate("Open Externally")}
                     </button>
                     <button
                         type="button"
@@ -487,7 +487,7 @@ export function CsvFileTabView({ paneId, tabId }: CsvFileTabViewProps) {
                         className="inline-flex items-center rounded px-1.5 text-[10px]"
                         style={headerButtonStyle}
                     >
-                        Reveal in Finder
+                        {translate("Reveal in Finder")}
                     </button>
                 </div>
             </div>
@@ -516,7 +516,7 @@ export function CsvFileTabView({ paneId, tabId }: CsvFileTabViewProps) {
                         className="rounded px-2 py-1 text-[11px] disabled:opacity-50"
                         style={secondaryActionButtonStyle}
                     >
-                        Add Row
+                        {translate("Add Row")}
                     </button>
                     <button
                         type="button"
@@ -525,7 +525,7 @@ export function CsvFileTabView({ paneId, tabId }: CsvFileTabViewProps) {
                         className="rounded px-2 py-1 text-[11px] disabled:opacity-50"
                         style={secondaryActionButtonStyle}
                     >
-                        Add Column
+                        {translate("Add Column")}
                     </button>
                 </div>
             </div>
@@ -572,14 +572,14 @@ export function CsvFileTabView({ paneId, tabId }: CsvFileTabViewProps) {
                         )
                     ) : (
                         <EmptyCsvTableState>
-                            Add a column to start editing this CSV as a table.
+                            {translate("Add a column to start editing this CSV as a table.")}
                         </EmptyCsvTableState>
                     )
                 ) : (
                     <div className="h-full flex flex-col">
                         <div className="min-h-0 flex-1 p-3">
                             <textarea
-                                aria-label="Raw CSV content"
+                                aria-label={translate("Raw CSV content")}
                                 readOnly
                                 value={editorState.rawContent}
                                 className="csv-file-raw"
@@ -611,7 +611,7 @@ function CsvColumnHeader({
             onMouseDown={(event) => event.stopPropagation()}
         >
             <input
-                aria-label={`${columnLabel} name`}
+                aria-label={translate(`${columnLabel} name`)}
                 value={column.name}
                 placeholder={columnLabel}
                 onChange={(event) => onRename(column.id, event.target.value)}
@@ -621,7 +621,7 @@ function CsvColumnHeader({
             />
             <button
                 type="button"
-                aria-label={`Delete ${columnLabel}`}
+                aria-label={translate(`Delete ${columnLabel}`)}
                 onMouseDown={(event) => stopHeaderButtonEvent(event)}
                 onClick={(event) => {
                     stopHeaderButtonEvent(event);
@@ -651,7 +651,7 @@ function DeleteRowCell({ rowIndex, deleteRow }: CellProps<CsvGridRow, null>) {
         <div className="w-full flex items-center justify-center">
             <button
                 type="button"
-                aria-label={`Delete row ${rowIndex + 1}`}
+                aria-label={translate(`Delete row ${rowIndex + 1}`)}
                 onMouseDown={(event) => stopHeaderButtonEvent(event)}
                 onClick={(event) => {
                     stopHeaderButtonEvent(event);

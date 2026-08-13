@@ -183,6 +183,21 @@ afterEach(() => {
 });
 
 describe("SettingsPanel", () => {
+    it("switches the application language from General settings", async () => {
+        useSettingsStore.setState({ appLanguage: "en" });
+        renderComponent(<SettingsPanel onClose={() => {}} />);
+
+        await act(async () => {
+            fireEvent.click(
+                screen.getByRole("button", { name: "Simplified Chinese" }),
+            );
+        });
+
+        expect(useSettingsStore.getState().appLanguage).toBe("zh-CN");
+        expect(screen.getByText("设置")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "通用" })).toBeInTheDocument();
+    });
+
     it("uses the standalone window vault for AI history storage", async () => {
         window.history.replaceState(
             {},

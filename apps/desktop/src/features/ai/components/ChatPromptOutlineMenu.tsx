@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import {
     useEffect,
     useLayoutEffect,
@@ -94,7 +95,7 @@ export function ChatPromptOutlineMenu({
         <div
             ref={menuRef}
             role="menu"
-            aria-label="User prompts"
+            aria-label={translate("User prompts")}
             style={{
                 position: "fixed",
                 left: position.x,
@@ -116,7 +117,7 @@ export function ChatPromptOutlineMenu({
                     role="status"
                     style={{ color: "var(--text-secondary)" }}
                 >
-                    No user prompts
+                    {translate("No user prompts")}
                 </div>
             ) : (
                 items.map((item) => (
@@ -124,8 +125,8 @@ export function ChatPromptOutlineMenu({
                         key={item.id}
                         type="button"
                         role="menuitem"
-                        title={item.label}
-                        aria-label={`Go to prompt ${item.ordinal}`}
+                        title={translate(String(item.label))}
+                        aria-label={translate(`Go to prompt ${item.ordinal}`)}
                         className="w-full rounded px-2.5 py-1.5 text-left"
                         style={{
                             display: "grid",
@@ -151,10 +152,10 @@ export function ChatPromptOutlineMenu({
                             className="text-[10px] tabular-nums"
                             style={{ color: "var(--text-secondary)" }}
                         >
-                            Prompt {item.ordinal}
+                            {translate("Prompt")} {item.ordinal}
                         </span>
                         <span className="min-w-0 truncate text-xs">
-                            {item.label}
+                            {translate(String(item.label))}
                         </span>
                     </button>
                 ))
@@ -167,7 +168,7 @@ export function ChatPromptOutlineMenu({
                         color: "var(--text-secondary)",
                     }}
                 >
-                    Earlier prompts are not loaded
+                    {translate("Earlier prompts are not loaded")}
                 </div>
             ) : null}
         </div>,

@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import {
     useEffect,
     useRef,
@@ -400,9 +401,9 @@ export function AgentsSidebarItem({
             {hasChildren ? (
                 <button
                     type="button"
-                    title={isCollapsed ? "Expand agents" : "Collapse agents"}
+                    title={isCollapsed ? translate("Expand agents") : translate("Collapse agents")}
                     aria-label={
-                        isCollapsed ? "Expand agents" : "Collapse agents"
+                        isCollapsed ? translate("Expand agents") : translate("Collapse agents")
                     }
                     onClick={(event) => {
                         event.preventDefault();
@@ -451,10 +452,10 @@ export function AgentsSidebarItem({
                     <button
                         type="button"
                         title={
-                            isPinned ? "Unpin from sidebar" : "Pin to sidebar"
+                            isPinned ? translate("Unpin from sidebar") : translate("Pin to sidebar")
                         }
                         aria-label={
-                            isPinned ? "Unpin from sidebar" : "Pin to sidebar"
+                            isPinned ? translate("Unpin from sidebar") : translate("Pin to sidebar")
                         }
                         onClick={(event) => {
                             event.stopPropagation();
@@ -504,9 +505,9 @@ export function AgentsSidebarItem({
                 }}
             >
                 {indicator?.tone === "working"
-                    ? "Working…"
+                    ? translate("Working…")
                     : indicator?.tone === "danger"
-                      ? "Error"
+                      ? translate("Error")
                       : timestampLabel}
             </span>
         </div>

@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { open } from "@bifrostwrite/runtime";
 import {
@@ -74,7 +75,10 @@ export function VaultSwitcher({
 
     const handleOpenVault = async () => {
         closeSwitcher();
-        const selected = await open({ directory: true, title: "Select vault" });
+        const selected = await open({
+            directory: true,
+            title: translate("Select vault"),
+        });
         if (!selected || selected === vaultPath) return;
         void openVaultWindow(selected);
     };
@@ -99,7 +103,7 @@ export function VaultSwitcher({
             <span style={{ width: 12, flexShrink: 0, color: "var(--accent)" }}>
                 {checked ? "✓" : ""}
             </span>
-            <span className="truncate flex-1">{label}</span>
+            <span className="truncate flex-1">{translate(label)}</span>
             {trailing}
         </button>
     );
@@ -175,8 +179,8 @@ export function VaultSwitcher({
                                 onChange={(event) =>
                                     setRecentSearch(event.target.value)
                                 }
-                                aria-label="Search vaults"
-                                placeholder="Search vaults…"
+                                aria-label={translate("Search vaults")}
+                                placeholder={translate("Search vaults…")}
                                 style={{
                                     flex: 1,
                                     border: "none",
@@ -203,7 +207,7 @@ export function VaultSwitcher({
                     {recents.length > 0 && (
                         <div
                             role="list"
-                            aria-label="Vault switcher recent vaults"
+                            aria-label={translate("Vault switcher recent vaults")}
                             style={{
                                 maxHeight: 240,
                                 overflowY: "auto",
@@ -217,7 +221,7 @@ export function VaultSwitcher({
                                         color: "var(--text-secondary)",
                                     }}
                                 >
-                                    No vaults match your search.
+                                    {translate("No vaults match your search.")}
                                 </div>
                             ) : (
                                 filteredRecents.map((v) => (

@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useRef, useState } from "react";
 
 function parseExtensionTokens(value: string): string[] {
@@ -39,7 +40,7 @@ export function ExtensionFilterInput({
     return (
         <div
             role="group"
-            aria-label="File extension filter"
+            aria-label={translate("File extension filter")}
             onClick={() => inputRef.current?.focus()}
             style={{
                 display: "flex",
@@ -83,7 +84,7 @@ export function ExtensionFilterInput({
                     </span>
                     <button
                         type="button"
-                        aria-label={`Remove .${extension}`}
+                        aria-label={translate(`Remove .${extension}`)}
                         onClick={(event) => {
                             event.stopPropagation();
                             removeExtension(extension);
@@ -98,15 +99,15 @@ export function ExtensionFilterInput({
                             lineHeight: 1,
                         }}
                     >
-                        &times;
+                        {translate("&times;")}
                     </button>
                 </span>
             ))}
             <input
                 ref={inputRef}
                 value={draft}
-                aria-label="Add file extension"
-                placeholder={value.length === 0 ? "Add: pdf, txt, csv..." : ""}
+                aria-label={translate("Add file extension")}
+                placeholder={value.length === 0 ? translate("Add: pdf, txt, csv...") : ""}
                 onChange={(event) => setDraft(event.currentTarget.value)}
                 onPaste={(event) => {
                     const pasted = event.clipboardData.getData("text");

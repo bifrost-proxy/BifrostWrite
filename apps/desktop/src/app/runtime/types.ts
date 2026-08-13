@@ -66,6 +66,11 @@ export interface RuntimeWindow {
     // macOS-only shell hook, so this remains optional and callers should treat
     // a missing method as a no-op.
     setTrafficLightsVisible?: (visible: boolean) => Promise<void>;
+    // Native window chrome follows these values independently of renderer
+    // CSS. They stay optional so non-Tauri test/runtime implementations can
+    // treat theme synchronization as a no-op.
+    setTheme?: (theme: "light" | "dark" | null) => Promise<void>;
+    setBackgroundColor?: (color: string) => Promise<void>;
     // Windows-only shell hook: retint the native caption
     // buttons so they stay legible against the current theme. Optional so
     // other runtimes (and other platforms) can silently ignore it.

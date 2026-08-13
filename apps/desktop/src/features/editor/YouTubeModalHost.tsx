@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useEffect, useState } from "react";
 
 import {
@@ -86,7 +87,7 @@ export function YouTubeModalHost() {
                             fontSize: 18,
                             lineHeight: 1,
                         }}
-                        aria-label="Close video"
+                        aria-label={translate("Close video")}
                     >
                         ×
                     </button>

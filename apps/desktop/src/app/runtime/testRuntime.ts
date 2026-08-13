@@ -81,6 +81,14 @@ class TestWindow implements RuntimeWebviewWindow {
         return Promise.resolve();
     }
 
+    setTheme(_theme: "light" | "dark" | null): Promise<void> {
+        return Promise.resolve();
+    }
+
+    setBackgroundColor(_color: string): Promise<void> {
+        return Promise.resolve();
+    }
+
     startDragging(): Promise<void> {
         return Promise.resolve();
     }

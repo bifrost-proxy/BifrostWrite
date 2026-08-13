@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useRef, type KeyboardEvent } from "react";
 
 // Persistent filter input rendered at the top of each sidebar panel. Styled
@@ -78,8 +79,8 @@ export function SidebarFilterInput({
                         onChange("");
                         inputRef.current?.focus();
                     }}
-                    title="Clear filter"
-                    aria-label="Clear filter"
+                    title={translate("Clear filter")}
+                    aria-label={translate("Clear filter")}
                     className="nw-sidebar-filter-clear flex size-4 shrink-0 items-center justify-center rounded-[3px]"
                 >
                     <svg

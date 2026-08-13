@@ -17,6 +17,8 @@
     "core:window:allow-destroy",
     "core:window:allow-set-position",
     "core:window:allow-set-ignore-cursor-events",
+    "core:window:allow-set-theme",
+    "core:window:allow-set-background-color",
     "core:window:allow-show",
     "core:window:allow-hide",
     "core:webview:allow-create-webview-window",

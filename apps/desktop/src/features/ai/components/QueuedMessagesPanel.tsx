@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useState } from "react";
 import { cleanPillMarkers } from "../composerParts";
 import type { QueuedChatMessage } from "../types";
@@ -116,8 +117,8 @@ export function QueuedMessagesPanel({
                         className="nw-strip-text-btn inline-flex items-center gap-1.5 border-0 bg-transparent p-0"
                         aria-label={
                             effectiveCollapsed
-                                ? "Expand queue"
-                                : "Collapse queue"
+                                ? translate("Expand queue")
+                                : translate("Collapse queue")
                         }
                         aria-expanded={!effectiveCollapsed}
                     >
@@ -157,7 +158,7 @@ export function QueuedMessagesPanel({
                             fontWeight: 600,
                         }}
                     >
-                        Clear All
+                        {translate("Clear All")}
                     </button>
                 </div>
             )}
@@ -182,7 +183,7 @@ export function QueuedMessagesPanel({
                                 fontWeight: 600,
                             }}
                         >
-                            Editing queued message
+                            {translate("Editing queued message")}
                         </div>
                         <div
                             className="mt-0.5 truncate text-sm"
@@ -202,7 +203,7 @@ export function QueuedMessagesPanel({
                             fontWeight: 600,
                         }}
                     >
-                        Cancel Edit
+                        {translate("Cancel Edit")}
                     </button>
                 </div>
             )}
@@ -247,7 +248,7 @@ export function QueuedMessagesPanel({
                                 <div className="flex shrink-0 items-center gap-0.5">
                                     <StripIconButton
                                         variant="danger"
-                                        title="Delete"
+                                        title={translate("Delete")}
                                         ariaLabel={`Delete ${summary}`}
                                         disabled={sending}
                                         onClick={() => onCancel(item.id)}
@@ -271,7 +272,7 @@ export function QueuedMessagesPanel({
                                     {!sending && (
                                         <StripIconButton
                                             variant="neutral"
-                                            title="Edit"
+                                            title={translate("Edit")}
                                             ariaLabel={`Edit ${summary}`}
                                             onClick={() => onEdit(item.id)}
                                         >
@@ -292,7 +293,7 @@ export function QueuedMessagesPanel({
                                     )}
                                     <StripIconButton
                                         variant="accent"
-                                        title="Send now"
+                                        title={translate("Send now")}
                                         disabled={sending}
                                         onClick={() => onSendNow(item.id)}
                                     >

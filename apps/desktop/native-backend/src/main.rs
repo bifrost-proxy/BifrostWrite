@@ -3,6 +3,7 @@ use std::fs;
 use std::io::{self, BufRead, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{
+    atomic::{AtomicBool, Ordering},
     mpsc::{self, Sender},
     Arc, Mutex,
 };
@@ -27,8 +28,8 @@ use neverwrite_types::{
     VaultOpenStateDto, WikilinkSuggestionDto,
 };
 use neverwrite_vault::{
-    normalize_existing_vault_path, parser::frontmatter_string_field, start_watcher,
-    ScopedPathIntent, Vault, VaultEvent, WriteTracker,
+    is_cloud_placeholder, normalize_existing_vault_path, parser::frontmatter_string_field,
+    start_watcher, ScopedPathIntent, Vault, VaultEvent, WriteTracker,
 };
 use notify::RecommendedWatcher;
 use serde::{Deserialize, Serialize};
@@ -674,12 +675,20 @@ struct VaultRuntimeState {
     graph_revision: u64,
     note_revisions: HashMap<String, u64>,
     file_revisions: HashMap<String, u64>,
+    deferred_note_ids: HashSet<String>,
     write_tracker: WriteTracker,
     _watcher: Option<RecommendedWatcher>,
 }
 
+struct OpenVaultJob {
+    generation: u64,
+    cancelled: Arc<AtomicBool>,
+}
+
 struct NativeBackend {
     vaults: HashMap<String, VaultRuntimeState>,
+    open_jobs: HashMap<String, OpenVaultJob>,
+    next_open_generation: u64,
     ai: NativeAi,
     ai_history: AiHistoryStorageService,
     devtools: DevTerminalManager,
@@ -698,6 +707,8 @@ impl NativeBackend {
         ));
         Self {
             vaults: HashMap::new(),
+            open_jobs: HashMap::new(),
+            next_open_generation: 0,
             ai: NativeAi::new(event_tx.clone()),
             ai_history: AiHistoryStorageService::with_events(ai_history_root, event_tx.clone()),
             devtools: DevTerminalManager::new(event_tx.clone()),
@@ -732,12 +743,15 @@ impl NativeBackend {
             }
             "start_open_vault" => {
                 let path = required_string(&args, &["path"])?;
-                self.open_vault(path, backend_ref)?;
+                self.start_open_vault(path, backend_ref)?;
                 Ok(json!(null))
             }
             "cancel_open_vault" => {
                 let vault_path = required_string(&args, &["vaultPath", "vault_path"])?;
                 let root = normalize_vault_path(&vault_path)?;
+                if let Some(job) = self.open_jobs.remove(&root) {
+                    job.cancelled.store(true, Ordering::Release);
+                }
                 let state = self
                     .vaults
                     .entry(root.clone())
@@ -759,8 +773,17 @@ impl NativeBackend {
             }
             "list_notes" => {
                 let state = self.state(&args)?;
-                let mut notes: Vec<NoteDto> =
-                    state.index.metadata.values().map(note_to_dto).collect();
+                let mut notes: Vec<NoteDto> = state
+                    .index
+                    .metadata
+                    .values()
+                    .map(|note| {
+                        note_to_dto_with_placeholder(
+                            note,
+                            state.deferred_note_ids.contains(&note.id.0),
+                        )
+                    })
+                    .collect();
                 notes.sort_by(|left, right| left.id.cmp(&right.id));
                 Ok(json!(notes))
             }
@@ -796,15 +819,7 @@ impl NativeBackend {
             "save_vault_file" => self.save_vault_file(args),
             "save_vault_binary_file" => self.save_vault_binary_file(args),
             "copy_external_file_to_vault" => self.copy_external_file_to_vault(args),
-            "read_note" => {
-                let state = self.state(&args)?;
-                let note_id = required_string(&args, &["noteId", "note_id"])?;
-                let note = state
-                    .vault
-                    .read_note(&note_id)
-                    .map_err(|error| error.to_string())?;
-                Ok(json!(note_to_detail(&note)))
-            }
+            "read_note" => self.read_note(args),
             "save_note" => self.save_note(args),
             "create_note" => self.create_note(args),
             "create_folder" => self.create_folder(args),
@@ -1304,15 +1319,20 @@ impl NativeBackend {
         backend_ref: &Arc<Mutex<NativeBackend>>,
     ) -> Result<(), String> {
         let root = normalize_vault_path(&path)?;
+        if let Some(job) = self.open_jobs.remove(&root) {
+            job.cancelled.store(true, Ordering::Release);
+        }
         let started_at_ms = now_ms();
         let vault = Vault::open(PathBuf::from(&root)).map_err(|error| error.to_string())?;
         let scan_started_at = now_ms();
-        let notes = vault.scan().map_err(|error| error.to_string())?;
+        let scan_result = vault.scan_available().map_err(|error| error.to_string())?;
         let entries = vault
             .discover_vault_entries()
             .map_err(|error| error.to_string())?;
-        let index = VaultIndex::build(notes);
         let scan_ms = now_ms().saturating_sub(scan_started_at);
+        let index_started_at = now_ms();
+        let index = VaultIndex::build(scan_result.notes);
+        let index_ms = now_ms().saturating_sub(index_started_at);
         let note_count = index.metadata.len();
         let entry_count = entries.len();
         let okf_version = vault.detect_okf_version();
@@ -1340,7 +1360,7 @@ impl NativeBackend {
                         scan_ms,
                         snapshot_load_ms: 0,
                         parse_ms: 0,
-                        index_ms: 0,
+                        index_ms,
                         snapshot_save_ms: 0,
                     },
                     error: None,
@@ -1349,6 +1369,7 @@ impl NativeBackend {
                 graph_revision: 1,
                 note_revisions: HashMap::new(),
                 file_revisions: HashMap::new(),
+                deferred_note_ids: scan_result.deferred_note_ids.into_iter().collect(),
                 write_tracker,
                 _watcher: Some(watcher),
             },
@@ -1356,15 +1377,93 @@ impl NativeBackend {
         Ok(())
     }
 
+    fn start_open_vault(
+        &mut self,
+        path: String,
+        backend_ref: &Arc<Mutex<NativeBackend>>,
+    ) -> Result<(), String> {
+        let root = normalize_vault_path(&path)?;
+        let vault = Vault::open(PathBuf::from(&root)).map_err(|error| error.to_string())?;
+
+        if let Some(job) = self.open_jobs.remove(&root) {
+            job.cancelled.store(true, Ordering::Release);
+        }
+        self.next_open_generation = self.next_open_generation.saturating_add(1).max(1);
+        let generation = self.next_open_generation;
+        let cancelled = Arc::new(AtomicBool::new(false));
+        self.open_jobs.insert(
+            root.clone(),
+            OpenVaultJob {
+                generation,
+                cancelled: cancelled.clone(),
+            },
+        );
+        self.vaults
+            .insert(root.clone(), opening_placeholder_state(vault, now_ms()));
+
+        let backend_ref = Arc::clone(backend_ref);
+        thread::spawn(move || {
+            run_open_vault_job(root, generation, cancelled, backend_ref);
+        });
+        Ok(())
+    }
+
     fn refresh_vault_state(state: &mut VaultRuntimeState) -> Result<(), String> {
-        let notes = state.vault.scan().map_err(|error| error.to_string())?;
-        state.index = VaultIndex::build(notes);
+        let scan_result = state
+            .vault
+            .scan_available()
+            .map_err(|error| error.to_string())?;
+        state.index = VaultIndex::build(scan_result.notes);
+        state.deferred_note_ids = scan_result.deferred_note_ids.into_iter().collect();
         state.entries = state
             .vault
             .discover_vault_entries()
             .map_err(|error| error.to_string())?;
         state.graph_revision = state.graph_revision.saturating_add(1).max(1);
         Ok(())
+    }
+
+    fn read_note(&mut self, args: Value) -> Result<Value, String> {
+        let note_id = required_string(&args, &["noteId", "note_id"])?;
+        let (vault_path, state) = self.state_mut(&args)?;
+        let note = state
+            .vault
+            .read_note(&note_id)
+            .map_err(|error| error.to_string())?;
+        let detail = note_to_detail(&note);
+        let change = if state.deferred_note_ids.remove(&note_id) {
+            state.index.reindex_note(note.clone());
+            for entry in &mut state.entries {
+                if entry.kind == "note" && entry.id == note_id {
+                    entry.is_cloud_placeholder = false;
+                }
+            }
+            state.graph_revision = state.graph_revision.saturating_add(1).max(1);
+            let revision = advance_revision(&mut state.note_revisions, &note_id, None).max(1);
+            let relative_path = state.vault.path_to_relative_path(&note.path.0);
+            Some(
+                VaultNoteChangeInput::new(&vault_path, "upsert", revision, state.graph_revision)
+                    .with_origin(VAULT_CHANGE_ORIGIN_EXTERNAL)
+                    .with_note(note_to_dto_with_placeholder(
+                        state
+                            .index
+                            .metadata
+                            .get(&NoteId(note_id.clone()))
+                            .expect("reindexed note metadata must exist"),
+                        false,
+                    ))
+                    .with_note_id(note_id)
+                    .with_relative_path(relative_path)
+                    .with_content_hash(Some(note_content_hash(&note.raw_markdown))),
+            )
+        } else {
+            None
+        };
+
+        if let Some(change) = change {
+            self.emit_vault_change(build_vault_note_change(change));
+        }
+        Ok(json!(detail))
     }
 
     fn save_vault_file(&mut self, args: Value) -> Result<Value, String> {
@@ -2384,15 +2483,20 @@ impl NativeBackend {
         }
 
         if let Some(note_id) = markdown_note_id_from_relative_path(&relative_path) {
+            let is_placeholder = state.deferred_note_ids.contains(&note_id);
             let Some(note) = state
                 .index
                 .metadata
                 .get(&NoteId(note_id.clone()))
-                .map(note_to_dto)
+                .map(|note| note_to_dto_with_placeholder(note, is_placeholder))
             else {
                 return Ok(());
             };
-            let content_hash = lossy_text_file_content_hash(&path);
+            let content_hash = if is_placeholder {
+                None
+            } else {
+                lossy_text_file_content_hash(&path)
+            };
             let revision = advance_revision(&mut state.note_revisions, &note_id, None).max(1);
             let change = build_vault_note_change(
                 VaultNoteChangeInput::new(vault_path, "upsert", revision, graph_revision)
@@ -2412,7 +2516,11 @@ impl NativeBackend {
             .find(|entry| entry.relative_path == relative_path)
             .cloned();
         let revision = advance_revision(&mut state.file_revisions, &relative_path, None).max(1);
-        let content_hash = lossy_text_file_content_hash(&path);
+        let content_hash = if is_cloud_placeholder(&path) {
+            None
+        } else {
+            lossy_text_file_content_hash(&path)
+        };
         let change = build_vault_note_change(
             VaultNoteChangeInput::new(vault_path, "upsert", revision, graph_revision)
                 .with_origin(origin)
@@ -2429,6 +2537,180 @@ impl NativeBackend {
             event_name: "vault://note-changed".to_string(),
             payload: json!(change),
         });
+    }
+}
+
+fn run_open_vault_job(
+    root: String,
+    generation: u64,
+    cancelled: Arc<AtomicBool>,
+    backend_ref: Arc<Mutex<NativeBackend>>,
+) {
+    let result = (|| -> Result<VaultRuntimeState, String> {
+        let vault = Vault::open(PathBuf::from(&root)).map_err(|error| error.to_string())?;
+        let started_at_ms = now_ms();
+        let scan_started_at = now_ms();
+        let files = vault
+            .discover_markdown_files()
+            .map_err(|error| error.to_string())?;
+        let entries = vault
+            .discover_vault_entries()
+            .map_err(|error| error.to_string())?;
+        let scan_ms = now_ms().saturating_sub(scan_started_at);
+        if cancelled.load(Ordering::Acquire) {
+            return Err("Opening cancelled".to_string());
+        }
+
+        update_open_job_state(&backend_ref, &root, generation, |state| {
+            state.stage = "parsing".to_string();
+            state.message = "Indexing available files...".to_string();
+            state.processed = 0;
+            state.total = files.len();
+            state.metrics.scan_ms = scan_ms;
+        });
+
+        let parse_started_at = now_ms();
+        let total_files = files.len();
+        let scan_result = vault
+            .parse_available_files(&files, |processed| {
+                if processed == total_files || processed % 32 == 0 {
+                    update_open_job_state(&backend_ref, &root, generation, |state| {
+                        state.processed = processed;
+                    });
+                }
+            })
+            .map_err(|error| error.to_string())?;
+        let parse_ms = now_ms().saturating_sub(parse_started_at);
+        if cancelled.load(Ordering::Acquire) {
+            return Err("Opening cancelled".to_string());
+        }
+
+        update_open_job_state(&backend_ref, &root, generation, |state| {
+            state.stage = "indexing".to_string();
+            state.message = "Building search index...".to_string();
+            state.processed = total_files;
+            state.metrics.parse_ms = parse_ms;
+        });
+
+        let index_started_at = now_ms();
+        let index = VaultIndex::build(scan_result.notes);
+        let index_ms = now_ms().saturating_sub(index_started_at);
+        if cancelled.load(Ordering::Acquire) {
+            return Err("Opening cancelled".to_string());
+        }
+
+        let note_count = index.metadata.len();
+        let entry_count = entries.len();
+        let okf_version = vault.detect_okf_version();
+        let write_tracker = WriteTracker::new();
+        let watcher = start_vault_watcher(&root, write_tracker.clone(), &backend_ref)?;
+        Ok(VaultRuntimeState {
+            vault,
+            index,
+            entries,
+            open_state: VaultOpenStateDto {
+                path: Some(root.clone()),
+                stage: "ready".to_string(),
+                message: "Vault ready".to_string(),
+                processed: entry_count,
+                total: entry_count,
+                note_count,
+                snapshot_used: false,
+                cancelled: false,
+                started_at_ms: Some(started_at_ms),
+                finished_at_ms: Some(now_ms()),
+                metrics: VaultOpenMetricsDto {
+                    scan_ms,
+                    snapshot_load_ms: 0,
+                    parse_ms,
+                    index_ms,
+                    snapshot_save_ms: 0,
+                },
+                error: None,
+                okf_version,
+            },
+            graph_revision: 1,
+            note_revisions: HashMap::new(),
+            file_revisions: HashMap::new(),
+            deferred_note_ids: scan_result.deferred_note_ids.into_iter().collect(),
+            write_tracker,
+            _watcher: Some(watcher),
+        })
+    })();
+
+    let mut backend = backend_ref.lock().unwrap();
+    let is_current = backend
+        .open_jobs
+        .get(&root)
+        .is_some_and(|job| job.generation == generation);
+    if !is_current || cancelled.load(Ordering::Acquire) {
+        return;
+    }
+
+    backend.open_jobs.remove(&root);
+    match result {
+        Ok(state) => {
+            backend.vaults.insert(root, state);
+        }
+        Err(error) => {
+            if let Some(state) = backend.vaults.get_mut(&root) {
+                state.open_state.stage = "error".to_string();
+                state.open_state.message = "Failed to open vault".to_string();
+                state.open_state.error = Some(error);
+                state.open_state.finished_at_ms = Some(now_ms());
+            }
+        }
+    }
+}
+
+fn update_open_job_state(
+    backend_ref: &Arc<Mutex<NativeBackend>>,
+    root: &str,
+    generation: u64,
+    update: impl FnOnce(&mut VaultOpenStateDto),
+) -> bool {
+    let mut backend = backend_ref.lock().unwrap();
+    let is_current = backend
+        .open_jobs
+        .get(root)
+        .is_some_and(|job| job.generation == generation && !job.cancelled.load(Ordering::Acquire));
+    if !is_current {
+        return false;
+    }
+    let Some(state) = backend.vaults.get_mut(root) else {
+        return false;
+    };
+    update(&mut state.open_state);
+    true
+}
+
+fn opening_placeholder_state(vault: Vault, started_at_ms: u64) -> VaultRuntimeState {
+    let root = vault.root.to_string_lossy().to_string();
+    VaultRuntimeState {
+        vault,
+        index: VaultIndex::build(Vec::new()),
+        entries: Vec::new(),
+        open_state: VaultOpenStateDto {
+            path: Some(root),
+            stage: "scanning".to_string(),
+            message: "Discovering vault files...".to_string(),
+            processed: 0,
+            total: 0,
+            note_count: 0,
+            snapshot_used: false,
+            cancelled: false,
+            started_at_ms: Some(started_at_ms),
+            finished_at_ms: None,
+            metrics: empty_metrics(),
+            error: None,
+            okf_version: None,
+        },
+        graph_revision: 1,
+        note_revisions: HashMap::new(),
+        file_revisions: HashMap::new(),
+        deferred_note_ids: HashSet::new(),
+        write_tracker: WriteTracker::new(),
+        _watcher: None,
     }
 }
 
@@ -2458,6 +2740,7 @@ fn cancelled_placeholder_state(root: String) -> VaultRuntimeState {
         graph_revision: 1,
         note_revisions: HashMap::new(),
         file_revisions: HashMap::new(),
+        deferred_note_ids: HashSet::new(),
         write_tracker: WriteTracker::new(),
         _watcher: None,
     }
@@ -2772,7 +3055,7 @@ fn resolve_vault_scoped_path(
         .map_err(|error| error.to_string())
 }
 
-fn note_to_dto(note: &NoteMetadata) -> NoteDto {
+fn note_to_dto_with_placeholder(note: &NoteMetadata, is_cloud_placeholder: bool) -> NoteDto {
     NoteDto {
         id: note.id.0.clone(),
         path: note.path.0.to_string_lossy().to_string(),
@@ -2781,6 +3064,7 @@ fn note_to_dto(note: &NoteMetadata) -> NoteDto {
         created_at: note.created_at,
         status: note.status.clone(),
         okf_type: note.okf_type.clone(),
+        is_cloud_placeholder,
     }
 }
 
@@ -2794,6 +3078,7 @@ fn note_document_to_dto(note: &NoteDocument) -> NoteDto {
         created_at,
         status: frontmatter_string_field(note.frontmatter.as_ref(), "status"),
         okf_type: frontmatter_string_field(note.frontmatter.as_ref(), "type"),
+        is_cloud_placeholder: false,
     }
 }
 
@@ -3256,6 +3541,113 @@ mod tests {
         }
     }
 
+    fn wait_for_vault_ready(backend: &Arc<Mutex<NativeBackend>>, vault_path: &str) -> Value {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        loop {
+            let state = invoke(
+                backend,
+                "get_vault_open_state",
+                json!({ "vaultPath": vault_path }),
+            )
+            .unwrap();
+            match state.get("stage").and_then(Value::as_str) {
+                Some("ready") => return state,
+                Some("error") => panic!("vault open failed: {state}"),
+                _ if std::time::Instant::now() >= deadline => {
+                    panic!("timed out waiting for vault: {state}")
+                }
+                _ => std::thread::sleep(std::time::Duration::from_millis(10)),
+            }
+        }
+    }
+
+    #[test]
+    fn start_open_vault_finishes_on_background_worker() {
+        let (event_tx, _event_rx) = mpsc::channel::<RpcOutput>();
+        let backend = Arc::new(Mutex::new(NativeBackend::new(event_tx)));
+        let vault_dir = tempfile::tempdir().unwrap();
+        for index in 0..64 {
+            fs::write(
+                vault_dir.path().join(format!("Note-{index}.md")),
+                format!("# Note {index}\n\n[[Note-0]] #async\n"),
+            )
+            .unwrap();
+        }
+        let vault_path = vault_dir.path().to_string_lossy().to_string();
+
+        invoke(&backend, "start_open_vault", json!({ "path": vault_path })).unwrap();
+        let initial = invoke(
+            &backend,
+            "get_vault_open_state",
+            json!({ "vaultPath": vault_path }),
+        )
+        .unwrap();
+        assert!(matches!(
+            initial.get("stage").and_then(Value::as_str),
+            Some("scanning" | "parsing" | "indexing" | "ready")
+        ));
+
+        let ready = wait_for_vault_ready(&backend, &vault_path);
+        assert_eq!(ready.get("note_count").and_then(Value::as_u64), Some(64));
+    }
+
+    #[test]
+    fn reading_deferred_note_materializes_and_reindexes_it_once() {
+        let (event_tx, event_rx) = mpsc::channel::<RpcOutput>();
+        let backend = Arc::new(Mutex::new(NativeBackend::new(event_tx)));
+        let vault_dir = tempfile::tempdir().unwrap();
+        let note_path = vault_dir.path().join("Remote.md");
+        fs::write(&note_path, "# Downloaded title\n\n#materialized\n").unwrap();
+        let vault_path = vault_dir.path().to_string_lossy().to_string();
+        invoke(&backend, "open_vault", json!({ "path": vault_path })).unwrap();
+
+        {
+            let mut locked = backend.lock().unwrap();
+            let canonical_path = normalize_vault_path(&vault_path).unwrap();
+            let state = locked.vaults.get_mut(&canonical_path).unwrap();
+            let shell = neverwrite_vault::parser::parse_note("Remote", &note_path, "");
+            state.index = VaultIndex::build(vec![shell]);
+            state.deferred_note_ids.insert("Remote".to_string());
+            state
+                .entries
+                .iter_mut()
+                .find(|entry| entry.id == "Remote")
+                .unwrap()
+                .is_cloud_placeholder = true;
+        }
+
+        let before = invoke(&backend, "list_notes", json!({ "vaultPath": vault_path })).unwrap();
+        assert_eq!(before[0]["is_cloud_placeholder"], json!(true));
+
+        let detail = invoke(
+            &backend,
+            "read_note",
+            json!({ "vaultPath": vault_path, "noteId": "Remote" }),
+        )
+        .unwrap();
+        assert_eq!(detail["title"], json!("Downloaded title"));
+        let change = recv_vault_change(&event_rx);
+        assert_eq!(change["note"]["is_cloud_placeholder"], json!(false));
+
+        let after = invoke(&backend, "list_notes", json!({ "vaultPath": vault_path })).unwrap();
+        assert_eq!(after[0]["title"], json!("Downloaded title"));
+        assert_eq!(after[0]["is_cloud_placeholder"], json!(false));
+        let tags = invoke(&backend, "get_tags", json!({ "vaultPath": vault_path })).unwrap();
+        assert!(tags
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|tag| tag["tag"] == json!("materialized")));
+
+        invoke(
+            &backend,
+            "read_note",
+            json!({ "vaultPath": vault_path, "noteId": "Remote" }),
+        )
+        .unwrap();
+        assert!(event_rx.try_recv().is_err());
+    }
+
     #[test]
     fn invokes_vault_editor_commands_without_desktop_shell() {
         let (event_tx, _event_rx) = mpsc::channel::<RpcOutput>();
@@ -3267,7 +3659,7 @@ mod tests {
         fs::write(notes_dir.join("B.md"), "# Beta\n").unwrap();
 
         let vault_path = vault_dir.path().to_string_lossy().to_string();
-        invoke(&backend, "start_open_vault", json!({ "path": vault_path })).unwrap();
+        invoke(&backend, "open_vault", json!({ "path": vault_path })).unwrap();
 
         let notes = invoke(&backend, "list_notes", json!({ "vaultPath": vault_path })).unwrap();
         assert!(notes
@@ -3312,7 +3704,7 @@ mod tests {
         let backend = Arc::new(Mutex::new(NativeBackend::new(event_tx)));
         let vault_dir = tempfile::tempdir().unwrap();
         let vault_path = vault_dir.path().to_string_lossy().to_string();
-        invoke(&backend, "start_open_vault", json!({ "path": vault_path })).unwrap();
+        invoke(&backend, "open_vault", json!({ "path": vault_path })).unwrap();
 
         let history = json!({
             "version": 1,
@@ -3417,7 +3809,7 @@ mod tests {
         let vault_path = vault_dir.path().to_string_lossy().to_string();
         let active_path_alias = vault_dir.path().join(".").to_string_lossy().to_string();
 
-        invoke(&backend, "start_open_vault", json!({ "path": vault_path })).unwrap();
+        invoke(&backend, "open_vault", json!({ "path": vault_path })).unwrap();
 
         let error = invoke(
             &backend,
@@ -3438,7 +3830,7 @@ mod tests {
         let backend = Arc::new(Mutex::new(NativeBackend::new(event_tx)));
         let vault_dir = tempfile::tempdir().unwrap();
         let vault_path = vault_dir.path().to_string_lossy().to_string();
-        invoke(&backend, "start_open_vault", json!({ "path": vault_path })).unwrap();
+        invoke(&backend, "open_vault", json!({ "path": vault_path })).unwrap();
         invoke(
             &backend,
             "ai_save_session_history",
@@ -3550,7 +3942,7 @@ mod tests {
         .unwrap_err();
         assert_eq!(error, "Vault not open");
 
-        invoke(&backend, "start_open_vault", json!({ "path": vault_path })).unwrap();
+        invoke(&backend, "open_vault", json!({ "path": vault_path })).unwrap();
         let created = invoke(&backend, "ai_create_managed_attachment", create_args).unwrap();
         let attachment_id = created["attachment_id"].as_str().unwrap().to_string();
         assert!(attachment_id.starts_with("ma_"));
@@ -3581,7 +3973,7 @@ mod tests {
         let backend = Arc::new(Mutex::new(NativeBackend::new(event_tx)));
         let vault_dir = tempfile::tempdir().unwrap();
         let vault_path = vault_dir.path().to_string_lossy().to_string();
-        invoke(&backend, "start_open_vault", json!({ "path": vault_path })).unwrap();
+        invoke(&backend, "open_vault", json!({ "path": vault_path })).unwrap();
 
         let created = invoke(
             &backend,
@@ -3622,7 +4014,7 @@ mod tests {
         fs::write(nested_dir.join("main.ts"), "export const value = 1;\n").unwrap();
 
         let vault_path = vault_dir.path().to_string_lossy().to_string();
-        invoke(&backend, "start_open_vault", json!({ "path": vault_path })).unwrap();
+        invoke(&backend, "open_vault", json!({ "path": vault_path })).unwrap();
 
         let entries = invoke(
             &backend,
@@ -3669,7 +4061,7 @@ mod tests {
         fs::write(&source_path, "# Imported\n\n[[Existing]] #tag-one\n").unwrap();
 
         let vault_path = vault_dir.path().to_string_lossy().to_string();
-        invoke(&backend, "start_open_vault", json!({ "path": vault_path })).unwrap();
+        invoke(&backend, "open_vault", json!({ "path": vault_path })).unwrap();
 
         let detail = invoke(
             &backend,
@@ -3729,7 +4121,7 @@ mod tests {
 
         let vault_path = vault_dir.path().to_string_lossy().to_string();
         let absolute_note_path = note_path.to_string_lossy().to_string();
-        invoke(&backend, "start_open_vault", json!({ "path": vault_path })).unwrap();
+        invoke(&backend, "open_vault", json!({ "path": vault_path })).unwrap();
 
         let hash = invoke(
             &backend,
@@ -3795,6 +4187,7 @@ mod tests {
                 graph_revision: 1,
                 note_revisions: HashMap::new(),
                 file_revisions: HashMap::new(),
+                deferred_note_ids: HashSet::new(),
                 write_tracker: WriteTracker::new(),
                 _watcher: None,
             },
@@ -3847,7 +4240,7 @@ mod tests {
         .unwrap();
 
         let vault_path = vault_dir.path().to_string_lossy().to_string();
-        invoke(&backend, "start_open_vault", json!({ "path": vault_path })).unwrap();
+        invoke(&backend, "open_vault", json!({ "path": vault_path })).unwrap();
 
         // okf_version surfaces on the vault-open state DTO.
         let open_state = invoke(

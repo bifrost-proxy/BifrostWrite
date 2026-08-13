@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useCallback, useRef, useState, type ReactElement } from "react";
 
 const DIFF_DEFAULT_HEIGHT = 200;
@@ -44,7 +45,7 @@ export function ResizableDiffContainer({
         >
             <div style={{ maxHeight: height, overflowY: "auto" }}>{children}</div>
             <div
-                aria-label="Resize diff preview"
+                aria-label={translate("Resize diff preview")}
                 onMouseEnter={(event) => {
                     event.currentTarget.style.backgroundColor =
                         "color-mix(in srgb, var(--text-secondary) 10%, transparent)";

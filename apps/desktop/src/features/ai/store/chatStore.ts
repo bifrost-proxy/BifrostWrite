@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { confirm, openUrl } from "@bifrostwrite/runtime";
+import { translate } from "../../../app/i18n";
 import {
     normalizeEditorFontFamily,
     readSettingsForVault,
@@ -11009,12 +11010,12 @@ export const useChatStore = create<ChatStore>((set, get) => {
                         "confirmation_required"
                     ) {
                         const approved = await confirm(
-                            continuationResult.message,
+                            translate(continuationResult.message),
                             {
-                                title: "Custom ACP runtime changed",
+                                title: translate("Custom ACP runtime changed"),
                                 kind: "warning",
-                                okLabel: "Continue",
-                                cancelLabel: "Cancel",
+                                okLabel: translate("Continue"),
+                                cancelLabel: translate("Cancel"),
                             },
                         );
                         if (!approved) {

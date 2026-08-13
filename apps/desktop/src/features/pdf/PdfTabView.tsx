@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     useCallback,
     useEffect,
@@ -366,7 +367,7 @@ export function PdfTabView({ paneId, tabId }: PdfTabViewProps) {
                 className="h-full flex items-center justify-center"
                 style={{ color: "var(--text-secondary)" }}
             >
-                No PDF tab active
+                {translate("No PDF tab active")}
             </div>
         );
     }
@@ -1474,7 +1475,7 @@ function PdfViewer({ tab }: { tab: PdfTab }) {
                 className="h-full flex items-center justify-center"
                 style={{ color: "var(--text-secondary)" }}
             >
-                Loading PDF...
+                {translate("Loading PDF...")}
             </div>
         );
     }
@@ -1505,7 +1506,7 @@ function PdfViewer({ tab }: { tab: PdfTab }) {
                     className="text-[13px] font-medium"
                     style={{ color: "var(--text-primary)" }}
                 >
-                    Failed to load PDF
+                    {translate("Failed to load PDF")}
                 </span>
                 <span className="text-[12px] text-center max-w-sm">
                     {friendlyMessage}
@@ -1528,7 +1529,7 @@ function PdfViewer({ tab }: { tab: PdfTab }) {
                                 "var(--border)";
                         }}
                     >
-                        Retry
+                        {translate("Retry")}
                     </button>
                     <button
                         onClick={() => void openPath(tab.path)}
@@ -1547,7 +1548,7 @@ function PdfViewer({ tab }: { tab: PdfTab }) {
                                 "var(--border)";
                         }}
                     >
-                        Open Externally
+                        {translate("Open Externally")}
                     </button>
                 </div>
             </div>
@@ -1590,7 +1591,7 @@ function PdfViewer({ tab }: { tab: PdfTab }) {
                 <ToolbarButton
                     onClick={goToPreviousPage}
                     disabled={tab.page <= 1}
-                    title="Previous page"
+                    title={translate("Previous page")}
                 >
                     <ChevronLeftIcon />
                 </ToolbarButton>
@@ -1607,7 +1608,7 @@ function PdfViewer({ tab }: { tab: PdfTab }) {
                 <ToolbarButton
                     onClick={goToNextPage}
                     disabled={tab.page >= numPages}
-                    title="Next page"
+                    title={translate("Next page")}
                 >
                     <ChevronRightIcon />
                 </ToolbarButton>
@@ -1624,7 +1625,7 @@ function PdfViewer({ tab }: { tab: PdfTab }) {
                 <ToolbarButton
                     onClick={zoomOut}
                     disabled={effectiveZoom <= ZOOM_STEPS[0]}
-                    title="Zoom out"
+                    title={translate("Zoom out")}
                 >
                     <MinusIcon />
                 </ToolbarButton>
@@ -1642,7 +1643,7 @@ function PdfViewer({ tab }: { tab: PdfTab }) {
                     disabled={
                         effectiveZoom >= ZOOM_STEPS[ZOOM_STEPS.length - 1]
                     }
-                    title="Zoom in"
+                    title={translate("Zoom in")}
                 >
                     <PlusIcon />
                 </ToolbarButton>
@@ -1652,12 +1653,12 @@ function PdfViewer({ tab }: { tab: PdfTab }) {
                     active={tab.fitWidth}
                     title={
                         tab.fitWidth
-                            ? "Fit width (on)"
-                            : "Fit page width to the window"
+                            ? translate("Fit width (on)")
+                            : translate("Fit page width to the window")
                     }
                 >
                     <FitWidthIcon />
-                    {!compactToolbar && <span>Fit Width</span>}
+                    {!compactToolbar && <span>{translate("Fit Width")}</span>}
                 </ToolbarButton>
 
                 <div
@@ -1674,16 +1675,16 @@ function PdfViewer({ tab }: { tab: PdfTab }) {
                     active={tab.viewMode === "continuous"}
                     title={
                         tab.viewMode === "continuous"
-                            ? "Switch to single-page view"
-                            : "Switch to continuous view"
+                            ? translate("Switch to single-page view")
+                            : translate("Switch to continuous view")
                     }
                 >
                     <StackPagesIcon />
                     {!compactToolbar && (
                         <span>
                             {tab.viewMode === "continuous"
-                                ? "Continuous"
-                                : "Single Page"}
+                                ? translate("Continuous")
+                                : translate("Single Page")}
                         </span>
                     )}
                 </ToolbarButton>
@@ -1700,17 +1701,17 @@ function PdfViewer({ tab }: { tab: PdfTab }) {
                 <ToolbarButton
                     onClick={cycleFilter}
                     active={pdfFilter !== "none"}
-                    title={`Filter: ${activeFilter.label}`}
+                    title={translate(`Filter: ${activeFilter.label}`)}
                 >
                     <FilterIcon />
-                    {!compactToolbar && <span>{activeFilter.label}</span>}
+                    {!compactToolbar && <span>{translate(String(activeFilter.label))}</span>}
                 </ToolbarButton>
 
                 <div style={{ flex: 1 }} />
 
-                <ToolbarButton onClick={openExternally} title="Open externally">
+                <ToolbarButton onClick={openExternally} title={translate("Open externally")}>
                     <ExternalLinkIcon />
-                    {!compactToolbar && <span>Open Externally</span>}
+                    {!compactToolbar && <span>{translate("Open Externally")}</span>}
                 </ToolbarButton>
             </div>
 
@@ -1764,7 +1765,7 @@ function PdfViewer({ tab }: { tab: PdfTab }) {
                                 className="flex items-center justify-center py-10 text-[12px]"
                                 style={{ color: "var(--text-secondary)" }}
                             >
-                                Preparing pages...
+                                {translate("Preparing pages...")}
                             </div>
                         ) : (
                             visibleContinuousLayouts.map((layout) => (

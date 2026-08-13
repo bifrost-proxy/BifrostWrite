@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useEffect } from "react";
 import { useClipImportStore } from "./clipImportStore";
 
@@ -46,7 +47,7 @@ export function ClipNotification() {
                     color: "var(--text-secondary)",
                 }}
             >
-                {notice.heading ?? "Web clip saved"}
+                {notice.heading ?? translate("Web clip saved")}
             </div>
             <div
                 style={{
@@ -56,7 +57,7 @@ export function ClipNotification() {
                     color: "var(--text-primary)",
                 }}
             >
-                {notice.title}
+                {translate(String(notice.title))}
             </div>
             <div
                 style={{
@@ -66,7 +67,7 @@ export function ClipNotification() {
                     color: "var(--text-secondary)",
                 }}
             >
-                {notice.message}
+                {translate(String(notice.message))}
             </div>
             {notice.relativePath ? (
                 <div

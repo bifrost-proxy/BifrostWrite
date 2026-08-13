@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import type { AIRuntimeConnectionState } from "../types";
 
 interface AIChatRuntimeBannerProps {
@@ -42,9 +43,9 @@ export function AIChatRuntimeBanner({
                 }}
             >
                 {connection.status === "loading"
-                    ? `Loading ${runtimeName ?? "AI runtime"}...`
+                    ? translate(`Loading ${runtimeName ?? "AI runtime"}...`)
                     : (connection.message ??
-                      `${runtimeName ?? "AI runtime"} is unavailable.`)}
+                      translate(`${runtimeName ?? "AI runtime"} is unavailable.`))}
             </div>
         </div>
     );

@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     type CSSProperties,
     Fragment,
@@ -465,7 +466,7 @@ export function EditorPaneBar({ paneId, isFocused }: EditorPaneBarProps) {
                                 type="button"
                                 onClick={goBack}
                                 disabled={!canGoBack}
-                                title="Go back"
+                                title={translate("Go back")}
                                 className="flex shrink-0 items-center justify-center"
                                 style={getChromeNavigationButtonStyle(
                                     "leading",
@@ -489,7 +490,7 @@ export function EditorPaneBar({ paneId, isFocused }: EditorPaneBarProps) {
                                 type="button"
                                 onClick={goForward}
                                 disabled={!canGoForward}
-                                title="Go forward"
+                                title={translate("Go forward")}
                                 className="flex shrink-0 items-center justify-center"
                                 style={getChromeNavigationButtonStyle(
                                     "trailing",
@@ -524,7 +525,7 @@ export function EditorPaneBar({ paneId, isFocused }: EditorPaneBarProps) {
                                         opacity: 0.7,
                                     }}
                                 >
-                                    Stacked tabs
+                                    {translate("Stacked tabs")}
                                 </span>
                             </div>
                         ) : (
@@ -756,7 +757,7 @@ export function EditorPaneBar({ paneId, isFocused }: EditorPaneBarProps) {
                                             {isPinned ? null : (
                                                 <button
                                                     type="button"
-                                                    title={`Close ${tabLabel}`}
+                                                    title={translate(`Close ${tabLabel}`)}
                                                     onClick={(event) => {
                                                         event.stopPropagation();
                                                         void requestCloseTab(
@@ -824,7 +825,7 @@ export function EditorPaneBar({ paneId, isFocused }: EditorPaneBarProps) {
                                     opacity: 0.6,
                                 }}
                             >
-                                No tabs open
+                                {translate("No tabs open")}
                             </span>
                         </div>
                     )}
@@ -850,8 +851,8 @@ export function EditorPaneBar({ paneId, isFocused }: EditorPaneBarProps) {
                                     });
                                 }}
                                 className="ub-chrome-btn inline-flex shrink-0 items-center justify-center"
-                                aria-label="New tab"
-                                title="New tab"
+                                aria-label={translate("New tab")}
+                                title={translate("New tab")}
                                 style={getPaneHeaderActionButtonStyle()}
                             >
                                 <svg
@@ -887,8 +888,8 @@ export function EditorPaneBar({ paneId, isFocused }: EditorPaneBarProps) {
                             })
                         }
                         className="ub-chrome-btn inline-flex shrink-0 items-center justify-center"
-                        aria-label={`${paneLabel} actions`}
-                        title={`${paneLabel} actions`}
+                        aria-label={translate(`${paneLabel} actions`)}
+                        title={translate(`${paneLabel} actions`)}
                         style={getPaneHeaderActionButtonStyle()}
                     >
                         <svg

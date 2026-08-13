@@ -42,6 +42,8 @@ const runtimeMocks = vi.hoisted(() => {
         innerPosition: vi.fn().mockResolvedValue({ x: 0, y: 0 }),
         scaleFactor: vi.fn().mockResolvedValue(1),
         setTrafficLightsVisible: vi.fn().mockResolvedValue(undefined),
+        setTheme: vi.fn().mockResolvedValue(undefined),
+        setBackgroundColor: vi.fn().mockResolvedValue(undefined),
         label,
     });
 

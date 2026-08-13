@@ -27,6 +27,8 @@ export interface NoteDto {
     status?: string | null;
     /** OKF document type from frontmatter (`type`), verbatim string or null. */
     okf_type?: string | null;
+    /** macOS cloud placeholder; content downloads and indexes when opened. */
+    is_cloud_placeholder?: boolean;
 }
 
 export interface VaultEntryDto {
@@ -45,6 +47,7 @@ export interface VaultEntryDto {
     is_image_like?: boolean | null;
     open_in_app?: boolean | null;
     viewer_kind?: string | null;
+    is_cloud_placeholder?: boolean;
 }
 
 export interface RecentVault {

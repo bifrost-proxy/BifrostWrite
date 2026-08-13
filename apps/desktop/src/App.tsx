@@ -75,6 +75,7 @@ import {
 import { useVaultStore, type VaultNoteChange } from "./app/store/vaultStore";
 import { useLayoutStore } from "./app/store/layoutStore";
 import { useSettingsStore } from "./app/store/settingsStore";
+import { translate, useAppLanguage } from "./app/i18n";
 import { formatShortcutAction } from "./app/shortcuts/format";
 import {
     matchesShortcutAction,
@@ -257,7 +258,7 @@ function RightPanelTabBar({
                         key={tab.value}
                         type="button"
                         onClick={() => onSelect(tab.value)}
-                        title={tab.label}
+                        title={translate(String(tab.label))}
                         data-active={active || undefined}
                         className="ub-sidebar-tab flex items-center justify-center gap-1.5 text-[11px] font-medium rounded-md"
                         style={{
@@ -282,15 +283,15 @@ function RightPanelTabBar({
                         }}
                     >
                         {tab.icon}
-                        <span className="truncate">{tab.label}</span>
+                        <span className="truncate">{translate(String(tab.label))}</span>
                     </button>
                 );
             })}
             <button
                 type="button"
                 onClick={onCollapse}
-                title="Hide right panel"
-                aria-label="Hide right panel"
+                title={translate("Hide right panel")}
+                aria-label={translate("Hide right panel")}
                 className="ub-chrome-btn flex items-center justify-center shrink-0 rounded-md"
                 style={{
                     width: 26,
@@ -398,7 +399,7 @@ function VaultOpeningOverlay() {
                         color: "var(--accent)",
                     }}
                 >
-                    Opening vault
+                    {translate("Opening vault")}
                 </div>
                 <div
                     className="mt-2 text-lg font-semibold"
@@ -410,7 +411,9 @@ function VaultOpeningOverlay() {
                     className="mt-1 text-sm"
                     style={{ color: "var(--text-secondary)" }}
                 >
-                    {openState.message || "Preparing vault..."}
+                    {translate(
+                        String(openState.message || "Preparing vault..."),
+                    )}
                 </div>
 
                 <div
@@ -460,7 +463,7 @@ function VaultOpeningOverlay() {
                     >
                         {hasProgress
                             ? `${openState.processed.toLocaleString()} / ${openState.total.toLocaleString()} ${progressUnit}`
-                            : "Preparing index"}
+                            : translate("Preparing index")}
                     </span>
                 </div>
 
@@ -472,7 +475,7 @@ function VaultOpeningOverlay() {
                             opacity: 0.85,
                         }}
                     >
-                        Reusing persisted snapshot before syncing changes.
+                        {translate("Reusing persisted snapshot before syncing changes.")}
                     </div>
                 )}
 
@@ -502,7 +505,7 @@ function VaultOpeningOverlay() {
                                 "background-color 120ms ease, color 120ms ease, border-color 120ms ease",
                         }}
                     >
-                        Cancel
+                        {translate("Cancel")}
                     </button>
                 </div>
             </div>
@@ -527,7 +530,7 @@ function OutlineRightPanel() {
                 className="flex items-center justify-center h-full text-xs"
                 style={{ color: "var(--text-secondary)" }}
             >
-                No note open
+                {translate("No note open")}
             </div>
         );
     }
@@ -678,7 +681,10 @@ function useRegisterCommands(
             shortcut: formatShortcutAction(openVaultShortcut.id, platform),
             category: openVaultShortcut.category,
             execute: () => {
-                void open({ directory: true, title: "Select vault" }).then(
+                void open({
+                    directory: true,
+                    title: translate("Select vault"),
+                }).then(
                     (selected) => {
                         if (selected)
                             void useVaultStore.getState().openVault(selected);
@@ -1343,6 +1349,7 @@ function useDynamicScrollbars() {
 }
 
 export default function App() {
+    useAppLanguage();
     const editorPaneSizes = useLayoutStore((s) => s.editorPaneSizes);
     const setEditorPaneSizes = useLayoutStore((s) => s.setEditorPaneSizes);
     const restoreVault = useVaultStore((s) => s.restoreVault);
@@ -2307,7 +2314,7 @@ export default function App() {
                 <WorkspaceTerminalHost />
                 <UnifiedBar windowMode="note" />
                 <div className="flex-1 min-h-0 min-w-0 overflow-hidden flex flex-col">
-                    <EditorPaneContent emptyStateMessage="Esta ventana no tiene ninguna nota abierta" />
+                    <EditorPaneContent emptyStateMessage={translate("No note is open in this window")} />
                 </div>
                 <YouTubeModalHost />
                 <CommandPalette />

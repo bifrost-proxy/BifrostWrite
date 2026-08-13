@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import {
     useEffect,
     useRef,
@@ -228,7 +229,7 @@ export function ShortcutRecorder({
             <button
                 ref={buttonRef}
                 type="button"
-                aria-label={`${recording ? "Cancel recording" : "Record shortcut"} for ${actionLabel}`}
+                aria-label={translate(`${recording ? "Cancel recording" : "Record shortcut"} for ${actionLabel}`)}
                 aria-describedby={recording || error ? statusId : undefined}
                 aria-pressed={recording}
                 onClick={() => {
@@ -264,7 +265,7 @@ export function ShortcutRecorder({
                     whiteSpace: "nowrap",
                 }}
             >
-                {recording ? "Press shortcut…" : "Record shortcut"}
+                {recording ? translate("Press shortcut…") : translate("Record shortcut")}
             </button>
             {(recording || error) && (
                 <span
@@ -286,7 +287,7 @@ export function ShortcutRecorder({
                         lineHeight: 1.4,
                     }}
                 >
-                    {error ?? "Press a modified key. Escape cancels."}
+                    {error ?? translate("Press a modified key. Escape cancels.")}
                 </span>
             )}
         </div>

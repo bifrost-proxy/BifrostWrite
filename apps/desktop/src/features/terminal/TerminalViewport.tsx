@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import "@xterm/xterm/css/xterm.css";
 
 import { FitAddon } from "@xterm/addon-fit";
@@ -38,7 +39,7 @@ function TerminalMessage({ message }: { message: string }) {
             className="pointer-events-none absolute inset-0 flex items-center justify-center"
             style={{ color: "var(--text-secondary)" }}
         >
-            <span className="text-xs">{message}</span>
+            <span className="text-xs">{translate(message)}</span>
         </div>
     );
 }
@@ -835,7 +836,7 @@ export function TerminalViewport({
                     }}
                 >
                     <label htmlFor={searchInputId} className="sr-only">
-                        Find in terminal
+                        {translate("Find in terminal")}
                     </label>
                     <input
                         id={searchInputId}
@@ -851,7 +852,7 @@ export function TerminalViewport({
                         onBlur={() => {
                             searchAddonRef.current?.clearActiveDecoration();
                         }}
-                        placeholder="Find in terminal"
+                        placeholder={translate("Find in terminal")}
                         className="h-8 w-52 rounded border px-2 text-xs outline-none"
                         style={{
                             backgroundColor: "var(--bg-primary)",
@@ -874,9 +875,9 @@ export function TerminalViewport({
                                 ? "white"
                                 : "var(--text-secondary)",
                         }}
-                        title="Match case"
+                        title={translate("Match case")}
                     >
-                        Aa
+                        {translate("Aa")}
                     </button>
                     <button
                         type="button"
@@ -888,7 +889,7 @@ export function TerminalViewport({
                             color: "var(--text-primary)",
                         }}
                     >
-                        Prev
+                        {translate("Prev")}
                     </button>
                     <button
                         type="button"
@@ -900,7 +901,7 @@ export function TerminalViewport({
                             color: "var(--text-primary)",
                         }}
                     >
-                        Next
+                        {translate("Next")}
                     </button>
                     <span
                         className="min-w-16 text-right text-[11px]"
@@ -921,7 +922,7 @@ export function TerminalViewport({
                             color: "var(--text-primary)",
                         }}
                     >
-                        Close
+                        {translate("Close")}
                     </button>
                 </div>
             )}
@@ -962,7 +963,7 @@ export function TerminalViewport({
                                 setDictationText(event.target.value)
                             }
                             onKeyDown={handleDictationKeyDown}
-                            placeholder="Speak or type — Enter to send"
+                            placeholder={translate("Speak or type — Enter to send")}
                             className="h-8 w-64 rounded border px-2 text-xs outline-none"
                             style={{
                                 backgroundColor: "var(--bg-primary)",
@@ -980,7 +981,7 @@ export function TerminalViewport({
                                 color: "white",
                             }}
                         >
-                            Send
+                            {translate("Send")}
                         </button>
                         <button
                             type="button"
@@ -992,7 +993,7 @@ export function TerminalViewport({
                                 color: "var(--text-primary)",
                             }}
                         >
-                            Cancel
+                            {translate("Cancel")}
                         </button>
                     </div>
                     {platform === "macos" && (
@@ -1000,7 +1001,7 @@ export function TerminalViewport({
                             className="px-1 text-[11px]"
                             style={{ color: "var(--text-secondary)" }}
                         >
-                            Press Fn Fn to activate macOS dictation, then speak your command.
+                            {translate("Press Fn Fn to activate macOS dictation, then speak your command.")}
                         </span>
                     )}
                     {platform === "windows" && (
@@ -1008,25 +1009,25 @@ export function TerminalViewport({
                             className="px-1 text-[11px]"
                             style={{ color: "var(--text-secondary)" }}
                         >
-                            Type your command, or use your system dictation if available.
+                            {translate("Type your command, or use your system dictation if available.")}
                         </span>
                     )}
                 </div>
             )}
 
             {snapshot.status === "starting" && noOutput && (
-                <TerminalMessage message="Starting shell..." />
+                <TerminalMessage message={translate("Starting shell...")} />
             )}
             {snapshot.status === "idle" && noOutput && (
-                <TerminalMessage message="Shell not started" />
+                <TerminalMessage message={translate("Shell not started")} />
             )}
             {snapshot.status === "error" && noOutput && (
                 <TerminalMessage
-                    message={snapshot.errorMessage ?? "Shell unavailable"}
+                    message={snapshot.errorMessage ?? translate("Shell unavailable")}
                 />
             )}
             {snapshot.status === "exited" && noOutput && (
-                <TerminalMessage message="Shell exited - restart to continue" />
+                <TerminalMessage message={translate("Shell exited - restart to continue")} />
             )}
 
             {!focused && snapshot.status === "running" && noOutput && (
@@ -1039,7 +1040,7 @@ export function TerminalViewport({
                         color: "var(--text-secondary)",
                     }}
                 >
-                    Click to focus terminal
+                    {translate("Click to focus terminal")}
                 </div>
             )}
 

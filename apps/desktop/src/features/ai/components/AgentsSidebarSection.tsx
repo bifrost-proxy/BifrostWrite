@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import type { ReactNode } from "react";
 
 interface AgentsSidebarSectionProps {
@@ -53,7 +54,7 @@ export function AgentsSidebarSection({
                         padding: `${headerMetrics.paddingTop}px ${headerMetrics.paddingX}px ${headerMetrics.paddingBottom}px`,
                     }}
                 >
-                    <span>{title}</span>
+                    <span>{translate(title)}</span>
                     <span style={{ opacity: 0.7 }}>{count}</span>
                 </div>
             ) : null}

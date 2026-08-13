@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { getViewportSafeMenuPosition } from "../../app/utils/menuPosition";
@@ -289,7 +290,7 @@ export function ContextMenu<T>({
                                     "transparent";
                             }}
                         >
-                            <span>{entry.label}</span>
+                            <span>{translate(String(entry.label))}</span>
                             {hasChildren ? (
                                 <span
                                     aria-hidden="true"
@@ -398,7 +399,7 @@ export function ContextMenu<T>({
                                                             "transparent";
                                                     }}
                                                 >
-                                                    {child.label}
+                                                    {translate(String(child.label))}
                                                 </button>
                                             );
                                         },

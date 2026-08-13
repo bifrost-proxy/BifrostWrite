@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     aiCreateCustomRuntime,
@@ -123,7 +124,7 @@ function VerificationMessage({
             }}
         >
             {verification.message ??
-                (ready ? "Executable is ready." : "Executable is unavailable.")}
+                (ready ? translate("Executable is ready.") : translate("Executable is unavailable."))}
         </div>
     );
 }
@@ -162,10 +163,10 @@ function RuntimeForm({
         >
             <label style={{ display: "grid", gap: 5, fontSize: 12 }}>
                 <span style={{ color: "var(--text-secondary)" }}>
-                    Runtime name
+                    {translate("Runtime name")}
                 </span>
                 <input
-                    aria-label="Runtime name"
+                    aria-label={translate("Runtime name")}
                     value={form.displayName}
                     onChange={(event) =>
                         onChange({ ...form, displayName: event.target.value })
@@ -174,9 +175,9 @@ function RuntimeForm({
                 />
             </label>
             <label style={{ display: "grid", gap: 5, fontSize: 12 }}>
-                <span style={{ color: "var(--text-secondary)" }}>Command</span>
+                <span style={{ color: "var(--text-secondary)" }}>{translate("Command")}</span>
                 <input
-                    aria-label="Command"
+                    aria-label={translate("Command")}
                     value={form.command}
                     onChange={(event) =>
                         onChange({ ...form, command: event.target.value })
@@ -186,30 +187,30 @@ function RuntimeForm({
             </label>
             <label style={{ display: "grid", gap: 5, fontSize: 12 }}>
                 <span style={{ color: "var(--text-secondary)" }}>
-                    Arguments
+                    {translate("Arguments")}
                 </span>
                 <textarea
-                    aria-label="Arguments"
+                    aria-label={translate("Arguments")}
                     value={form.args}
                     onChange={(event) =>
                         onChange({ ...form, args: event.target.value })
                     }
-                    placeholder="One argument per line"
+                    placeholder={translate("One argument per line")}
                     rows={3}
                     style={{ ...inputStyle, resize: "vertical" }}
                 />
             </label>
             <label style={{ display: "grid", gap: 5, fontSize: 12 }}>
                 <span style={{ color: "var(--text-secondary)" }}>
-                    Environment
+                    {translate("Environment")}
                 </span>
                 <textarea
-                    aria-label="Environment"
+                    aria-label={translate("Environment")}
                     value={form.env}
                     onChange={(event) =>
                         onChange({ ...form, env: event.target.value })
                     }
-                    placeholder="NAME=value, one per line"
+                    placeholder={translate("NAME=value, one per line")}
                     rows={3}
                     style={{ ...inputStyle, resize: "vertical" }}
                 />
@@ -221,8 +222,7 @@ function RuntimeForm({
                     lineHeight: 1.5,
                 }}
             >
-                Authentication managed by the runtime. BifrostWrite does not
-                store custom runtime secrets.
+                {translate("Authentication managed by the runtime. BifrostWrite does not store custom runtime secrets.")}
             </div>
             {error && (
                 <div style={{ color: "#fca5a5", fontSize: 11 }}>{error}</div>
@@ -235,7 +235,7 @@ function RuntimeForm({
                     onClick={onVerify}
                     style={buttonStyle}
                 >
-                    Verify executable
+                    {translate("Verify executable")}
                 </button>
                 <button
                     type="button"
@@ -248,7 +248,7 @@ function RuntimeForm({
                         color: "var(--bg-primary)",
                     }}
                 >
-                    {busy ? "Saving…" : submitLabel}
+                    {busy ? translate("Saving…") : submitLabel}
                 </button>
                 <button
                     type="button"
@@ -256,7 +256,7 @@ function RuntimeForm({
                     onClick={onCancel}
                     style={buttonStyle}
                 >
-                    Cancel
+                    {translate("Cancel")}
                 </button>
             </div>
         </div>
@@ -457,7 +457,7 @@ export function CustomAcpRuntimesSettings({
                     paddingBottom: 6,
                 }}
             >
-                Custom ACP runtimes
+                {translate("Custom ACP runtimes")}
             </div>
             <div
                 style={{
@@ -475,12 +475,11 @@ export function CustomAcpRuntimesSettings({
                         lineHeight: 1.5,
                     }}
                 >
-                    Add ACP-compatible local runtimes. Authentication managed by
-                    the runtime; BifrostWrite does not store custom runtime secrets.
+                    {translate("Add ACP-compatible local runtimes. Authentication managed by the runtime; BifrostWrite does not store custom runtime secrets.")}
                 </div>
                 <div style={{ padding: "0 14px 12px" }}>
                     <button type="button" onClick={startCreate} style={buttonStyle}>
-                        Add runtime
+                        {translate("Add runtime")}
                     </button>
                 </div>
                 {editingId === "new" && (
@@ -505,7 +504,7 @@ export function CustomAcpRuntimesSettings({
                             borderTop: "1px solid var(--border)",
                         }}
                     >
-                        Loading custom runtimes…
+                        {translate("Loading custom runtimes…")}
                     </div>
                 ) : (
                     filteredActive.map((definition) => (
@@ -552,7 +551,7 @@ export function CustomAcpRuntimesSettings({
                                         onClick={() => startEdit(definition)}
                                         style={buttonStyle}
                                     >
-                                        Edit
+                                        {translate("Edit")}
                                     </button>
                                     <button
                                         type="button"
@@ -560,7 +559,7 @@ export function CustomAcpRuntimesSettings({
                                         onClick={() => void handleDelete(definition.id)}
                                         style={{ ...buttonStyle, color: "#fca5a5" }}
                                     >
-                                        Delete
+                                        {translate("Delete")}
                                     </button>
                                 </div>
                             </div>
@@ -589,7 +588,7 @@ export function CustomAcpRuntimesSettings({
                             borderTop: "1px solid var(--border)",
                         }}
                     >
-                        No custom runtimes configured.
+                        {translate("No custom runtimes configured.")}
                     </div>
                 )}
                 {error && editingId == null && (
@@ -618,7 +617,7 @@ export function CustomAcpRuntimesSettings({
                             paddingBottom: 6,
                         }}
                     >
-                        Deleted definitions retained for history
+                        {translate("Deleted definitions retained for history")}
                     </div>
                     <div
                         style={{
@@ -669,7 +668,7 @@ export function CustomAcpRuntimesSettings({
                                     onClick={() => void handleRestore(definition.id)}
                                     style={buttonStyle}
                                 >
-                                    Restore
+                                    {translate("Restore")}
                                 </button>
                             </div>
                         ))}

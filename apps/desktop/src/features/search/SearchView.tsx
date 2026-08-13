@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { vaultInvoke } from "../../app/utils/vaultInvoke";
 import {
@@ -316,7 +317,7 @@ export function SearchView({ tabId }: SearchViewProps) {
                         className="text-lg font-semibold"
                         style={{ color: "var(--text-primary)" }}
                     >
-                        Advanced Search
+                        {translate("Advanced Search")}
                     </h1>
                 </div>
 
@@ -345,7 +346,7 @@ export function SearchView({ tabId }: SearchViewProps) {
                     <input
                         ref={inputRef}
                         type="text"
-                        placeholder="Search files and notes... (e.g. tag:project content:react)"
+                        placeholder={translate("Search files and notes... (e.g. tag:project content:react)")}
                         value={query}
                         onChange={(e) => handleQueryChange(e.target.value)}
                         className="flex-1 bg-transparent text-[13px] outline-none"
@@ -378,7 +379,7 @@ export function SearchView({ tabId }: SearchViewProps) {
                     )}
                     <button
                         onClick={() => setShowBuilder((v) => !v)}
-                        title="Toggle query builder"
+                        title={translate("Toggle query builder")}
                         className="shrink-0 p-0.5 rounded transition-colors"
                         style={{
                             color: showBuilder
@@ -446,7 +447,7 @@ export function SearchView({ tabId }: SearchViewProps) {
                 <div className="flex flex-wrap gap-1.5 mt-3">
                     {OPERATORS.map((op) => (
                         <button
-                            key={op.label}
+                            key={translate(String(op.label))}
                             onClick={() =>
                                 handleInsertOperator(
                                     "insert" in op ? op.insert : op.label,
@@ -468,15 +469,16 @@ export function SearchView({ tabId }: SearchViewProps) {
                             }
                             title={op.desc}
                         >
-                            {op.label}
+                            {translate(String(op.label))}
                         </button>
                     ))}
                     <span
                         className="px-1 py-0.5 text-[10px]"
                         style={{ color: "var(--text-secondary)", opacity: 0.6 }}
                     >
-                        OR &middot; -exclude &middot; &quot;exact phrase&quot;
-                        &middot; /regex/
+                        {translate(
+                            'OR · -exclude · "exact phrase" · /regex/',
+                        )}
                     </span>
                 </div>
 
@@ -487,7 +489,7 @@ export function SearchView({ tabId }: SearchViewProps) {
                         style={{ color: "var(--text-secondary)" }}
                     >
                         <span className="text-[11px]">
-                            {results.length} result
+                            {results.length} {translate("result")}
                             {results.length !== 1 ? "s" : ""}
                         </span>
                         <div className="flex items-center gap-2">
@@ -505,7 +507,7 @@ export function SearchView({ tabId }: SearchViewProps) {
                             {results.length > 0 && (
                                 <button
                                     onClick={handleCopyResults}
-                                    title="Copy results as markdown"
+                                    title={translate("Copy results as markdown")}
                                     className="p-1 rounded opacity-60 hover:opacity-100"
                                 >
                                     <svg
@@ -545,7 +547,7 @@ export function SearchView({ tabId }: SearchViewProps) {
                                     }}
                                 >
                                     <span className="text-[11px] uppercase tracking-wider">
-                                        Recent searches
+                                        {translate("Recent searches")}
                                     </span>
                                     <button
                                         onClick={() => {
@@ -554,7 +556,7 @@ export function SearchView({ tabId }: SearchViewProps) {
                                         }}
                                         className="text-[10px] opacity-50 hover:opacity-100"
                                     >
-                                        Clear
+                                        {translate("Clear")}
                                     </button>
                                 </div>
                                 <div className="flex flex-wrap gap-1.5">
@@ -611,7 +613,7 @@ export function SearchView({ tabId }: SearchViewProps) {
                                 className="text-[13px] text-center py-8"
                                 style={{ color: "var(--text-secondary)" }}
                             >
-                                Use operators to search across your vault
+                                {translate("Use operators to search across your vault")}
                             </div>
                         )}
                     </div>
@@ -623,7 +625,7 @@ export function SearchView({ tabId }: SearchViewProps) {
                         className="text-[13px] text-center py-8"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        No results for &ldquo;{query.trim()}&rdquo;
+                        {translate("No results for")} "{query.trim()}"
                     </div>
                 )}
 
@@ -685,7 +687,7 @@ export function SearchView({ tabId }: SearchViewProps) {
                                                         stroke="none"
                                                         fontWeight="bold"
                                                     >
-                                                        PDF
+                                                        {translate("PDF")}
                                                     </text>
                                                 </svg>
                                             )}
@@ -780,7 +782,7 @@ export function SearchView({ tabId }: SearchViewProps) {
                                         onClick={() =>
                                             void handleOpenInNewTab(r)
                                         }
-                                        title="Open in new tab"
+                                        title={translate("Open in new tab")}
                                         className="shrink-0 px-2.5 py-2.5 opacity-0 group-hover:opacity-60 hover:opacity-100!"
                                         style={{
                                             color: "var(--text-secondary)",

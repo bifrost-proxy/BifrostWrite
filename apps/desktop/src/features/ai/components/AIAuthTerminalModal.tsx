@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     aiCloseAuthTerminalSession,
@@ -426,20 +427,19 @@ export function AIAuthTerminalModal({
                             className="text-[11px] uppercase tracking-[0.16em]"
                             style={{ color: "var(--accent)" }}
                         >
-                            Limited Terminal Sign-In
+                            {translate("Limited Terminal Sign-In")}
                         </div>
                         <div
                             className="mt-1 text-base font-semibold"
                             style={{ color: "var(--text-primary)" }}
                         >
-                            Sign in to {runtimeName}
+                            {translate("Sign in to")} {runtimeName}
                         </div>
                         <div
                             className="mt-2 text-sm"
                             style={{ color: "var(--text-secondary)" }}
                         >
-                            This terminal is limited to the authentication flow.
-                            It does not enable the full developer terminal.
+                            {translate("This terminal is limited to the authentication flow. It does not enable the full developer terminal.")}
                         </div>
                     </div>
 
@@ -451,17 +451,17 @@ export function AIAuthTerminalModal({
                         }}
                     >
                         <div>
-                            Status:{" "}
+                            {translate("Status:")}{" "}
                             <span style={{ color: "var(--text-primary)" }}>
                                 {snapshot.status === "starting"
-                                    ? "Starting sign-in terminal"
+                                    ? translate("Starting sign-in terminal")
                                     : authSucceeded
-                                      ? `${runtimeName} sign-in succeeded`
+                                      ? translate(`${runtimeName} sign-in succeeded`)
                                       : snapshot.status === "running"
                                       ? getRunningStatusLabel(runtimeName)
                                       : snapshot.status === "exited"
-                                        ? "Terminal closed"
-                                        : "Terminal error"}
+                                        ? translate("Terminal closed")
+                                        : translate("Terminal error")}
                             </span>
                         </div>
                         <button
@@ -474,7 +474,7 @@ export function AIAuthTerminalModal({
                                 color: "var(--text-primary)",
                             }}
                         >
-                            Check status
+                            {translate("Check status")}
                         </button>
                     </div>
 
@@ -509,10 +509,10 @@ export function AIAuthTerminalModal({
                             style={{ color: "var(--text-secondary)" }}
                         >
                             {authSucceeded
-                                ? `Sign-in completed. You can close this dialog; ${APP_BRAND_NAME} will refresh setup.`
+                                ? translate(`Sign-in completed. You can close this dialog; ${APP_BRAND_NAME} will refresh setup.`)
                                 : terminalExited
-                                  ? `If sign-in completed, ${APP_BRAND_NAME} will detect it after refreshing setup.`
-                                  : "Complete the sign-in flow in the terminal, then close this dialog or wait for it to exit."}
+                                  ? translate(`If sign-in completed, ${APP_BRAND_NAME} will detect it after refreshing setup.`)
+                                  : translate("Complete the sign-in flow in the terminal, then close this dialog or wait for it to exit.")}
                         </div>
                         <div className="flex items-center gap-2">
                             <button
@@ -525,7 +525,7 @@ export function AIAuthTerminalModal({
                                     color: "var(--text-primary)",
                                 }}
                             >
-                                Close
+                                {translate("Close")}
                             </button>
                             <button
                                 type="button"
@@ -540,7 +540,7 @@ export function AIAuthTerminalModal({
                                         "linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 56%, black))",
                                 }}
                             >
-                                Retry
+                                {translate("Retry")}
                             </button>
                         </div>
                     </div>

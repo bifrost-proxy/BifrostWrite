@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import React, {
     useCallback,
     useEffect,
@@ -456,7 +457,7 @@ export function StackedPaneContent({
             ref={setScrollContainer}
             role="tablist"
             aria-orientation="horizontal"
-            aria-label="Stacked tabs"
+            aria-label={translate("Stacked tabs")}
             // data-pane-tab-strip lets the shared drop resolver treat this
             // column row as a drop target, so tabs from other panes land here
             // (inserted at a column position) just like the classic tab strip.
@@ -649,8 +650,8 @@ function SpineCloseButton({
     return (
         <button
             type="button"
-            title={`Close ${title}`}
-            aria-label={`Close ${title}`}
+            title={translate(`Close ${title}`)}
+            aria-label={translate(`Close ${title}`)}
             onClick={(event) => {
                 event.stopPropagation();
                 onRequestClose();

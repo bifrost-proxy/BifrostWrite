@@ -28,6 +28,13 @@ pub struct DiscoveredNoteFile {
     pub modified_at: u64,
     pub created_at: u64,
     pub size: u64,
+    pub is_cloud_placeholder: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct VaultScanResult {
+    pub notes: Vec<NoteDocument>,
+    pub deferred_note_ids: Vec<String>,
 }
 
 pub struct Vault {
@@ -72,6 +79,9 @@ impl Vault {
     /// frontmatter, or `okf_version` is absent / not a string.
     pub fn detect_okf_version(&self) -> Option<String> {
         let index_path = self.root.join("index.md");
+        if is_cloud_placeholder(&index_path) {
+            return None;
+        }
         let content = std::fs::read_to_string(&index_path).ok()?;
         let frontmatter = crate::parser::extract_frontmatter(&content);
         crate::parser::frontmatter_string_field(frontmatter.as_ref(), "okf_version")
@@ -113,6 +123,7 @@ impl Vault {
                 modified_at,
                 created_at,
                 size: metadata.len(),
+                is_cloud_placeholder: metadata_is_cloud_placeholder(&metadata),
             });
         }
 
@@ -505,7 +516,14 @@ impl Vault {
 
     /// Recursively scans all `.md` files and parses them.
     pub fn scan(&self) -> Result<Vec<NoteDocument>, VaultError> {
-        self.parse_discovered_files(&self.discover_markdown_files()?, |_| {})
+        Ok(self.scan_available()?.notes)
+    }
+
+    /// Scans all markdown files without materializing macOS cloud placeholders.
+    /// Placeholder notes are represented by lightweight empty-content shells so
+    /// they remain visible in the file tree and can be indexed on first open.
+    pub fn scan_available(&self) -> Result<VaultScanResult, VaultError> {
+        self.parse_available_files(&self.discover_markdown_files()?, |_| {})
     }
 
     pub fn parse_discovered_files(
@@ -521,6 +539,37 @@ impl Vault {
         }
 
         Ok(notes)
+    }
+
+    pub fn parse_available_files(
+        &self,
+        files: &[DiscoveredNoteFile],
+        mut on_progress: impl FnMut(usize),
+    ) -> Result<VaultScanResult, VaultError> {
+        let mut notes = Vec::with_capacity(files.len());
+        let mut deferred_note_ids = Vec::new();
+
+        for (index, file) in files.iter().enumerate() {
+            if file.is_cloud_placeholder {
+                notes.push(parser::parse_note(&file.id, &file.path, ""));
+                deferred_note_ids.push(file.id.clone());
+            } else {
+                match self.read_note_from_path(&file.path) {
+                    Ok(note) => notes.push(note),
+                    Err(_) if is_cloud_placeholder(&file.path) => {
+                        notes.push(parser::parse_note(&file.id, &file.path, ""));
+                        deferred_note_ids.push(file.id.clone());
+                    }
+                    Err(error) => return Err(error),
+                }
+            }
+            on_progress(index + 1);
+        }
+
+        Ok(VaultScanResult {
+            notes,
+            deferred_note_ids,
+        })
     }
 
     /// Converts an absolute path to a note_id (relative path without the .md extension).
@@ -815,7 +864,35 @@ fn build_vault_entry(
         is_image_like: Some(classification.is_image_like),
         open_in_app: Some(classification.open_in_app),
         viewer_kind: Some(classification.viewer_kind),
+        is_cloud_placeholder: metadata_is_cloud_placeholder(&metadata),
     })
+}
+
+/// Returns true for macOS dataless files, including iCloud Drive placeholders.
+/// Reading one of these files can synchronously trigger a network download, so
+/// discovery and indexing must only inspect metadata until the user opens it.
+pub fn is_cloud_placeholder(path: &Path) -> bool {
+    std::fs::metadata(path)
+        .map(|metadata| metadata_is_cloud_placeholder(&metadata))
+        .unwrap_or(false)
+}
+
+#[cfg(target_os = "macos")]
+fn metadata_is_cloud_placeholder(metadata: &std::fs::Metadata) -> bool {
+    use std::os::macos::fs::MetadataExt;
+
+    flags_are_dataless(metadata.st_flags())
+}
+
+#[cfg(not(target_os = "macos"))]
+fn metadata_is_cloud_placeholder(_metadata: &std::fs::Metadata) -> bool {
+    false
+}
+
+#[cfg(target_os = "macos")]
+fn flags_are_dataless(flags: u32) -> bool {
+    const SF_DATALESS: u32 = 0x4000_0000;
+    flags & SF_DATALESS != 0
 }
 
 fn path_to_portable_string(path: impl AsRef<Path>) -> String {
@@ -1031,12 +1108,23 @@ fn guess_mime_type(path: &Path) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(target_os = "macos")]
+    use super::flags_are_dataless;
     use super::{
         boundary_path_starts_with, canonicalize_existing_path_with, guess_mime_type,
         is_supported_text_path, normalize_lexically, BoundaryPath, BoundaryPathMode, Vault,
     };
     use std::io;
     use std::path::{Path, PathBuf};
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn detects_macos_dataless_flag() {
+        assert!(flags_are_dataless(0x4000_0000));
+        assert!(flags_are_dataless(0x4000_0001));
+        assert!(!flags_are_dataless(0));
+        assert!(!flags_are_dataless(0x2000_0000));
+    }
 
     #[test]
     fn guess_mime_type_recognizes_extended_text_file_set() {

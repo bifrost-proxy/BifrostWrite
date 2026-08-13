@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { openUrl } from "@bifrostwrite/runtime";
+import { translate } from "../../app/i18n";
 import { getViewportSafeMenuPosition } from "../../app/utils/menuPosition";
 import { findWikilinkResource } from "./wikilinkResolution";
 import { navigateWikilink, openWikilinkInNewTab } from "./wikilinkNavigation";
@@ -123,7 +124,7 @@ export function LinkContextMenu({
                 event.currentTarget.style.backgroundColor = "transparent";
             }}
         >
-            {label}
+            {translate(label)}
         </button>
     );
 

@@ -1,3 +1,4 @@
+import { translate } from "./app/i18n";
 // Capture full stack traces for debugging deep recursion / stack overflow
 (Error as ErrorConstructor & { stackTraceLimit?: number }).stackTraceLimit =
     300;
@@ -60,7 +61,7 @@ class RootErrorBoundary extends Component<
                             marginBottom: 8,
                         }}
                     >
-                        UI render error
+                        {translate("UI render error")}
                     </div>
                     <div
                         style={{
@@ -72,7 +73,7 @@ class RootErrorBoundary extends Component<
                                 '"SFMono-Regular", Menlo, Monaco, Consolas, monospace',
                         }}
                     >
-                        {this.state.error.message}
+                        {translate(String(this.state.error.message))}
                     </div>
                     {this.state.componentStack && (
                         <pre
@@ -98,8 +99,7 @@ class RootErrorBoundary extends Component<
                             marginBottom: 12,
                         }}
                     >
-                        The app hit a runtime error while rendering. The message
-                        below should help isolate the failing component.
+                        {translate("The app hit a runtime error while rendering. The message below should help isolate the failing component.")}
                     </div>
                     <pre
                         style={{
@@ -128,7 +128,7 @@ class RootErrorBoundary extends Component<
                             cursor: "pointer",
                         }}
                     >
-                        Reload App
+                        {translate("Reload App")}
                     </button>
                 </div>
             </div>
@@ -173,7 +173,7 @@ function renderFatalStartupError(error: unknown) {
                 }}
             >
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>
-                    Startup error
+                    {translate("Startup error")}
                 </div>
                 <div
                     style={{

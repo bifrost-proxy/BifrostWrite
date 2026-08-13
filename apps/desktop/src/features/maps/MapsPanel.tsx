@@ -1,3 +1,4 @@
+import { translate } from "../../app/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@bifrostwrite/runtime";
 import { openPath, revealItemInDir } from "@bifrostwrite/runtime";
@@ -402,11 +403,11 @@ export function MapsPanel() {
                         className="text-xs font-semibold uppercase tracking-wider"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        Concept Maps
+                        {translate("Concept Maps")}
                     </span>
                     <button
                         onClick={handleNewMap}
-                        title="New Concept Map"
+                        title={translate("New Concept Map")}
                         className="flex items-center justify-center rounded transition-opacity"
                         style={{
                             width: 18,
@@ -438,7 +439,7 @@ export function MapsPanel() {
                     <SidebarFilterInput
                         value={filterText}
                         onChange={setFilterText}
-                        placeholder="Filter maps..."
+                        placeholder={translate("Filter maps...")}
                     />
                 </div>
             </div>
@@ -446,18 +447,18 @@ export function MapsPanel() {
             <div className="flex-1 overflow-y-auto py-1">
                 {maps.length === 0 ? (
                     <div className="px-4 py-6 text-center text-sm text-(--text-secondary)">
-                        No concept maps yet.
+                        {translate("No concept maps yet.")}
                         <br />
                         <button
                             onClick={handleNewMap}
                             className="mt-2 text-(--accent) hover:underline"
                         >
-                            Create one
+                            {translate("Create one")}
                         </button>
                     </div>
                 ) : filteredMaps.length === 0 ? (
                     <div className="px-4 py-6 text-center text-sm text-(--text-secondary)">
-                        No maps match &ldquo;{filterText}&rdquo;
+                        {translate("No maps match")} "{filterText}"
                     </div>
                 ) : (
                     filteredMaps.map((map) => (
@@ -497,7 +498,7 @@ export function MapsPanel() {
                                             }
                                         }}
                                         className="w-full px-2 py-1 text-sm rounded border border-(--border) bg-(--bg-primary) text-(--text-primary) outline-none focus:border-(--accent)"
-                                        aria-label={`Rename ${map.title}`}
+                                        aria-label={translate(`Rename ${map.title}`)}
                                     />
                                 </div>
                             ) : (
@@ -517,7 +518,7 @@ export function MapsPanel() {
                                 onClick={() => void handleDeleteMap(map)}
                                 disabled={renamingMapPath === map.relativePath}
                                 className="hidden group-hover:flex items-center justify-center shrink-0 mr-2 w-5 h-5 rounded text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-primary)"
-                                title="Delete map"
+                                title={translate("Delete map")}
                             >
                                 <svg
                                     width="12"

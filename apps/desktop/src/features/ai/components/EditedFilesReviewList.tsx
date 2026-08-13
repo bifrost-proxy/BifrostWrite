@@ -1,3 +1,4 @@
+import { translate } from "../../../app/i18n";
 import { openAiEditedFileByAbsolutePath } from "../chatFileNavigation";
 import { EditedFileDiffPreview } from "./editedFilesPresentation";
 import {
@@ -263,29 +264,29 @@ function FullRow({
                 {/* Inline action buttons */}
                 <div className="flex shrink-0 items-center gap-0.5">
                     <FullRowActionButton
-                        title="Open File"
+                        title={translate("Open File")}
                         variant="neutral"
                         onClick={() =>
                             void openAiEditedFileByAbsolutePath(file.path)
                         }
                     >
-                        Open
+                        {translate("Open")}
                     </FullRowActionButton>
                     {canReject ? (
                         <FullRowActionButton
-                            title="Reject"
+                            title={translate("Reject")}
                             variant="danger"
                             onClick={onReject}
                         >
-                            Reject
+                            {translate("Reject")}
                         </FullRowActionButton>
                     ) : null}
                     <FullRowActionButton
-                        title="Accept"
+                        title={translate("Accept")}
                         variant="accent"
                         onClick={onKeep}
                     >
-                        Accept
+                        {translate("Accept")}
                     </FullRowActionButton>
                 </div>
             </div>
@@ -406,7 +407,7 @@ function CompactRow({
                     {/* Open File — external-link icon */}
                     <button
                         type="button"
-                        title="Open File"
+                        title={translate("Open File")}
                         onClick={() => {
                             if (!canOpen) return;
                             void openAiEditedFileByAbsolutePath(file.path);
@@ -442,7 +443,7 @@ function CompactRow({
                     {canReject ? (
                         <button
                             type="button"
-                            title="Reject"
+                            title={translate("Reject")}
                             onClick={onReject}
                             className="nw-strip-icon-btn flex shrink-0 items-center justify-center rounded-sm border-0 bg-transparent"
                             style={{
@@ -471,7 +472,7 @@ function CompactRow({
                     {/* Keep — checkmark icon */}
                     <button
                         type="button"
-                        title="Keep"
+                        title={translate("Keep")}
                         onClick={onKeep}
                         className="nw-strip-icon-btn flex shrink-0 items-center justify-center rounded-sm border-0 bg-transparent"
                         style={{
