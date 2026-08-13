@@ -21,6 +21,7 @@ import {
 } from "../okf/status";
 import { fetchSystemUsername } from "../okf/systemUsername";
 import { useVaultStore } from "../../app/store/vaultStore";
+import { useSettingsStore } from "../../app/store/settingsStore";
 import { upsertFrontmatterTitle } from "./noteTitleHelpers";
 
 /** Statuses that warrant a trust banner, with their banner copy. */
@@ -91,6 +92,8 @@ export function MarkdownNoteHeader({
     }, [entries]);
 
     const okfVersion = useVaultStore((s) => s.okfVersion);
+    const livePreviewEnabled = useSettingsStore((s) => s.livePreviewEnabled);
+    const setSetting = useSettingsStore((s) => s.setSetting);
     // Conformance hint: OKF vaults expect a `type` field. Only nudge when we
     // know this is an OKF vault and the note is missing a non-empty type.
     const showMissingTypeHint = okfVersion !== null && typeValue === null;
@@ -229,6 +232,33 @@ export function MarkdownNoteHeader({
                     ) : (
                         <SetStatusButton onClick={openStatusMenu} />
                     )}
+                    <HeaderViewToggleButton
+                        label={translate(
+                            livePreviewEnabled
+                                ? "Disable Live Preview"
+                                : "Enable Live Preview",
+                        )}
+                        active={livePreviewEnabled}
+                        onClick={() =>
+                            setSetting(
+                                "livePreviewEnabled",
+                                !livePreviewEnabled,
+                            )
+                        }
+                        icon={<LivePreviewIcon enabled={livePreviewEnabled} />}
+                    />
+                    <HeaderViewToggleButton
+                        label={translate(
+                            lineWrapping
+                                ? "Disable Line Wrapping"
+                                : "Enable Line Wrapping",
+                        )}
+                        active={lineWrapping}
+                        onClick={() =>
+                            setSetting("lineWrapping", !lineWrapping)
+                        }
+                        icon={<LineWrappingIcon enabled={lineWrapping} />}
+                    />
                     {typeValue && <MetaBadge label={typeValue} tone="muted" />}
                     {showMissingTypeHint && (
                         <MetaBadge
@@ -361,6 +391,89 @@ function SetStatusButton({
             <StatusDot color="var(--text-secondary)" />
             {translate("Set status")}
         </button>
+    );
+}
+
+function HeaderViewToggleButton({
+    label,
+    active,
+    onClick,
+    icon,
+}: {
+    label: string;
+    active: boolean;
+    onClick: () => void;
+    icon: React.ReactNode;
+}) {
+    return (
+        <button
+            type="button"
+            title={label}
+            aria-label={label}
+            aria-pressed={active}
+            onClick={onClick}
+            style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 24,
+                height: 24,
+                flexShrink: 0,
+                borderRadius: 6,
+                border: active
+                    ? "1px solid color-mix(in srgb, var(--accent) 22%, var(--border))"
+                    : "1px solid transparent",
+                background: active
+                    ? "color-mix(in srgb, var(--accent) 10%, var(--bg-primary))"
+                    : "transparent",
+                color: active ? "var(--accent)" : "var(--text-secondary)",
+                cursor: "pointer",
+                opacity: active ? 1 : 0.72,
+            }}
+        >
+            {icon}
+        </button>
+    );
+}
+
+function LivePreviewIcon({ enabled }: { enabled: boolean }) {
+    return (
+        <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+        >
+            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+            <circle cx="12" cy="12" r="3" />
+            {!enabled && <line x1="2" y1="2" x2="22" y2="22" />}
+        </svg>
+    );
+}
+
+function LineWrappingIcon({ enabled }: { enabled: boolean }) {
+    return (
+        <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+        >
+            <path d="M4 6h16" />
+            <path d="M4 12h10a3 3 0 1 1 0 6H9" />
+            <path d="m9 15-3 3 3 3" />
+            {!enabled && <line x1="5" y1="5" x2="19" y2="19" />}
+        </svg>
     );
 }
 

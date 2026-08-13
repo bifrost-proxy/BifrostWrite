@@ -18,7 +18,7 @@ import {
 } from "../../app/store/layoutStore";
 import {
     getDesktopPlatform,
-    getTrafficLightSpacerWidth,
+    WINDOW_CHROME_BAR_HEIGHT,
 } from "../../app/utils/platform";
 import {
     FILE_TREE_NOTE_DRAG_EVENT,
@@ -60,14 +60,21 @@ const EDGE_PEEK_SAFE_GAP = 28;
 // ancestor — that's why dragging the band silently fails. Instead of fighting
 // that chain we paint a dedicated drag strip at the AppLayout root (no
 // transformed ancestor), so the OS always gets a correct draggable rect.
-const SIDEBAR_DRAG_BAND_HEIGHT = (() => {
-    if (getDesktopPlatform() !== "macos") return 38;
-    return Math.max(38, Math.max(28, getTrafficLightSpacerWidth() / 2 + 12));
-})();
+const SIDEBAR_DRAG_BAND_HEIGHT = WINDOW_CHROME_BAR_HEIGHT;
 // Right-hand space the strip leaves free so it never sits over the collapse
 // button (32px button + 8px padding + a little slack). The button keeps its
 // own click; the OS would otherwise swallow the press as a window drag.
 const SIDEBAR_DRAG_BAND_RIGHT_RESERVE = 48;
+
+function startWindowDragFromSidebarBand(
+    event: ReactMouseEvent<HTMLDivElement>,
+) {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    void getCurrentWindow()
+        .startDragging()
+        .catch(() => {});
+}
 
 interface PointerPosition {
     x: number;
@@ -1118,15 +1125,15 @@ export function AppLayout({ left, center, right }: AppLayoutProps) {
 
             {/* Window-drag strip for the docked sidebar's top band. Rendered at
                 the AppLayout root — NOT inside the sidebar's transformed dock
-                wrapper — because Chromium zeroes out `-webkit-app-region` rects
-                under any transformed ancestor. Spans from the left edge up to
-                (but not over) the collapse button so that button keeps its
-                click. The traffic lights are native and drawn above everything,
-                so the strip never interferes with them. */}
+                wrapper. It starts native dragging explicitly because Chromium
+                can drop CSS app-region geometry while the sidebar is animated.
+                The strip stops before the collapse button so that control keeps
+                its click; native traffic lights remain above the webview. */}
             {!sidebarCollapsed && effectiveLeft > 0 && (
                 <div
                     data-testid="sidebar-drag-strip"
                     aria-hidden
+                    onMouseDown={startWindowDragFromSidebarBand}
                     style={
                         {
                             position: "absolute",
@@ -1138,7 +1145,6 @@ export function AppLayout({ left, center, right }: AppLayoutProps) {
                             ),
                             height: SIDEBAR_DRAG_BAND_HEIGHT,
                             zIndex: 6,
-                            WebkitAppRegion: "drag",
                         } as CSSProperties
                     }
                 />

@@ -3,7 +3,10 @@ import {
     type MouseEventHandler,
     type ReactNode,
 } from "react";
-import { getWindowChromeLayout } from "../../app/utils/platform";
+import {
+    getWindowChromeLayout,
+    WINDOW_CHROME_BAR_HEIGHT,
+} from "../../app/utils/platform";
 
 // On Windows and Linux, the caption buttons are painted by the native
 // `titleBarOverlay`, not by React — so this component only reserves the
@@ -48,7 +51,7 @@ export function WindowChrome({
             <div
                 className="drag flex items-stretch select-none"
                 style={{
-                    height: 34,
+                    height: WINDOW_CHROME_BAR_HEIGHT,
                     cursor: "default",
                     ...barStyle,
                 }}

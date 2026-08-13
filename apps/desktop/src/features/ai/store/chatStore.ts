@@ -2256,17 +2256,6 @@ function setMessageInProgressState(
     );
 }
 
-function appendToMessageContent(
-    session: AIChatSession,
-    messageId: string,
-    text: string,
-) {
-    return replaceSessionMessage(session, messageId, (message) => ({
-        ...message,
-        content: message.content + text,
-    }));
-}
-
 function markPendingInteractionMessagesIdle(session: AIChatSession) {
     const normalized = normalizeSessionTranscript(session);
     let changed = false;
@@ -6933,6 +6922,7 @@ const _suppressedRuntimeUserEchoByKey = new Map<
     string,
     SuppressedRuntimeUserEcho
 >();
+const RUNTIME_MESSAGE_ID_META_KEY = "runtime_message_id";
 
 function normalizeRuntimeTextMessageRole(
     role?: AIChatRole | null,
@@ -6942,6 +6932,70 @@ function normalizeRuntimeTextMessageRole(
 
 function runtimeTextMessageTitle(role: RuntimeTextMessageRole) {
     return role === "user" ? "User" : "Assistant";
+}
+
+function isRuntimeTextMessageFor(
+    message: AIChatMessage,
+    runtimeMessageId: string,
+    role: RuntimeTextMessageRole,
+) {
+    return (
+        message.kind === "text" &&
+        message.role === role &&
+        (message.id === runtimeMessageId ||
+            message.meta?.[RUNTIME_MESSAGE_ID_META_KEY] === runtimeMessageId)
+    );
+}
+
+function findActiveRuntimeTextMessage(
+    normalizedSession: AIChatSession,
+    runtimeMessageId: string,
+    role: RuntimeTextMessageRole,
+) {
+    for (
+        let index = normalizedSession.messages.length - 1;
+        index >= 0;
+        index -= 1
+    ) {
+        const message = normalizedSession.messages[index];
+        if (
+            message.inProgress &&
+            isRuntimeTextMessageFor(message, runtimeMessageId, role)
+        ) {
+            return message;
+        }
+    }
+
+    return null;
+}
+
+function resolveRuntimeTextMessageId(
+    session: AIChatSession,
+    runtimeMessageId: string,
+    role: RuntimeTextMessageRole,
+) {
+    const normalizedSession = normalizeSessionTranscript(session);
+    return (
+        findActiveRuntimeTextMessage(
+            normalizedSession,
+            runtimeMessageId,
+            role,
+        )?.id ?? runtimeMessageId
+    );
+}
+
+function createRuntimeTextMessageIdentity(
+    normalizedSession: AIChatSession,
+    runtimeMessageId: string,
+) {
+    if (normalizedSession.messagesById?.[runtimeMessageId] == null) {
+        return { id: runtimeMessageId, meta: undefined };
+    }
+
+    return {
+        id: `${runtimeMessageId}:${crypto.randomUUID()}`,
+        meta: { [RUNTIME_MESSAGE_ID_META_KEY]: runtimeMessageId },
+    };
 }
 
 function messageDeltaBufferKey(
@@ -6999,17 +7053,17 @@ function createRuntimeUserEchoMessage(
         insert_after_message_id?: string | null;
     },
 ) {
-    const existingMessage =
-        normalizedSession.messagesById?.[payload.message_id] ?? null;
+    const identity = createRuntimeTextMessageIdentity(
+        normalizedSession,
+        payload.message_id,
+    );
     const workCycleId =
         normalizedSession.activeWorkCycleId ??
         normalizedSession.visibleWorkCycleId ??
         null;
 
     const message: AIChatMessage = {
-        id: existingMessage
-            ? `${payload.message_id}:${Date.now()}`
-            : payload.message_id,
+        id: identity.id,
         role: "user",
         kind: "text",
         content: payload.text,
@@ -7017,6 +7071,7 @@ function createRuntimeUserEchoMessage(
         title: runtimeTextMessageTitle("user"),
         timestamp: Date.now(),
         inProgress: true,
+        meta: identity.meta,
     };
 
     if (payload.insert_after_message_id !== undefined) {
@@ -7085,8 +7140,16 @@ function appendRuntimeTextDelta(
         normalizedSession.visibleWorkCycleId ??
         null;
     const title = runtimeTextMessageTitle(payload.role);
-    const existingMessage =
-        normalizedSession.messagesById?.[payload.message_id] ?? null;
+    const activeMessageCandidate = findActiveRuntimeTextMessage(
+        normalizedSession,
+        payload.message_id,
+        payload.role,
+    );
+    const activeMessage =
+        activeMessageCandidate?.id ===
+        (normalizedSession.messageOrder?.at(-1) ?? null)
+            ? activeMessageCandidate
+            : null;
     const bufferKey = messageDeltaBufferKey(
         normalizedSession.sessionId,
         payload.role,
@@ -7094,12 +7157,10 @@ function appendRuntimeTextDelta(
     );
 
     if (
-        existingMessage &&
-        existingMessage.role === payload.role &&
-        existingMessage.kind === "text"
+        activeMessage
     ) {
         _suppressedRuntimeUserEchoByKey.delete(bufferKey);
-        const nextText = existingMessage.content + payload.text;
+        const nextText = activeMessage.content + payload.text;
         if (
             payload.role === "user" &&
             isPotentialResumeContextPromptText(nextText)
@@ -7113,12 +7174,12 @@ function appendRuntimeTextDelta(
                     normalizedSession.messageOrder?.at(-1) ?? null,
                 drop_on_completion: true,
             });
-            return removeSessionMessage(normalizedSession, payload.message_id);
+            return removeSessionMessage(normalizedSession, activeMessage.id);
         }
 
         return replaceSessionMessage(
             normalizedSession,
-            payload.message_id,
+            activeMessage.id,
             (message) => ({
                 ...message,
                 content: nextText,
@@ -7178,30 +7239,12 @@ function appendRuntimeTextDelta(
         }
     }
 
-    const lastMessageId = normalizedSession.messageOrder?.at(-1) ?? null;
-    const lastMsg = lastMessageId
-        ? normalizedSession.messagesById?.[lastMessageId]
-        : null;
-
-    if (
-        lastMsg &&
-        lastMsg.id === payload.message_id &&
-        lastMsg.role === payload.role &&
-        lastMsg.kind === "text" &&
-        lastMsg.inProgress
-    ) {
-        return appendToMessageContent(
-            normalizedSession,
-            lastMsg.id,
-            payload.text,
-        );
-    }
-
-    const idTaken = existingMessage != null;
+    const identity = createRuntimeTextMessageIdentity(
+        normalizedSession,
+        payload.message_id,
+    );
     return appendSessionMessage(normalizedSession, {
-        id: idTaken
-            ? `${payload.message_id}:${Date.now()}`
-            : payload.message_id,
+        id: identity.id,
         role: payload.role,
         kind: "text",
         content: payload.text,
@@ -7209,6 +7252,7 @@ function appendRuntimeTextDelta(
         title,
         timestamp: Date.now(),
         inProgress: true,
+        meta: identity.meta,
     });
 }
 
@@ -9971,7 +10015,11 @@ export const useChatStore = create<ChatStore>((set, get) => {
                             : session;
                     const nextSession = setMessageInProgressState(
                         baseSession,
-                        message_id,
+                        resolveRuntimeTextMessageId(
+                            baseSession,
+                            message_id,
+                            messageRole,
+                        ),
                         false,
                     );
                     if (nextSession === session) return state;

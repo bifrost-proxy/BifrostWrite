@@ -6,9 +6,11 @@ import {
     useLayoutEffect,
     useRef,
     useState,
+    type MouseEvent as ReactMouseEvent,
 } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { createPortal } from "react-dom";
+import { getCurrentWindow } from "@bifrostwrite/runtime";
 import {
     type Tab,
     type TerminalTab,
@@ -28,6 +30,7 @@ import { useChatStore } from "../ai/store/chatStore";
 import { useInlineRename } from "../ai/components/useInlineRename";
 import { isSearchTab, SEARCH_TAB_TITLE } from "../search/searchTab";
 import { useSettingsStore } from "../../app/store/settingsStore";
+import { useLayoutStore } from "../../app/store/layoutStore";
 import { useVaultStore } from "../../app/store/vaultStore";
 import {
     ContextMenu,
@@ -35,7 +38,10 @@ import {
     type ContextMenuState,
 } from "../../components/context-menu/ContextMenu";
 import { useTerminalRuntimeStore } from "../terminal/terminalRuntimeStore";
-import { getWindowMode } from "../../app/detachedWindows";
+import {
+    getWindowMode,
+    openSettingsWindow,
+} from "../../app/detachedWindows";
 import { buildNewTabContextMenuEntries } from "./newTabMenuActions";
 import { useCommandStore } from "../command-palette/store/commandStore";
 import { createWorkspaceTabExternalDragHandlers } from "./tabDragAttachments";
@@ -50,6 +56,12 @@ import {
     getChromeIconButtonStyle,
     getChromeNavigationButtonStyle,
 } from "./workspaceChromeControls";
+import {
+    getDesktopPlatform,
+    getTrafficLightSpacerWidth,
+    WINDOW_CHROME_BAR_HEIGHT,
+    WINDOW_CHROME_CONTROL_SIZE,
+} from "../../app/utils/platform";
 
 function getTabLabel(
     tab: Tab,
@@ -75,13 +87,14 @@ function getTabLabel(
 interface EditorPaneBarProps {
     paneId: string;
     isFocused: boolean;
+    isTopLeftPane?: boolean;
 }
 
 function getPaneHeaderActionButtonStyle(active = false) {
     return {
         ...getChromeIconButtonStyle(active),
-        width: 22,
-        height: 22,
+        width: WINDOW_CHROME_CONTROL_SIZE,
+        height: WINDOW_CHROME_CONTROL_SIZE,
         borderRadius: 6,
         opacity: 1,
         boxShadow: "none",
@@ -98,6 +111,26 @@ const paneHeaderActionDividerStyle: CSSProperties = {
     flexShrink: 0,
 };
 
+const WINDOW_DRAG_INTERACTIVE_TARGETS =
+    "a, button, input, select, textarea, [contenteditable='true'], [role='button'], [role='tab'], .no-drag";
+
+function startWindowDragFromPaneBar(event: ReactMouseEvent<HTMLDivElement>) {
+    if (event.button !== 0) return;
+
+    const target = event.target;
+    if (
+        target instanceof Element &&
+        target.closest(WINDOW_DRAG_INTERACTIVE_TARGETS)
+    ) {
+        return;
+    }
+
+    event.preventDefault();
+    void getCurrentWindow()
+        .startDragging()
+        .catch(() => {});
+}
+
 function getDuplicateTerminalTitle(tab: TerminalTab) {
     const title = tab.title.trim();
     if (!title || /^Terminal(?: \d+)?$/.test(title)) {
@@ -106,7 +139,11 @@ function getDuplicateTerminalTitle(tab: TerminalTab) {
     return `${title} copy`;
 }
 
-export function EditorPaneBar({ paneId, isFocused }: EditorPaneBarProps) {
+export function EditorPaneBar({
+    paneId,
+    isFocused,
+    isTopLeftPane = false,
+}: EditorPaneBarProps) {
     void isFocused;
     const pane = useEditorStore((state) =>
         selectEditorPaneState(state, paneId),
@@ -139,6 +176,11 @@ export function EditorPaneBar({ paneId, isFocused }: EditorPaneBarProps) {
         (state) => state.fileTreeShowExtensions,
     );
     const tabOpenBehavior = useSettingsStore((state) => state.tabOpenBehavior);
+    const sidebarCollapsed = useLayoutStore((state) => state.sidebarCollapsed);
+    const rightPanelCollapsed = useLayoutStore(
+        (state) => state.rightPanelCollapsed,
+    );
+    const rightPanelWidth = useLayoutStore((state) => state.rightPanelWidth);
     const vaultPath = useVaultStore((state) => state.vaultPath);
     const [tabContextMenu, setTabContextMenu] = useState<ContextMenuState<{
         tabId: string;
@@ -149,6 +191,11 @@ export function EditorPaneBar({ paneId, isFocused }: EditorPaneBarProps) {
     const [newTabContextMenu, setNewTabContextMenu] =
         useState<ContextMenuState<void> | null>(null);
     const windowMode = getWindowMode();
+    const showTrafficLightInset =
+        windowMode === "main" &&
+        getDesktopPlatform() === "macos" &&
+        sidebarCollapsed &&
+        isTopLeftPane;
     const {
         editingKey,
         editValue,
@@ -447,15 +494,26 @@ export function EditorPaneBar({ paneId, isFocused }: EditorPaneBarProps) {
         <>
             <div
                 className="drag flex items-center shrink-0"
+                onMouseDown={startWindowDragFromPaneBar}
                 style={{
-                    height: 33,
-                    minHeight: 33,
+                    height: WINDOW_CHROME_BAR_HEIGHT,
+                    minHeight: WINDOW_CHROME_BAR_HEIGHT,
                     boxSizing: "border-box",
                     borderBottom: "1px solid var(--border)",
                     background: "var(--bg-secondary)",
                 }}
                 data-pane-empty={hasTabs ? undefined : "true"}
             >
+                {showTrafficLightInset ? (
+                    <div
+                        aria-hidden="true"
+                        data-pane-traffic-light-inset="true"
+                        style={{
+                            width: getTrafficLightSpacerWidth(),
+                            flexShrink: 0,
+                        }}
+                    />
+                ) : null}
                 {showHistoryNavigationButtons && (
                     <div className="flex shrink-0 items-center px-1.5">
                         <div
@@ -655,7 +713,7 @@ export function EditorPaneBar({ paneId, isFocused }: EditorPaneBarProps) {
                                                     ? 34
                                                     : tabLayout.tabWidth,
                                                 maxWidth: isPinned ? 34 : 240,
-                                                height: 33,
+                                                height: WINDOW_CHROME_BAR_HEIGHT,
                                                 flexShrink: 0,
                                                 justifyContent: isPinned
                                                     ? "center"
@@ -1035,6 +1093,34 @@ export function EditorPaneBar({ paneId, isFocused }: EditorPaneBarProps) {
                     menu={paneContextMenu}
                     onClose={() => setPaneContextMenu(null)}
                     entries={[
+                        ...(windowMode === "main"
+                            ? [
+                                  {
+                                      label: "Settings…",
+                                      action: () =>
+                                          void openSettingsWindow(vaultPath),
+                                  } as const,
+                                  {
+                                      label: "Open Left Panel",
+                                      action: () =>
+                                          useLayoutStore
+                                              .getState()
+                                              .expandSidebar(),
+                                      disabled: !sidebarCollapsed,
+                                  } as const,
+                                  {
+                                      label: "Open Right Panel",
+                                      action: () =>
+                                          useLayoutStore
+                                              .getState()
+                                              .showRightPanelAtWidth(
+                                                  rightPanelWidth,
+                                              ),
+                                      disabled: !rightPanelCollapsed,
+                                  } as const,
+                                  { type: "separator" } as const,
+                              ]
+                            : []),
                         {
                             label: isStackedTabs
                                 ? "Unstack tabs"

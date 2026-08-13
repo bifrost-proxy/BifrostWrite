@@ -1,12 +1,34 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { renderComponent } from "../../test/test-utils";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+    getMockCurrentWindow,
+    renderComponent,
+} from "../../test/test-utils";
 import { useEditorStore } from "../../app/store/editorStore";
 import { useSettingsStore } from "../../app/store/settingsStore";
+import { useLayoutStore } from "../../app/store/layoutStore";
 import { useVaultStore } from "../../app/store/vaultStore";
 import { useChatStore } from "../ai/store/chatStore";
 import { EditorPaneBar } from "./EditorPaneBar";
+
+const originalUserAgent = navigator.userAgent;
+const originalPlatform = navigator.platform;
+
+function setNavigatorIdentity(userAgent: string, platform: string) {
+    Object.defineProperty(window.navigator, "userAgent", {
+        configurable: true,
+        value: userAgent,
+    });
+    Object.defineProperty(window.navigator, "platform", {
+        configurable: true,
+        value: platform,
+    });
+}
+
+afterEach(() => {
+    setNavigatorIdentity(originalUserAgent, originalPlatform);
+});
 
 function rect({
     left,
@@ -90,6 +112,14 @@ function createNoteTab(id: string, title: string) {
     };
 }
 
+function getStartDraggingMock() {
+    return (
+        getMockCurrentWindow() as unknown as {
+            startDragging: ReturnType<typeof vi.fn>;
+        }
+    ).startDragging;
+}
+
 describe("EditorPaneBar", () => {
     beforeEach(() => {
         if (typeof window.PointerEvent === "undefined") {
@@ -167,6 +197,64 @@ describe("EditorPaneBar", () => {
             "primary",
         );
         useSettingsStore.getState().reset();
+        useLayoutStore.setState({ sidebarCollapsed: false });
+        getStartDraggingMock().mockClear();
+    });
+
+    it("starts dragging the native window from empty pane-bar space", () => {
+        useEditorStore.getState().hydrateWorkspace(
+            [
+                {
+                    id: "primary",
+                    tabs: [],
+                    activeTabId: null,
+                },
+            ],
+            "primary",
+        );
+
+        renderComponent(<EditorPaneBar paneId="primary" isFocused />);
+
+        fireEvent.mouseDown(screen.getByText("No tabs open"), { button: 0 });
+
+        expect(getStartDraggingMock()).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps pane-bar tabs and buttons outside the window drag region", () => {
+        useVaultStore.setState({ vaultPath: "/vault" });
+        renderComponent(<EditorPaneBar paneId="primary" isFocused />);
+
+        fireEvent.mouseDown(screen.getByRole("tab", { name: "Alpha" }), {
+            button: 0,
+        });
+        fireEvent.mouseDown(
+            screen.getByRole("button", { name: "New tab" }),
+            { button: 0 },
+        );
+        fireEvent.mouseDown(
+            screen.getByRole("button", { name: "Pane 1 actions" }),
+            { button: 0 },
+        );
+
+        expect(getStartDraggingMock()).not.toHaveBeenCalled();
+    });
+
+    it("reserves the macOS traffic-light area in the top-left pane when the sidebar is collapsed", () => {
+        setNavigatorIdentity(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_0) AppleWebKit/605.1.15",
+            "MacIntel",
+        );
+        useLayoutStore.setState({ sidebarCollapsed: true });
+
+        const { container } = renderComponent(
+            <EditorPaneBar paneId="primary" isFocused isTopLeftPane />,
+        );
+
+        expect(
+            container.querySelector(
+                '[data-pane-traffic-light-inset="true"]',
+            ),
+        ).not.toBeNull();
     });
 
     it("shows compact empty-pane chrome when a pane has no tabs", () => {
@@ -1144,6 +1232,43 @@ describe("EditorPaneBar", () => {
         expect(
             await screen.findByRole("button", { name: "Close Pane 2" }),
         ).toBeVisible();
+    });
+
+    it("offers settings and collapsed panel actions from the main pane menu", async () => {
+        const user = userEvent.setup();
+        useLayoutStore.setState({
+            sidebarCollapsed: true,
+            rightPanelCollapsed: true,
+        });
+        renderComponent(<EditorPaneBar paneId="primary" isFocused />);
+
+        await user.click(
+            screen.getByRole("button", { name: "Pane 1 actions" }),
+        );
+
+        expect(
+            await screen.findByRole("button", { name: "Settings…" }),
+        ).toBeEnabled();
+
+        const openLeftPanel = screen.getByRole("button", {
+            name: "Open Left Panel",
+        });
+        const openRightPanel = screen.getByRole("button", {
+            name: "Open Right Panel",
+        });
+        expect(openLeftPanel).toBeEnabled();
+        expect(openRightPanel).toBeEnabled();
+
+        await user.click(openLeftPanel);
+        expect(useLayoutStore.getState().sidebarCollapsed).toBe(false);
+
+        await user.click(
+            screen.getByRole("button", { name: "Pane 1 actions" }),
+        );
+        await user.click(
+            screen.getByRole("button", { name: "Open Right Panel" }),
+        );
+        expect(useLayoutStore.getState().rightPanelCollapsed).toBe(false);
     });
 
     it("closes a pane explicitly from the pane actions menu", async () => {

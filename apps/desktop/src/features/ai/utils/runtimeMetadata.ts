@@ -49,7 +49,9 @@ const RUNTIME_METADATA: RuntimeMetadata[] = [
 ];
 
 export const PROVIDER_CATALOG = [
-    ...RUNTIME_METADATA.map(({ id, name, company }) => ({ id, name, company })),
+    ...RUNTIME_METADATA.filter(({ id }) => id !== "claude-acp").map(
+        ({ id, name, company }) => ({ id, name, company }),
+    ),
     {
         id: CLAUDE_TERMINAL_RUNTIME_ID,
         name: "Claude Code",

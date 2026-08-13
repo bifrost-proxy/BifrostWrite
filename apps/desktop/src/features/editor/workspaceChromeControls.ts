@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { WINDOW_CHROME_CONTROL_SIZE } from "../../app/utils/platform";
 
 // Matches `SidebarFilterInput` (85% bg-tertiary / 70% border) so the
 // chrome control group and the filter pill read as a harmonised family
@@ -37,8 +38,8 @@ export function getChromeNavigationButtonStyle(
     enabled: boolean,
 ): CSSProperties {
     return {
-        width: 22,
-        height: 22,
+        width: WINDOW_CHROME_CONTROL_SIZE,
+        height: WINDOW_CHROME_CONTROL_SIZE,
         borderRadius: side === "leading" ? "6px 0 0 6px" : "0 6px 6px 0",
         border: "1px solid color-mix(in srgb, var(--border) 82%, transparent)",
         borderRight: side === "leading" ? "none" : undefined,

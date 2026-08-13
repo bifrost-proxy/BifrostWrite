@@ -1331,7 +1331,13 @@ export function AIProvidersSettings({
         const loadProviders = async () => {
             setIsLoading(true);
             try {
-                const descriptors = await aiListRuntimes();
+                const publicRuntimeIds = new Set(
+                    PROVIDER_CATALOG.map((provider) => provider.id),
+                );
+                const descriptors = (await aiListRuntimes()).filter(
+                    (descriptor) =>
+                        publicRuntimeIds.has(descriptor.runtime.id),
+                );
                 if (cancelled) return;
 
                 const results = await Promise.allSettled(
@@ -1735,6 +1741,9 @@ export function AIProvidersSettings({
     const selectableProviders = runtimes
         .filter(
             (runtime) =>
+                PROVIDER_CATALOG.some(
+                    (provider) => provider.id === runtime.runtime.id,
+                ) &&
                 setupStatusMap[runtime.runtime.id]?.authReady === true &&
                 !setupStatusMap[runtime.runtime.id]?.onboardingRequired,
         )

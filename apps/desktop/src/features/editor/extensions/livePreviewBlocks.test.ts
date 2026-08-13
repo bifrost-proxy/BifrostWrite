@@ -10,7 +10,7 @@ import {
     getFencedCodeBlockKind,
     resolvePreviewAssetPath,
 } from "./livePreviewBlocks";
-import { livePreviewExtension } from "./livePreview";
+import { exitFencedCodeBlock, livePreviewExtension } from "./livePreview";
 import { renderMermaidDiagram } from "../mermaid/mermaidRenderer";
 
 vi.mock("../mermaid/mermaidRenderer", () => ({
@@ -483,6 +483,183 @@ describe("code block live preview", () => {
         expect(
             view.dom.querySelector(".cm-code-block-line-unlabeled"),
         ).not.toBeNull();
+
+        view.destroy();
+        parent.remove();
+    });
+
+    it("lets the user append content after a fenced code block at EOF", () => {
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+
+        const original = "```ts\nconst value = 1;\n```";
+        const view = new EditorView({
+            state: createLivePreviewState(original),
+            parent,
+        });
+
+        const appendLine = view.dom.querySelector<HTMLElement>(
+            "[data-live-preview-trailing-append='true']",
+        );
+        expect(appendLine).not.toBeNull();
+
+        appendLine?.dispatchEvent(
+            new MouseEvent("mousedown", { bubbles: true, clientY: 1 }),
+        );
+
+        expect(view.state.doc.toString()).toBe(`${original}\n`);
+        expect(view.state.selection.main.head).toBe(original.length + 1);
+        expect(
+            view.dom.querySelector(
+                "[data-live-preview-trailing-append='true']",
+            ),
+        ).toBeNull();
+
+        view.dispatch({
+            changes: {
+                from: view.state.selection.main.head,
+                insert: "After the block",
+            },
+        });
+        expect(view.state.doc.toString()).toBe(
+            `${original}\nAfter the block`,
+        );
+
+        view.destroy();
+        parent.remove();
+    });
+
+    it("appends outside the final code block when clicking the blank editor area below it", () => {
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+
+        const original = "```ts\nconst value = 1;\n```";
+        const view = new EditorView({
+            state: createLivePreviewState(original),
+            parent,
+        });
+        const renderedLines = view.contentDOM.querySelectorAll<HTMLElement>(
+            ":scope > .cm-line",
+        );
+        const lastLine = renderedLines.item(renderedLines.length - 1);
+        vi.spyOn(lastLine, "getBoundingClientRect").mockReturnValue({
+            x: 0,
+            y: 80,
+            width: 400,
+            height: 20,
+            top: 80,
+            right: 400,
+            bottom: 100,
+            left: 0,
+            toJSON: () => ({}),
+        });
+
+        view.contentDOM.dispatchEvent(
+            new MouseEvent("mousedown", {
+                bubbles: true,
+                button: 0,
+                clientY: 180,
+            }),
+        );
+
+        expect(view.state.doc.toString()).toBe(`${original}\n`);
+        expect(view.state.selection.main.head).toBe(original.length + 1);
+
+        view.destroy();
+        parent.remove();
+    });
+
+    it("uses an existing trailing blank line instead of a virtual append line", () => {
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+
+        const view = new EditorView({
+            state: createLivePreviewState("```\ncode\n```\n"),
+            parent,
+        });
+
+        expect(
+            view.dom.querySelector(
+                "[data-live-preview-trailing-append='true']",
+            ),
+        ).toBeNull();
+
+        view.destroy();
+        parent.remove();
+    });
+
+    it("exits a fenced code block at EOF with Shift+Enter", () => {
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+
+        const original = "```ts\nconst value = 1;\n```";
+        const view = new EditorView({
+            state: createLivePreviewState(
+                original,
+                original.indexOf("value"),
+            ),
+            parent,
+        });
+
+        view.contentDOM.dispatchEvent(
+            new KeyboardEvent("keydown", {
+                bubbles: true,
+                key: "Enter",
+                shiftKey: true,
+            }),
+        );
+
+        expect(view.state.doc.toString()).toBe(`${original}\n`);
+        expect(view.state.selection.main.head).toBe(original.length + 1);
+
+        view.destroy();
+        parent.remove();
+    });
+
+    it("exits a fenced code block at EOF with the primary modifier+Enter", () => {
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+
+        const original = "```ts\nconst value = 1;\n```";
+        const view = new EditorView({
+            state: createLivePreviewState(
+                original,
+                original.indexOf("value"),
+            ),
+            parent,
+        });
+
+        const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+        view.contentDOM.dispatchEvent(
+            new KeyboardEvent("keydown", {
+                bubbles: true,
+                key: "Enter",
+                ...(isMac ? { metaKey: true } : { ctrlKey: true }),
+            }),
+        );
+
+        expect(view.state.doc.toString()).toBe(`${original}\n`);
+        expect(view.state.selection.main.head).toBe(original.length + 1);
+
+        view.destroy();
+        parent.remove();
+    });
+
+    it("inserts a blank line when jumping out before following content", () => {
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+
+        const original = "```\ncode\n```\nAfter";
+        const view = new EditorView({
+            state: createLivePreviewState(original, original.indexOf("code")),
+            parent,
+        });
+
+        expect(exitFencedCodeBlock(view)).toBe(true);
+        expect(view.state.doc.toString()).toBe("```\ncode\n```\n\nAfter");
+        expect(view.state.selection.main.head).toBe(
+            "```\ncode\n```\n".length,
+        );
 
         view.destroy();
         parent.remove();

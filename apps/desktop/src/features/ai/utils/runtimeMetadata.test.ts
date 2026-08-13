@@ -6,10 +6,9 @@ import {
 } from "./runtimeMetadata";
 
 describe("runtimeMetadata", () => {
-    it("limits the provider catalog to Codex and Claude agents", () => {
+    it("exposes only Codex and Claude Code as public providers", () => {
         expect(PROVIDER_CATALOG.map(({ id }) => id)).toEqual([
             "codex-acp",
-            "claude-acp",
             "claude-code-terminal",
         ]);
     });

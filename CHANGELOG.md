@@ -32,6 +32,21 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.1.2] - 2026-08-14
+
+### Changed
+
+- Refined the macOS title bar with consistent button sizing and alignment, additional draggable regions, proper traffic-light spacing, and quick access to Settings and both side panels.
+- Moved editor preview controls into the pane header and made stacked pane labels read vertically from top to bottom.
+- Limited the public AI provider list to Codex and Claude Code. BifrostWrite now detects an existing `claude` CLI through the user's login shell and only offers installation when it is unavailable.
+
+### Fixed
+
+- Fixed later Agent messages being attached to an earlier response when multiple turns were active.
+- Fixed localized editor tips corrupting Markdown operators and syntax examples.
+- Fixed live-preview headings changing size while edited.
+- Fixed fenced code blocks and other block elements at the end of a note trapping newly appended content inside the final block.
+
 ## [1.1.1] - 2026-08-13
 
 ### Changed

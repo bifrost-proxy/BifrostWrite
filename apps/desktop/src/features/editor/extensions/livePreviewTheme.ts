@@ -849,6 +849,11 @@ export const livePreviewTheme = EditorView.baseTheme({
         fontSize: "0",
         overflow: "hidden",
     },
+    ".cm-lp-trailing-append-line": {
+        boxSizing: "border-box",
+        minHeight: "var(--text-input-line-height)",
+        cursor: "text",
+    },
     ".cm-mermaid-preview": {
         margin: "12px 0",
         maxWidth: "100%",
