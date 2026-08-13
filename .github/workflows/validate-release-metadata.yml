@@ -10,8 +10,10 @@ on:
       - apps/desktop/embedded/**
       - apps/desktop/scripts/stage-native-runtime-assets*.mjs
       - apps/desktop/scripts/stage-tauri-sidecar.mjs
+      - apps/desktop/scripts/verify-macos-dmg.sh
       - apps/desktop/src-tauri/**
       - scripts/sync-tauri-version.mjs
+      - .github/workflows/ci.yml
       - .github/workflows/release-desktop.yml
       - .github/workflows/validate-release-metadata.yml
   push:
