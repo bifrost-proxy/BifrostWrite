@@ -12347,14 +12347,21 @@ mod tests {
         assert_eq!(parse_node_major_version("22.22.0"), None);
         assert_eq!(parse_node_major_version("vnot-a-version"), None);
 
-        let archive = managed_node_archive().unwrap();
-        assert!(archive.file_name.starts_with("node-v22.22.0-darwin-"));
-        assert!(archive.file_name.ends_with(".tar.gz"));
-        assert_eq!(archive.sha256.len(), 64);
-        assert!(archive
-            .sha256
-            .chars()
-            .all(|character| character.is_ascii_hexdigit()));
+        #[cfg(target_os = "macos")]
+        {
+            let archive = managed_node_archive().unwrap();
+            assert!(archive.file_name.starts_with("node-v22.22.0-darwin-"));
+            assert!(archive.file_name.ends_with(".tar.gz"));
+            assert_eq!(archive.sha256.len(), 64);
+            assert!(archive
+                .sha256
+                .chars()
+                .all(|character| character.is_ascii_hexdigit()));
+        }
+        #[cfg(not(target_os = "macos"))]
+        assert!(managed_node_archive()
+            .unwrap_err()
+            .contains("supported only on macOS"));
     }
 
     #[test]
