@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { TagsPanel } from "./TagsPanel";
@@ -14,6 +14,7 @@ import {
     isNoteTab,
     useEditorStore,
 } from "../../app/store/editorStore";
+import { useVaultStore } from "../../app/store/vaultStore";
 
 describe("TagsPanel", () => {
     it("shows an empty-state message when no vault is open", () => {
@@ -207,7 +208,54 @@ describe("TagsPanel", () => {
         );
     });
 
-    it.todo(
-        "refetches tags when note content/frontmatter changes without changing notes.length",
-    );
+    it("refetches tags when note content/frontmatter changes without changing notes.length", async () => {
+        const note = {
+            id: "notes/roadmap",
+            path: "/vault/notes/roadmap.md",
+            title: "Roadmap",
+            modified_at: 1,
+            created_at: 1,
+        };
+        const invokeMock = mockInvoke();
+        let getTagsCalls = 0;
+
+        setVaultNotes([note]);
+        invokeMock.mockImplementation(async (command) => {
+            if (command === "get_tags") {
+                getTagsCalls += 1;
+                return getTagsCalls === 1
+                    ? [{ tag: "project", note_ids: [note.id] }]
+                    : [{ tag: "updated", note_ids: [note.id] }];
+            }
+
+            throw new Error(`Unexpected command: ${command}`);
+        });
+
+        renderComponent(<TagsPanel />);
+        expect(
+            await screen.findByRole("button", { name: /#project 1/i }),
+        ).toBeInTheDocument();
+
+        act(() => {
+            useVaultStore.getState().applyVaultNoteChange({
+                vault_path: "/vault",
+                kind: "upsert",
+                note: { ...note, modified_at: 2 },
+                note_id: note.id,
+                entry: null,
+                relative_path: "notes/roadmap.md",
+                origin: "external",
+                op_id: null,
+                revision: 2,
+                content_hash: "updated-content",
+                graph_revision: 2,
+            });
+        });
+
+        await waitFor(() => expect(getTagsCalls).toBe(2));
+        expect(
+            await screen.findByRole("button", { name: /#updated 1/i }),
+        ).toBeInTheDocument();
+        expect(useVaultStore.getState().notes).toHaveLength(1);
+    });
 });
