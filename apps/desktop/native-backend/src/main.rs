@@ -879,6 +879,8 @@ impl NativeBackend {
             "ai_restore_custom_runtime" => self.ai.restore_custom_runtime(&args),
             "ai_verify_custom_runtime" => self.ai.verify_custom_runtime(&args),
             "ai_get_setup_status" => self.ai.get_setup_status(&args),
+            "ai_get_runtime_install_status" => self.ai.get_runtime_install_status(&args),
+            "ai_start_runtime_install" => self.ai.start_runtime_install(&args),
             "ai_get_environment_diagnostics" => Ok(self.ai.get_environment_diagnostics()),
             "ai_update_setup" => self.ai.update_setup(&args),
             "ai_start_auth" => self.ai.start_auth(&args),

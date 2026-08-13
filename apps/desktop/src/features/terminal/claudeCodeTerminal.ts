@@ -41,6 +41,14 @@ const TERMINAL_READY_TIMEOUT_MS = 10_000;
 const CLAUDE_TUI_SETTLE_MS = 3_500;
 const CLAUDE_CODE_TERMINAL_TITLE = "Claude Code";
 const CLAUDE_CODE_TERMINAL_TITLE_PATTERN = /^Claude Code(?: (\d+))?$/;
+const CLAUDE_CODE_PRIVACY_ENV = [
+    "DO_NOT_TRACK=1",
+    "DISABLE_TELEMETRY=1",
+    "DISABLE_ERROR_REPORTING=1",
+    "OTEL_SDK_DISABLED=true",
+    "CLAUDE_CODE_ENABLE_TELEMETRY=0",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1",
+];
 const ALLOWED_CLAUDE_CODE_MODELS = new Set([
     "claude-opus-4-7",
     "claude-sonnet-4-6",
@@ -240,7 +248,9 @@ export async function openClaudeCodeTerminalWithContext(
         await store.writeInput(terminalId, `cd ${cdQuoted}\n`);
     }
 
-    const args = ["claude"];
+    // Keep terminal-launched Claude sessions under the same zero-telemetry
+    // policy as ACP sessions without changing the user's shell globally.
+    const args = ["env", ...CLAUDE_CODE_PRIVACY_ENV, "claude"];
     if (claudeCodeSkipPermissions) args.push("--dangerously-skip-permissions");
     if (pinnedSessionId) args.push("--session-id", pinnedSessionId);
     const safeModel = getSafeClaudeCodeModel(claudeCodeModel);

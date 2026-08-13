@@ -32,6 +32,20 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.1.1] - 2026-08-13
+
+### Changed
+
+- Limited the built-in Agent catalog to Claude and Codex while other Agent integrations remain disabled.
+- Reused compatible `claude-agent-acp` and `codex-acp` runtimes already installed on the system, with an on-demand installer in Settings when either runtime is missing; an existing Codex CLI is also reused without downloading a duplicate platform binary.
+- Moved optional Agent runtimes into the application data directory so the main application itself does not depend on Node.js; a pinned, checksum-verified Node.js runtime is downloaded there only when an Agent actually needs it and no compatible system installation exists.
+- Disabled non-essential telemetry, analytics, OpenTelemetry export, and error reporting for every Claude/Codex process launched by BifrostWrite, and added a release check that rejects direct telemetry SDK dependencies.
+
+### Removed
+
+- Removed bundled Node.js, Claude, Codex, and code-mode host assets from release packages, substantially reducing DMG size.
+- Removed Custom ACP, Grok, Kilo, and OpenCode entries from the user-facing Agent catalog.
+
 ## [1.1.0] - 2026-08-13
 
 ### Added

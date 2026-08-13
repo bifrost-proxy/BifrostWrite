@@ -6,62 +6,20 @@ import {
 } from "./runtimeMetadata";
 
 describe("runtimeMetadata", () => {
-    it("includes native ACP runtimes in the provider catalog", () => {
-        expect(PROVIDER_CATALOG).toEqual(
-            expect.arrayContaining([
-                expect.objectContaining({
-                    id: "kilo-acp",
-                    name: "Kilo",
-                    company: "Kilo Code",
-                }),
-                expect.objectContaining({
-                    id: "opencode-acp",
-                    name: "OpenCode",
-                    company: "OpenCode",
-                }),
-                expect.objectContaining({
-                    id: "grok-acp",
-                    name: "Grok",
-                    company: "xAI",
-                }),
-            ]),
-        );
+    it("limits the provider catalog to Codex and Claude agents", () => {
+        expect(PROVIDER_CATALOG.map(({ id }) => id)).toEqual([
+            "codex-acp",
+            "claude-acp",
+            "claude-code-terminal",
+        ]);
     });
 
-    it("builds fallback descriptors for all supported ACP runtimes", () => {
+    it("builds fallback descriptors only for supported ACP runtimes", () => {
         const descriptors = buildFallbackRuntimeDescriptors();
-        expect(descriptors).toEqual(
-            expect.arrayContaining([
-                expect.objectContaining({
-                    runtime: expect.objectContaining({
-                        id: "kilo-acp",
-                        name: "Kilo ACP",
-                    }),
-                }),
-                expect.objectContaining({
-                    runtime: expect.objectContaining({
-                        id: "opencode-acp",
-                        name: "OpenCode ACP",
-                        description:
-                            "OpenCode CLI running as a native ACP agent.",
-                    }),
-                }),
-                expect.objectContaining({
-                    runtime: expect.objectContaining({
-                        id: "grok-acp",
-                        name: "Grok ACP",
-                        description: "Grok CLI running as a native ACP agent.",
-                        capabilities: expect.arrayContaining([
-                            "attachments",
-                            "permissions",
-                            "plans",
-                            "terminal_output",
-                            "create_session",
-                        ]),
-                    }),
-                }),
-            ]),
-        );
+        expect(descriptors.map(({ runtime }) => runtime.id)).toEqual([
+            "codex-acp",
+            "claude-acp",
+        ]);
     });
 
     it("only advertises native resume in fallback descriptors for verified runtimes", () => {
@@ -76,10 +34,9 @@ describe("runtimeMetadata", () => {
     });
 
     it("normalizes runtime display names for the UI", () => {
-        expect(getRuntimeDisplayName("kilo-acp", "Kilo ACP")).toBe("Kilo");
-        expect(getRuntimeDisplayName("kilo-acp")).toBe("Kilo");
-        expect(getRuntimeDisplayName("grok-acp")).toBe("Grok");
-        expect(getRuntimeDisplayName("opencode-acp")).toBe("OpenCode");
+        expect(getRuntimeDisplayName("codex-acp", "Codex ACP")).toBe("Codex");
+        expect(getRuntimeDisplayName("claude-acp")).toBe("Claude");
+        expect(getRuntimeDisplayName("grok-acp")).toBe("grok-acp");
         expect(getRuntimeDisplayName(undefined, undefined)).toBe("Assistant");
     });
 });

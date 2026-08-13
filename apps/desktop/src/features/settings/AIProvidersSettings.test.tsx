@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderComponent } from "../../test/test-utils";
 import type {
@@ -7,11 +7,11 @@ import type {
     AIRuntimeSetupStatus,
 } from "../ai/types";
 import { AIProvidersSettings } from "./AIProvidersSettings";
-import { createSettingsSearchQuery } from "./settingsSearch";
 
 const apiMocks = vi.hoisted(() => ({
     aiGetEnvironmentDiagnostics: vi.fn(),
     aiGetSetupStatus: vi.fn(),
+    aiGetRuntimeInstallStatus: vi.fn(),
     aiListRuntimes: vi.fn(),
     aiListCustomRuntimes: vi.fn(),
     aiListDeletedCustomRuntimes: vi.fn(),
@@ -22,6 +22,7 @@ const apiMocks = vi.hoisted(() => ({
     aiVerifyCustomRuntime: vi.fn(),
     aiLogout: vi.fn(),
     aiStartAuth: vi.fn(),
+    aiStartRuntimeInstall: vi.fn(),
     aiUpdateSetup: vi.fn(),
     aiStartAuthTerminalSession: vi.fn(),
     aiCloseAuthTerminalSession: vi.fn(async () => undefined),
@@ -149,28 +150,6 @@ function createDefaultProviders() {
     };
 
     return { descriptors, statuses };
-}
-
-function addOpenCodeProvider(
-    providers: ReturnType<typeof createDefaultProviders>,
-    statusOverrides: Partial<AIRuntimeSetupStatus> = {},
-) {
-    providers.descriptors.push(
-        createRuntimeDescriptor("opencode-acp", "OpenCode ACP"),
-    );
-    providers.statuses["opencode-acp"] = createSetupStatus({
-        runtimeId: "opencode-acp",
-        binarySource: "env",
-        authMethods: [
-            {
-                id: "opencode-login",
-                name: "OpenCode auth",
-                description:
-                    "Use providers and credentials configured by the OpenCode CLI.",
-            },
-        ],
-        ...statusOverrides,
-    });
 }
 
 function addGrokProvider(
@@ -660,93 +639,31 @@ describe("AIProvidersSettings", () => {
         );
     });
 
-    it("submits Kilo API keys without opening terminal auth", async () => {
+    it("does not expose legacy agent types returned by an older backend", async () => {
         const providers = createDefaultProviders();
         providers.descriptors.push(
             createRuntimeDescriptor("kilo-acp", "Kilo ACP"),
+            createRuntimeDescriptor("opencode-acp", "OpenCode ACP"),
         );
         providers.statuses["kilo-acp"] = createSetupStatus({
             runtimeId: "kilo-acp",
-            binarySource: "env",
-            authMethods: [
-                {
-                    id: "kilo-login",
-                    name: "Kilo login",
-                    description: "Open a terminal-based Kilo login flow.",
-                },
-                {
-                    id: "kilo-api-key",
-                    name: "Kilo API key",
-                    description: "Use a Kilo API key stored only for BifrostWrite.",
-                },
-            ],
         });
-        mockProviders(providers);
-
-        renderComponent(<AIProvidersSettings />);
-
-        await openProvider("Kilo");
-        fireEvent.click(getButtonFromText("Kilo API key"));
-        fireEvent.change(screen.getByPlaceholderText("Kilo API key"), {
-            target: { value: "kilo-secret" },
+        providers.statuses["opencode-acp"] = createSetupStatus({
+            runtimeId: "opencode-acp",
         });
-        fireEvent.click(
-            screen.getByRole("button", { name: "Save and connect" }),
-        );
-
-        await waitFor(() => {
-            expect(apiMocks.aiUpdateSetup).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    runtimeId: "kilo-acp",
-                    kiloApiKey: {
-                        action: "set",
-                        value: "kilo-secret",
-                    },
-                }),
-            );
-        });
-        expect(apiMocks.aiStartAuth).toHaveBeenCalledWith(
-            { methodId: "kilo-api-key", runtimeId: "kilo-acp" },
-            null,
-        );
-        expect(apiMocks.aiStartAuthTerminalSession).not.toHaveBeenCalled();
-    });
-
-    it("submits Grok xAI API keys without opening terminal auth", async () => {
-        const providers = createDefaultProviders();
         addGrokProvider(providers);
         mockProviders(providers);
 
         renderComponent(<AIProvidersSettings />);
 
-        await openProvider("Grok");
-        fireEvent.click(getButtonFromText("xAI API key"));
-        fireEvent.change(screen.getByPlaceholderText("xAI API key"), {
-            target: { value: "xai-secret" },
-        });
-        fireEvent.click(
-            screen.getByRole("button", { name: "Save and connect" }),
-        );
-
-        await waitFor(() => {
-            expect(apiMocks.aiUpdateSetup).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    runtimeId: "grok-acp",
-                    xaiApiKey: {
-                        action: "set",
-                        value: "xai-secret",
-                    },
-                }),
-            );
-        });
-        expect(apiMocks.aiStartAuth).toHaveBeenCalledWith(
-            { methodId: "xai-api-key", runtimeId: "grok-acp" },
-            null,
-        );
-        expect(apiMocks.aiStartAuthTerminalSession).not.toHaveBeenCalled();
+        expect(await screen.findByText("Codex")).toBeInTheDocument();
+        expect(screen.getAllByText("Claude").length).toBeGreaterThan(0);
+        expect(screen.queryByText("Kilo")).not.toBeInTheDocument();
+        expect(screen.queryByText("Grok")).not.toBeInTheDocument();
+        expect(screen.queryByText("OpenCode")).not.toBeInTheDocument();
     });
 
-    it("expands a provider row even when setup status failed to load", async () => {
+    it("shows retry when a supported runtime setup check fails", async () => {
         const providers = createDefaultProviders();
         apiMocks.aiListRuntimes.mockResolvedValue(providers.descriptors);
         apiMocks.aiGetSetupStatus.mockImplementation(
@@ -759,8 +676,6 @@ describe("AIProvidersSettings", () => {
 
         renderComponent(<AIProvidersSettings />);
 
-        await openProvider("Claude");
-
         expect(
             await screen.findByText("Native backend is unavailable."),
         ).toBeInTheDocument();
@@ -769,321 +684,37 @@ describe("AIProvidersSettings", () => {
         ).toBeInTheDocument();
     });
 
-    it("opens integrated terminal auth for Kilo providers", async () => {
+    it("installs a missing Codex runtime on demand", async () => {
         const providers = createDefaultProviders();
-        providers.descriptors.push(
-            createRuntimeDescriptor("kilo-acp", "Kilo ACP"),
-        );
-        providers.statuses["kilo-acp"] = createSetupStatus({
-            runtimeId: "kilo-acp",
-            binarySource: "env",
-            authMethods: [
-                {
-                    id: "kilo-login",
-                    name: "Kilo login",
-                    description: "Open a terminal-based Kilo login flow.",
-                },
-            ],
+        providers.statuses["codex-acp"] = createSetupStatus({
+            runtimeId: "codex-acp",
+            binaryReady: false,
+            binaryPath: undefined,
+            binarySource: "missing",
         });
         mockProviders(providers);
-
-        renderComponent(<AIProvidersSettings />);
-
-        await openProvider("Kilo");
-        fireEvent.click(
-            screen.getByRole("button", { name: "Open sign-in terminal" }),
-        );
-
-        await waitFor(() => {
-            expect(apiMocks.aiStartAuthTerminalSession).toHaveBeenCalledWith({
-                runtimeId: "kilo-acp",
-                methodId: "kilo-login",
-                vaultPath: null,
-                customBinaryPath: undefined,
-            });
-        });
-    });
-
-    it("opens integrated terminal auth for Grok providers", async () => {
-        const providers = createDefaultProviders();
-        addGrokProvider(providers);
-        mockProviders(providers);
-
-        renderComponent(<AIProvidersSettings />);
-
-        await openProvider("Grok");
-        fireEvent.click(
-            screen.getByRole("button", { name: "Open sign-in terminal" }),
-        );
-
-        await waitFor(() => {
-            expect(apiMocks.aiStartAuthTerminalSession).toHaveBeenCalledWith({
-                runtimeId: "grok-acp",
-                methodId: "grok-login",
-                vaultPath: null,
-                customBinaryPath: undefined,
-            });
-        });
-    });
-
-    it("preflights a Grok custom binary path before opening terminal auth", async () => {
-        const providers = createDefaultProviders();
-        addGrokProvider(providers);
-        mockProviders(providers);
-
-        renderComponent(<AIProvidersSettings />);
-
-        await openProvider("Grok");
-        fireEvent.change(screen.getByLabelText("Runtime binary"), {
-            target: { value: "/Users/jfg/.grok/bin/grok" },
-        });
-        fireEvent.click(
-            screen.getByRole("button", { name: "Open sign-in terminal" }),
-        );
-
-        await waitFor(() => {
-            expect(apiMocks.aiUpdateSetup).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    runtimeId: "grok-acp",
-                    customBinaryPath: "/Users/jfg/.grok/bin/grok",
-                    xaiApiKey: { action: "unchanged" },
-                    kiloApiKey: { action: "unchanged" },
-                    anthropicApiKey: { action: "unchanged" },
-                }),
-            );
-            expect(apiMocks.aiStartAuthTerminalSession).toHaveBeenCalledWith({
-                runtimeId: "grok-acp",
-                methodId: "grok-login",
-                vaultPath: null,
-                customBinaryPath: "/Users/jfg/.grok/bin/grok",
-            });
-        });
-
-        expect(
-            apiMocks.aiUpdateSetup.mock.invocationCallOrder[0],
-        ).toBeLessThan(
-            apiMocks.aiStartAuthTerminalSession.mock.invocationCallOrder[0],
-        );
-    });
-
-    it("finds Grok providers by xAI runtime setup search values", async () => {
-        mockProviders(createDefaultProviders());
-
-        renderComponent(
-            <AIProvidersSettings
-                searchQuery={createSettingsSearchQuery(
-                    "BIFROSTWRITE_GROK_ACP_BIN",
-                )}
-            />,
-        );
-
-        expect((await screen.findAllByText("Grok")).length).toBeGreaterThan(0);
-        expect(screen.queryByText("OpenCode")).not.toBeInTheDocument();
-    });
-
-    it("lists OpenCode in the provider catalog before it is installed", async () => {
-        renderComponent(<AIProvidersSettings />);
-
-        expect((await screen.findAllByText("OpenCode")).length).toBeGreaterThan(
-            0,
-        );
-    });
-
-    it("opens integrated terminal auth for OpenCode without treating it as an API key", async () => {
-        const providers = createDefaultProviders();
-        addOpenCodeProvider(providers);
-        mockProviders(providers);
-
-        renderComponent(<AIProvidersSettings />);
-
-        await openProvider("OpenCode");
-
-        expect(screen.getByText("OpenCode auth")).toBeInTheDocument();
-        expect(
-            screen.getByText(
-                "Use providers and credentials configured by the OpenCode CLI.",
-            ),
-        ).toBeInTheDocument();
-        expect(screen.queryByPlaceholderText("API key")).not.toBeInTheDocument();
-
-        fireEvent.click(
-            screen.getByRole("button", { name: "Open sign-in terminal" }),
-        );
-
-        await waitFor(() => {
-            expect(apiMocks.aiStartAuthTerminalSession).toHaveBeenCalledWith({
-                runtimeId: "opencode-acp",
-                methodId: "opencode-login",
-                vaultPath: null,
-                customBinaryPath: undefined,
-            });
-        });
-        expect(apiMocks.aiStartAuth).not.toHaveBeenCalledWith(
-            { methodId: "opencode-login", runtimeId: "opencode-acp" },
-            null,
-        );
-    });
-
-    it("preflights an OpenCode custom binary path before opening terminal auth", async () => {
-        const providers = createDefaultProviders();
-        addOpenCodeProvider(providers);
-        mockProviders(providers);
-
-        renderComponent(<AIProvidersSettings />);
-
-        await openProvider("OpenCode");
-        fireEvent.change(screen.getByLabelText("Runtime binary"), {
-            target: { value: "/usr/local/bin/opencode" },
-        });
-        fireEvent.click(
-            screen.getByRole("button", { name: "Open sign-in terminal" }),
-        );
-
-        await waitFor(() => {
-            expect(apiMocks.aiUpdateSetup).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    runtimeId: "opencode-acp",
-                    customBinaryPath: "/usr/local/bin/opencode",
-                    codexApiKey: { action: "unchanged" },
-                    openaiApiKey: { action: "unchanged" },
-                    kiloApiKey: { action: "unchanged" },
-                    anthropicApiKey: { action: "unchanged" },
-                }),
-            );
-            expect(apiMocks.aiStartAuthTerminalSession).toHaveBeenCalledWith({
-                runtimeId: "opencode-acp",
-                methodId: "opencode-login",
-                vaultPath: null,
-                customBinaryPath: "/usr/local/bin/opencode",
-            });
-        });
-
-        expect(
-            apiMocks.aiUpdateSetup.mock.invocationCallOrder[0],
-        ).toBeLessThan(
-            apiMocks.aiStartAuthTerminalSession.mock.invocationCallOrder[0],
-        );
-    });
-
-    it("labels connected OpenCode auth as a local disconnect action", async () => {
-        const providers = createDefaultProviders();
-        addOpenCodeProvider(providers, {
-            authReady: true,
-            authMethod: "opencode-login",
-            onboardingRequired: false,
-        });
-        mockProviders(providers);
-
-        renderComponent(<AIProvidersSettings />);
-
-        await openProvider("OpenCode");
-        fireEvent.click(screen.getByRole("button", { name: "Disconnect" }));
-
-        await waitFor(() => {
-            expect(apiMocks.aiLogout).toHaveBeenCalledWith({
-                runtimeId: "opencode-acp",
-                vaultPath: null,
-            });
-        });
-    });
-
-    it("manages custom ACP definitions without exposing provider authentication", async () => {
-        apiMocks.aiCreateCustomRuntime.mockResolvedValue({
-            id: "custom:123e4567-e89b-12d3-a456-426614174000",
-            revision: 1,
-            launchFingerprint: "a".repeat(64),
-            displayName: "Local reviewer",
-            command: "local-acp",
-            args: ["--stdio", "--safe"],
-            env: { LOG_LEVEL: "debug" },
-            authMode: "external",
+        apiMocks.aiStartRuntimeInstall.mockResolvedValue({
+            runtimeId: "codex-acp",
+            state: "installed",
+            binaryPath: "/managed/codex-acp/dist/index.js",
         });
 
         renderComponent(<AIProvidersSettings />);
 
-        expect(await screen.findByText("Custom ACP runtimes")).toBeInTheDocument();
+        const codexLabels = await screen.findAllByText("Codex");
+        const catalogRow = codexLabels.at(-1)?.parentElement?.parentElement;
+        expect(catalogRow).not.toBeNull();
         fireEvent.click(
-            screen.getAllByRole("button", { name: "Add runtime" }).at(-1)!,
+            within(catalogRow as HTMLElement).getByRole("button", {
+                name: "Install",
+            }),
         );
-        fireEvent.change(screen.getByLabelText("Runtime name"), {
-            target: { value: "Local reviewer" },
-        });
-        fireEvent.change(screen.getByLabelText("Command"), {
-            target: { value: "local-acp" },
-        });
-        fireEvent.change(screen.getByLabelText("Arguments"), {
-            target: { value: "--stdio\n--safe" },
-        });
-        fireEvent.change(screen.getByLabelText("Environment"), {
-            target: { value: "LOG_LEVEL=debug" },
-        });
 
-        fireEvent.click(
-            screen.getByRole("button", { name: "Verify executable" }),
-        );
         await waitFor(() => {
-            expect(apiMocks.aiVerifyCustomRuntime).toHaveBeenCalledWith({
-                displayName: "Local reviewer",
-                command: "local-acp",
-                args: ["--stdio", "--safe"],
-                env: { LOG_LEVEL: "debug" },
-                authMode: "external",
-            });
-        });
-        expect(screen.getByText("Executable is ready.")).toBeInTheDocument();
-
-        fireEvent.click(
-            screen.getAllByRole("button", { name: "Add runtime" }).at(-1)!,
-        );
-        await waitFor(() => {
-            expect(apiMocks.aiCreateCustomRuntime).toHaveBeenCalledWith({
-                displayName: "Local reviewer",
-                command: "local-acp",
-                args: ["--stdio", "--safe"],
-                env: { LOG_LEVEL: "debug" },
-                authMode: "external",
-            });
-        });
-        expect(
-            screen.queryByRole("button", { name: /sign-in terminal|log out/i }),
-        ).not.toBeInTheDocument();
-    });
-
-    it("keeps deleted custom definitions out of active settings and restores their stable ID", async () => {
-        const deletedDefinition = {
-            id: "custom:123e4567-e89b-12d3-a456-426614174001",
-            revision: 2,
-            launchFingerprint: "b".repeat(64),
-            displayName: "Archived reviewer",
-            command: "archived-acp",
-            args: ["--stdio"],
-            env: {},
-            authMode: "external" as const,
-        };
-        apiMocks.aiListDeletedCustomRuntimes.mockResolvedValue([
-            deletedDefinition,
-        ]);
-        apiMocks.aiRestoreCustomRuntime.mockResolvedValue(deletedDefinition);
-
-        renderComponent(
-            <AIProvidersSettings
-                searchQuery={createSettingsSearchQuery("archived-acp")}
-            />,
-        );
-
-        expect(
-            await screen.findByText(
-                "Deleted definitions retained for history",
-            ),
-        ).toBeInTheDocument();
-        expect(screen.getByText("Archived reviewer")).toBeInTheDocument();
-        expect(screen.queryByText("archived-acp")).not.toBeInTheDocument();
-
-        fireEvent.click(screen.getByRole("button", { name: "Restore" }));
-        await waitFor(() => {
-            expect(apiMocks.aiRestoreCustomRuntime).toHaveBeenCalledWith(
-                deletedDefinition.id,
+            expect(apiMocks.aiStartRuntimeInstall).toHaveBeenCalledWith(
+                "codex-acp",
             );
         });
+        expect(apiMocks.aiGetRuntimeInstallStatus).not.toHaveBeenCalled();
     });
 });

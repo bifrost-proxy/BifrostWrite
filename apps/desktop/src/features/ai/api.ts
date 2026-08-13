@@ -34,6 +34,7 @@ import type {
     AIToolActivityPayload,
     AIUserInputRequestPayload,
     AIRuntimeDescriptor,
+    AIRuntimeInstallStatus,
     AIRuntimeConnectionPayload,
     AIRuntimeSetupStatus,
     AISecretPatch,
@@ -62,8 +63,7 @@ export const AI_STATUS_EVENT = "ai://status-event";
 export const AI_IMAGE_GENERATION_EVENT = "ai://image-generation";
 export const AI_PERMISSION_REQUEST_EVENT = "ai://permission-request";
 export const AI_USER_INPUT_REQUEST_EVENT = "ai://user-input-request";
-export const AI_URL_ELICITATION_REQUEST_EVENT =
-    "ai://url-elicitation-request";
+export const AI_URL_ELICITATION_REQUEST_EVENT = "ai://url-elicitation-request";
 export const AI_PLAN_UPDATED_EVENT = "ai://plan-updated";
 export const AI_AVAILABLE_COMMANDS_UPDATED_EVENT =
     "ai://available-commands-updated";
@@ -73,14 +73,10 @@ export const AI_AUTH_TERMINAL_STARTED_EVENT = "ai://auth-terminal-started";
 export const AI_AUTH_TERMINAL_OUTPUT_EVENT = "ai://auth-terminal-output";
 export const AI_AUTH_TERMINAL_EXITED_EVENT = "ai://auth-terminal-exited";
 export const AI_AUTH_TERMINAL_ERROR_EVENT = "ai://auth-terminal-error";
-export const AI_HISTORY_STORAGE_CHANGED_EVENT =
-    "ai_history_storage_changed";
+export const AI_HISTORY_STORAGE_CHANGED_EVENT = "ai_history_storage_changed";
 
 export type AIStorageScope = "device" | "vault";
-export type AIHistoryRecoveryRootId =
-    | "device"
-    | "vault"
-    | "previous_device";
+export type AIHistoryRecoveryRootId = "device" | "vault" | "previous_device";
 
 export interface AIHistoryRecoveryDetails {
     reason: string;
@@ -115,11 +111,11 @@ export type AIHistoryStorageStatus =
           generation: number;
           status: "ready";
           scope: AIStorageScope;
-    orphanedDeviceHistories: Array<{
-        vaultKey: string;
-        previousVaultPath: string;
-    }>;
-}
+          orphanedDeviceHistories: Array<{
+              vaultKey: string;
+              previousVaultPath: string;
+          }>;
+      }
     | {
           vaultKey: string;
           generation: number;
@@ -440,7 +436,9 @@ export async function aiVerifyCustomRuntime(
 ) {
     return invoke<AICustomAcpExecutableVerification>(
         "ai_verify_custom_runtime",
-        { input: definition },
+        {
+            input: definition,
+        },
     );
 }
 
@@ -462,6 +460,40 @@ export async function aiGetSetupStatus(runtimeId: string) {
         },
     );
     return normalizeRuntimeSetupStatus(status);
+}
+
+function normalizeRuntimeInstallStatus(payload: {
+    runtime_id: string;
+    state: AIRuntimeInstallStatus["state"];
+    message?: string | null;
+    binary_path?: string | null;
+}): AIRuntimeInstallStatus {
+    return {
+        runtimeId: payload.runtime_id,
+        state: payload.state,
+        message: payload.message ?? undefined,
+        binaryPath: payload.binary_path ?? undefined,
+    };
+}
+
+export async function aiGetRuntimeInstallStatus(runtimeId: string) {
+    const status = await invoke<{
+        runtime_id: string;
+        state: AIRuntimeInstallStatus["state"];
+        message?: string | null;
+        binary_path?: string | null;
+    }>("ai_get_runtime_install_status", { runtimeId });
+    return normalizeRuntimeInstallStatus(status);
+}
+
+export async function aiStartRuntimeInstall(runtimeId: string) {
+    const status = await invoke<{
+        runtime_id: string;
+        state: AIRuntimeInstallStatus["state"];
+        message?: string | null;
+        binary_path?: string | null;
+    }>("ai_start_runtime_install", { runtimeId });
+    return normalizeRuntimeInstallStatus(status);
 }
 
 export async function aiGetEnvironmentDiagnostics() {
@@ -526,7 +558,9 @@ export async function aiUpdateSetup(input: {
                     input.anthropicBedrockBaseUrl ?? null,
                 anthropic_custom_headers: input.anthropicCustomHeaders,
                 anthropic_auth_token: input.anthropicAuthToken,
-                anthropic_api_key: input.anthropicApiKey ?? { action: "unchanged" },
+                anthropic_api_key: input.anthropicApiKey ?? {
+                    action: "unchanged",
+                },
             },
             runtimeId: input.runtimeId,
         },
@@ -1029,7 +1063,11 @@ export async function reconcileAiHistoryStorage(
 ): Promise<AIHistoryStorageChangeResult> {
     return invoke<AIHistoryStorageChangeResult>(
         "reconcile_ai_history_storage",
-        { vaultPath, targetScope, sourceVaultKey },
+        {
+            vaultPath,
+            targetScope,
+            sourceVaultKey,
+        },
     );
 }
 

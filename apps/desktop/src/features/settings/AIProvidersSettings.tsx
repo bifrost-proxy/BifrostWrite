@@ -4,9 +4,11 @@ import { openUrl } from "@bifrostwrite/runtime";
 import { useVaultStore } from "../../app/store/vaultStore";
 import {
     aiGetEnvironmentDiagnostics,
+    aiGetRuntimeInstallStatus,
     aiGetSetupStatus,
     aiListRuntimes,
     aiLogout,
+    aiStartRuntimeInstall,
     aiStartAuth,
     aiUpdateSetup,
 } from "../ai/api";
@@ -28,7 +30,6 @@ import {
 import { checkClaudeCodeInstalled } from "../terminal/claudeCodeTerminal";
 import { useChatStore } from "../ai/store/chatStore";
 import { getClaudeGatewayUrlValidationMessage } from "../ai/utils/claudeGatewayUrl";
-import { CustomAcpRuntimesSettings } from "./CustomAcpRuntimesSettings";
 import {
     EMPTY_SEARCH_QUERY,
     matchesSettingsSearch,
@@ -48,6 +49,7 @@ import type {
 const OPENCODE_RUNTIME_ID = "opencode-acp";
 const OPENCODE_AUTH_METHOD_ID = "opencode-login";
 const GROK_RUNTIME_ID = "grok-acp";
+const CODEX_RUNTIME_ID = "codex-acp";
 const CLAUDE_ACP_RUNTIME_ID = "claude-acp";
 const GOOGLE_VERTEX_METHOD_ID = "google-vertex";
 const GOOGLE_VERTEX_METHOD = {
@@ -262,27 +264,21 @@ function setSecretPatch(value: string): AISecretPatch {
 }
 
 function supportsRuntimeBinaryOverride(runtimeId: string): boolean {
-    return runtimeId === OPENCODE_RUNTIME_ID || runtimeId === GROK_RUNTIME_ID;
+    return (
+        runtimeId === CODEX_RUNTIME_ID || runtimeId === CLAUDE_ACP_RUNTIME_ID
+    );
 }
 
 function getRuntimeBinaryPlaceholder(runtimeId: string): string {
-    if (runtimeId === OPENCODE_RUNTIME_ID) {
-        return "Custom OpenCode runtime path, for example opencode";
-    }
-    if (runtimeId === GROK_RUNTIME_ID) {
-        return "Custom Grok runtime path, for example grok";
-    }
+    if (runtimeId === CODEX_RUNTIME_ID)
+        return "Custom Codex ACP path, for example codex-acp";
+    if (runtimeId === CLAUDE_ACP_RUNTIME_ID)
+        return "Custom Claude ACP path, for example claude-agent-acp";
     return "Custom runtime path";
 }
 
-function getRuntimeBinaryHelpText(runtimeId: string): string {
-    if (runtimeId === OPENCODE_RUNTIME_ID) {
-        return "Leave empty to use opencode from PATH.";
-    }
-    if (runtimeId === GROK_RUNTIME_ID) {
-        return "Leave empty to use grok from PATH.";
-    }
-    return "Leave empty to use the bundled runtime or PATH.";
+function getRuntimeBinaryHelpText(_runtimeId: string): string {
+    return "Leave empty to reuse a compatible runtime from PATH or the on-demand installation.";
 }
 
 function getInitialCustomBinaryPath(status: AIRuntimeSetupStatus): string {
@@ -524,7 +520,8 @@ function DiagnosticsRuntimeCard({
             )}
 
             <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
-                {translate("Source:")} {setupStatus?.binarySource ?? translate("unknown")}
+                {translate("Source:")}{" "}
+                {setupStatus?.binarySource ?? translate("unknown")}
                 {setupStatus?.authMethod
                     ? translate(`  •  Auth: ${setupStatus.authMethod}`)
                     : ""}
@@ -677,12 +674,14 @@ function ProviderExpandedPanel({
                     ? gatewayUrl || undefined
                     : undefined
                 : undefined,
-            anthropicCustomHeaders: gatewaySelected || vertexSelected
-                ? setOptionalSecretPatch(gatewayHeaders)
-                : unchangedSecretPatch,
-            anthropicAuthToken: gatewaySelected && !bedrockGatewaySelected
-                ? setOptionalSecretPatch(gatewayToken)
-                : unchangedSecretPatch,
+            anthropicCustomHeaders:
+                gatewaySelected || vertexSelected
+                    ? setOptionalSecretPatch(gatewayHeaders)
+                    : unchangedSecretPatch,
+            anthropicAuthToken:
+                gatewaySelected && !bedrockGatewaySelected
+                    ? setOptionalSecretPatch(gatewayToken)
+                    : unchangedSecretPatch,
         });
     };
 
@@ -807,7 +806,9 @@ function ProviderExpandedPanel({
                     <textarea
                         value={gatewayHeaders}
                         onChange={(e) => setGatewayHeaders(e.target.value)}
-                        placeholder={translate("Headers, one per line\nx-api-key: secret")}
+                        placeholder={translate(
+                            "Headers, one per line\nx-api-key: secret",
+                        )}
                         style={{
                             ...inputStyle,
                             minHeight: 60,
@@ -830,9 +831,13 @@ function ProviderExpandedPanel({
                             marginTop: -2,
                         }}
                     >
-                        {translate("Use HTTPS for remote gateways. Plain HTTP is only allowed for localhost.")}
+                        {translate(
+                            "Use HTTPS for remote gateways. Plain HTTP is only allowed for localhost.",
+                        )}
                         {bedrockGatewaySelected
-                            ? translate(" Bedrock gateways use the configured headers and do not require an Anthropic auth token.")
+                            ? translate(
+                                  " Bedrock gateways use the configured headers and do not require an Anthropic auth token.",
+                              )
                             : ""}
                     </div>
                     {gatewayUrlError && (
@@ -911,7 +916,9 @@ function ProviderExpandedPanel({
                             onChange={(event) =>
                                 setVertexEndpoint(event.target.value)
                             }
-                            placeholder={translate("https://vertex.example.com")}
+                            placeholder={translate(
+                                "https://vertex.example.com",
+                            )}
                             style={inputStyle}
                         />
                     </div>
@@ -994,9 +1001,9 @@ function ProviderExpandedPanel({
                             onChange={(event) =>
                                 setGatewayHeaders(event.target.value)
                             }
-                            placeholder={
-                                translate("Headers, one per line\nx-api-key: secret")
-                            }
+                            placeholder={translate(
+                                "Headers, one per line\nx-api-key: secret",
+                            )}
                             style={{
                                 ...inputStyle,
                                 minHeight: 60,
@@ -1010,7 +1017,9 @@ function ProviderExpandedPanel({
                             color: "var(--text-secondary)",
                         }}
                     >
-                        {translate("Authentication is provided by Google Application Default Credentials.")}
+                        {translate(
+                            "Authentication is provided by Google Application Default Credentials.",
+                        )}
                     </div>
                     <div
                         style={{
@@ -1018,7 +1027,9 @@ function ProviderExpandedPanel({
                             color: "var(--text-secondary)",
                         }}
                     >
-                        {translate("Changes apply to new or reopened sessions. Active chats keep their current provider configuration.")}
+                        {translate(
+                            "Changes apply to new or reopened sessions. Active chats keep their current provider configuration.",
+                        )}
                     </div>
                     {(vertexEndpointError ||
                         vertexProjectIdError ||
@@ -1212,7 +1223,9 @@ function ProviderSetupUnavailablePanel({
                 {loading
                     ? translate("Loading provider setup…")
                     : (error ??
-                      translate("Provider setup status is not available yet. Check diagnostics or retry loading this provider."))}
+                      translate(
+                          "Provider setup status is not available yet. Check diagnostics or retry loading this provider.",
+                      ))}
             </div>
             {!loading && (
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -1248,9 +1261,7 @@ export function AIProvidersSettings({
     const vaultPath = useVaultStore((s) => s.vaultPath);
     const defaultRuntimeId = useChatStore((s) => s.defaultRuntimeId);
     const setDefaultRuntime = useChatStore((s) => s.setDefaultRuntime);
-    const refreshRuntimeCatalog = useChatStore(
-        (s) => s.refreshRuntimeCatalog,
-    );
+    const refreshRuntimeCatalog = useChatStore((s) => s.refreshRuntimeCatalog);
     const [runtimes, setRuntimes] = useState<AIRuntimeDescriptor[]>([]);
     const [setupStatusMap, setSetupStatusMap] = useState<
         Record<string, AIRuntimeSetupStatus>
@@ -1267,6 +1278,9 @@ export function AIProvidersSettings({
     );
     const [diagnosticsLoading, setDiagnosticsLoading] = useState(false);
     const [catalogVersion, setCatalogVersion] = useState(0);
+    const [installingRuntimeIds, setInstallingRuntimeIds] = useState<
+        Set<string>
+    >(new Set());
     const [authTerminalRequest, setAuthTerminalRequest] = useState<{
         runtimeId: string;
         methodId: string;
@@ -1373,6 +1387,59 @@ export function AIProvidersSettings({
     }, [catalogVersion]);
 
     /* ── Handlers ── */
+
+    const handleInstallRuntime = useCallback(
+        async (runtimeId: string) => {
+            setInstallingRuntimeIds((current) => {
+                const next = new Set(current);
+                next.add(runtimeId);
+                return next;
+            });
+            setErrorMap((current) => {
+                const next = { ...current };
+                delete next[runtimeId];
+                return next;
+            });
+            try {
+                let install = await aiStartRuntimeInstall(runtimeId);
+                const deadline = Date.now() + 30 * 60 * 1_000;
+                while (
+                    install.state === "installing" &&
+                    Date.now() < deadline
+                ) {
+                    await new Promise((resolve) => setTimeout(resolve, 1_000));
+                    install = await aiGetRuntimeInstallStatus(runtimeId);
+                }
+                if (install.state === "failed") {
+                    throw new Error(
+                        install.message ??
+                            "Failed to install the agent runtime.",
+                    );
+                }
+                if (install.state !== "installed") {
+                    throw new Error("Agent runtime installation timed out.");
+                }
+                await refreshRuntime(runtimeId);
+                await refreshRuntimeCatalog();
+                setCatalogVersion((version) => version + 1);
+            } catch (error) {
+                setErrorMap((current) => ({
+                    ...current,
+                    [runtimeId]: getErrorMessage(
+                        error,
+                        "Failed to install the agent runtime.",
+                    ),
+                }));
+            } finally {
+                setInstallingRuntimeIds((current) => {
+                    const next = new Set(current);
+                    next.delete(runtimeId);
+                    return next;
+                });
+            }
+        },
+        [refreshRuntime, refreshRuntimeCatalog],
+    );
 
     const handleAuth = useCallback(
         async (input: ProviderAuthInput) => {
@@ -1539,50 +1606,48 @@ export function AIProvidersSettings({
         [refreshRuntime],
     );
 
-    const handleClearVertex = useCallback(
-        async (runtimeId: string) => {
-            setSavingId(runtimeId);
-            try {
-                const status = await aiUpdateSetup({
-                    runtimeId,
-                    claudeProviderRouting: { type: "default" },
-                    codexApiKey: unchangedSecretPatch,
-                    openaiApiKey: unchangedSecretPatch,
-                    xaiApiKey: unchangedSecretPatch,
-                    gatewayBaseUrl: undefined,
-                    gatewayHeaders: unchangedSecretPatch,
-                    anthropicBaseUrl: undefined,
-                    anthropicBedrockBaseUrl: undefined,
-                    anthropicCustomHeaders: unchangedSecretPatch,
-                    anthropicAuthToken: unchangedSecretPatch,
-                    anthropicApiKey: unchangedSecretPatch,
-                });
-                setSetupStatusMap((prev) => ({ ...prev, [runtimeId]: status }));
-                setErrorMap((prev) => {
-                    const next = { ...prev };
-                    delete next[runtimeId];
-                    return next;
-                });
-            } catch (error) {
-                setErrorMap((prev) => ({
-                    ...prev,
-                    [runtimeId]: getErrorMessage(
-                        error,
-                        "Failed to clear Vertex settings.",
-                    ),
-                }));
-            } finally {
-                setSavingId(null);
-            }
-        },
-        [],
-    );
+    const handleClearVertex = useCallback(async (runtimeId: string) => {
+        setSavingId(runtimeId);
+        try {
+            const status = await aiUpdateSetup({
+                runtimeId,
+                claudeProviderRouting: { type: "default" },
+                codexApiKey: unchangedSecretPatch,
+                openaiApiKey: unchangedSecretPatch,
+                xaiApiKey: unchangedSecretPatch,
+                gatewayBaseUrl: undefined,
+                gatewayHeaders: unchangedSecretPatch,
+                anthropicBaseUrl: undefined,
+                anthropicBedrockBaseUrl: undefined,
+                anthropicCustomHeaders: unchangedSecretPatch,
+                anthropicAuthToken: unchangedSecretPatch,
+                anthropicApiKey: unchangedSecretPatch,
+            });
+            setSetupStatusMap((prev) => ({ ...prev, [runtimeId]: status }));
+            setErrorMap((prev) => {
+                const next = { ...prev };
+                delete next[runtimeId];
+                return next;
+            });
+        } catch (error) {
+            setErrorMap((prev) => ({
+                ...prev,
+                [runtimeId]: getErrorMessage(
+                    error,
+                    "Failed to clear Vertex settings.",
+                ),
+            }));
+        } finally {
+            setSavingId(null);
+        }
+    }, []);
 
     /* ── Derived data ── */
 
     const installedProviders = PROVIDER_CATALOG.flatMap((p) => {
         const hasRuntime = runtimes.some((r) => r.runtime.id === p.id);
-        if (!hasRuntime) return [];
+        const binaryReady = setupStatusMap[p.id]?.binaryReady === true;
+        if (!hasRuntime || !binaryReady) return [];
         return [
             {
                 ...p,
@@ -1668,9 +1733,10 @@ export function AIProvidersSettings({
 
     // Providers available to be set as default and ready to start a session.
     const selectableProviders = runtimes
-        .filter((runtime) =>
-            setupStatusMap[runtime.runtime.id]?.authReady === true &&
-            !setupStatusMap[runtime.runtime.id]?.onboardingRequired,
+        .filter(
+            (runtime) =>
+                setupStatusMap[runtime.runtime.id]?.authReady === true &&
+                !setupStatusMap[runtime.runtime.id]?.onboardingRequired,
         )
         .map((runtime) => ({
             id: runtime.runtime.id,
@@ -1688,11 +1754,6 @@ export function AIProvidersSettings({
             "Claude Code",
             ...selectableProviders.flatMap((p) => [p.name, p.id]),
         );
-
-    const handleCustomCatalogChanged = useCallback(async () => {
-        await refreshRuntimeCatalog();
-        setCatalogVersion((version) => version + 1);
-    }, [refreshRuntimeCatalog]);
 
     return (
         <>
@@ -1733,22 +1794,28 @@ export function AIProvidersSettings({
                                     lineHeight: 1.5,
                                 }}
                             >
-                                {translate("The default agent opens when you start a new chat or use")}{" "}
-                                <strong style={{ color: "var(--text-primary)" }}>
+                                {translate(
+                                    "The default agent opens when you start a new chat or use",
+                                )}{" "}
+                                <strong
+                                    style={{ color: "var(--text-primary)" }}
+                                >
                                     {translate("Add to chat")}
                                 </strong>{" "}
                                 {translate("from the file tree. Select")}{" "}
-                                <strong style={{ color: "var(--text-primary)" }}>
+                                <strong
+                                    style={{ color: "var(--text-primary)" }}
+                                >
                                     {translate("Claude Code")}
                                 </strong>{" "}
-                                {translate("to route notes and files directly into a terminal session — no API key required.")}
+                                {translate(
+                                    "to route notes and files directly into a terminal session — no API key required.",
+                                )}
                             </p>
                             <select
                                 value={defaultRuntimeId ?? ""}
                                 onChange={(e) =>
-                                    setDefaultRuntime(
-                                        e.target.value || null,
-                                    )
+                                    setDefaultRuntime(e.target.value || null)
                                 }
                                 style={{
                                     width: "100%",
@@ -1764,18 +1831,23 @@ export function AIProvidersSettings({
                                 }}
                             >
                                 <option value="">
-                                    {translate("Automatic (current or last used provider)")}
+                                    {translate(
+                                        "Automatic (current or last used provider)",
+                                    )}
                                 </option>
                                 {selectableProviders.map((p) => (
                                     <option key={p.id} value={p.id}>
                                         {p.name}
                                         {p.id === CLAUDE_TERMINAL_RUNTIME_ID
-                                            ? translate(" — terminal (no API key)")
+                                            ? translate(
+                                                  " — terminal (no API key)",
+                                              )
                                             : ""}
                                     </option>
                                 ))}
                             </select>
-                            {defaultRuntimeId === CLAUDE_TERMINAL_RUNTIME_ID && (
+                            {defaultRuntimeId ===
+                                CLAUDE_TERMINAL_RUNTIME_ID && (
                                 <p
                                     style={{
                                         fontSize: 11,
@@ -1784,7 +1856,9 @@ export function AIProvidersSettings({
                                         lineHeight: 1.4,
                                     }}
                                 >
-                                    {translate("Claude Code will open in a new terminal tab. Attached files appear as @mentions in the input — add your question and press Enter.")}
+                                    {translate(
+                                        "Claude Code will open in a new terminal tab. Attached files appear as @mentions in the input — add your question and press Enter.",
+                                    )}
                                 </p>
                             )}
                         </div>
@@ -1992,10 +2066,16 @@ export function AIProvidersSettings({
                                                     {isTerminalRuntime
                                                         ? translate("Ready")
                                                         : vertexConfigured
-                                                          ? translate("Configured")
+                                                          ? translate(
+                                                                "Configured",
+                                                            )
                                                           : connected
-                                                          ? translate("Connected")
-                                                          : translate("Not configured")}
+                                                            ? translate(
+                                                                  "Connected",
+                                                              )
+                                                            : translate(
+                                                                  "Not configured",
+                                                              )}
                                                 </div>
                                             </div>
 
@@ -2011,13 +2091,17 @@ export function AIProvidersSettings({
                                                             "1px solid var(--border)",
                                                     }}
                                                 >
-                                                    {translate("Model, skip permissions, and other Claude Code options are in")}{" "}
+                                                    {translate(
+                                                        "Model, skip permissions, and other Claude Code options are in",
+                                                    )}{" "}
                                                     <strong
                                                         style={{
                                                             color: "var(--text-primary)",
                                                         }}
                                                     >
-                                                        {translate("Settings → Terminal")}
+                                                        {translate(
+                                                            "Settings → Terminal",
+                                                        )}
                                                     </strong>
                                                     .
                                                 </div>
@@ -2026,7 +2110,8 @@ export function AIProvidersSettings({
                                             {/* Expanded content — not shown for terminal runtime */}
                                             {!isTerminalRuntime &&
                                                 isExpanded &&
-                                                provider.id === "claude-acp" && (
+                                                provider.id ===
+                                                    "claude-acp" && (
                                                     <div
                                                         style={{
                                                             padding:
@@ -2043,28 +2128,39 @@ export function AIProvidersSettings({
                                                                 color: "var(--text-primary)",
                                                             }}
                                                         >
-                                                            {translate("Claude subscription")}
+                                                            {translate(
+                                                                "Claude subscription",
+                                                            )}
                                                         </strong>{" "}
-                                                        {translate("authentication only works with")}{" "}
+                                                        {translate(
+                                                            "authentication only works with",
+                                                        )}{" "}
                                                         <strong
                                                             style={{
                                                                 color: "var(--text-primary)",
                                                             }}
                                                         >
-                                                            {translate("Claude Code")}
+                                                            {translate(
+                                                                "Claude Code",
+                                                            )}
                                                         </strong>{" "}
-                                                        {translate("in the terminal. To use this provider, configure an")}{" "}
+                                                        {translate(
+                                                            "in the terminal. To use this provider, configure an",
+                                                        )}{" "}
                                                         <strong
                                                             style={{
                                                                 color: "var(--text-primary)",
                                                             }}
                                                         >
-                                                            {translate("Anthropic API key")}
+                                                            {translate(
+                                                                "Anthropic API key",
+                                                            )}
                                                         </strong>{" "}
                                                         {translate("below.")}
                                                     </div>
                                                 )}
-                                            {!isTerminalRuntime && isExpanded &&
+                                            {!isTerminalRuntime &&
+                                                isExpanded &&
                                                 (provider.setupStatus ? (
                                                     <ProviderExpandedPanel
                                                         setupStatus={
@@ -2112,11 +2208,6 @@ export function AIProvidersSettings({
                     </div>
                 </>
             ) : null}
-
-            <CustomAcpRuntimesSettings
-                searchQuery={searchQuery}
-                onCatalogChanged={handleCustomCatalogChanged}
-            />
 
             {showDiagnosticsSection ? (
                 <>
@@ -2174,7 +2265,10 @@ export function AIProvidersSettings({
                                     }}
                                 >
                                     {translate("Inspect the PATH inherited by")}{" "}
-                                    {APP_BRAND_NAME}{translate(", the PATH injected into runtimes, and which binaries are actually resolvable.")}
+                                    {APP_BRAND_NAME}
+                                    {translate(
+                                        ", the PATH injected into runtimes, and which binaries are actually resolvable.",
+                                    )}
                                 </div>
                             </div>
                             <div
@@ -2221,7 +2315,9 @@ export function AIProvidersSettings({
                                         cursor: "pointer",
                                     }}
                                 >
-                                    {showDiagnostics ? translate("Hide") : translate("Show")}
+                                    {showDiagnostics
+                                        ? translate("Hide")
+                                        : translate("Show")}
                                 </button>
                             </div>
                         </div>
@@ -2261,8 +2357,10 @@ export function AIProvidersSettings({
                                             }
                                         />
                                         <DiagnosticsPathBlock
-                                            label={translate("Injected Runtime PATH")}
-                                            helper={`This is the normalized PATH that ${APP_BRAND_NAME} now injects into Codex, Claude, Grok, Kilo, and OpenCode child processes.`}
+                                            label={translate(
+                                                "Injected Runtime PATH",
+                                            )}
+                                            helper={`This is the normalized PATH that ${APP_BRAND_NAME} injects into Codex and Claude child processes.`}
                                             entries={
                                                 diagnostics.preferredEntries
                                             }
@@ -2323,7 +2421,9 @@ export function AIProvidersSettings({
                                                                 }
                                                             >
                                                                 {item.path ??
-                                                                    translate("Not found")}
+                                                                    translate(
+                                                                        "Not found",
+                                                                    )}
                                                             </pre>
                                                         </div>
                                                     ),
@@ -2345,7 +2445,9 @@ export function AIProvidersSettings({
                                                     color: "var(--text-primary)",
                                                 }}
                                             >
-                                                {translate("Runtime launch resolution")}
+                                                {translate(
+                                                    "Runtime launch resolution",
+                                                )}
                                             </div>
                                             <div
                                                 style={{
@@ -2418,8 +2520,11 @@ export function AIProvidersSettings({
                         }}
                     >
                         {filteredProviderCatalog.map((provider, i) => {
-                            const installed = runtimes.some(
-                                (r) => r.runtime.id === provider.id,
+                            const installed =
+                                setupStatusMap[provider.id]?.binaryReady ===
+                                true;
+                            const installing = installingRuntimeIds.has(
+                                provider.id,
                             );
                             return (
                                 <Fragment key={provider.id}>
@@ -2467,6 +2572,32 @@ export function AIProvidersSettings({
                                             >
                                                 {provider.company}
                                             </span>
+                                            {errorMap[provider.id] &&
+                                                !installed && (
+                                                    <span
+                                                        title={translate(
+                                                            errorMap[
+                                                                provider.id
+                                                            ],
+                                                        )}
+                                                        style={{
+                                                            maxWidth: 360,
+                                                            overflow: "hidden",
+                                                            textOverflow:
+                                                                "ellipsis",
+                                                            whiteSpace:
+                                                                "nowrap",
+                                                            fontSize: 11,
+                                                            color: "#ef4444",
+                                                        }}
+                                                    >
+                                                        {translate(
+                                                            errorMap[
+                                                                provider.id
+                                                            ],
+                                                        )}
+                                                    </span>
+                                                )}
                                         </div>
                                         {runtimeInventoryPending ? (
                                             <span
@@ -2499,8 +2630,22 @@ export function AIProvidersSettings({
                                                         void openUrl(
                                                             "https://claude.ai/code",
                                                         );
+                                                    } else {
+                                                        void handleInstallRuntime(
+                                                            provider.id,
+                                                        );
                                                     }
                                                 }}
+                                                disabled={installing}
+                                                title={
+                                                    errorMap[provider.id]
+                                                        ? translate(
+                                                              errorMap[
+                                                                  provider.id
+                                                              ],
+                                                          )
+                                                        : undefined
+                                                }
                                                 style={{
                                                     padding: "4px 10px",
                                                     borderRadius: 6,
@@ -2510,10 +2655,19 @@ export function AIProvidersSettings({
                                                     backgroundColor:
                                                         "transparent",
                                                     color: "#34d399",
-                                                    cursor: "pointer",
+                                                    cursor: installing
+                                                        ? "wait"
+                                                        : "pointer",
+                                                    opacity: installing
+                                                        ? 0.65
+                                                        : 1,
                                                 }}
                                             >
-                                                {translate("Install")}
+                                                {installing
+                                                    ? translate("Downloading…")
+                                                    : errorMap[provider.id]
+                                                      ? translate("Retry")
+                                                      : translate("Install")}
                                             </button>
                                         )}
                                     </div>

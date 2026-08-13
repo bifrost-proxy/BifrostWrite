@@ -15,7 +15,8 @@ const RUNTIME_METADATA: RuntimeMetadata[] = [
         id: "codex-acp",
         name: "Codex",
         company: "OpenAI",
-        description: "Codex runtime embedded as an ACP sidecar.",
+        description:
+            "Codex ACP runtime discovered on the system or installed on demand.",
         capabilities: [
             "attachments",
             "permissions",
@@ -31,7 +32,8 @@ const RUNTIME_METADATA: RuntimeMetadata[] = [
         id: "claude-acp",
         name: "Claude",
         company: "Anthropic",
-        description: "Claude runtime exposed through the upstream ACP adapter.",
+        description:
+            "Claude ACP runtime discovered on the system or installed on demand.",
         capabilities: [
             "attachments",
             "permissions",
@@ -42,49 +44,6 @@ const RUNTIME_METADATA: RuntimeMetadata[] = [
             "fork_session",
             "list_sessions",
             "prompt_queueing",
-        ],
-    },
-    {
-        id: "grok-acp",
-        name: "Grok",
-        company: "xAI",
-        description: "Grok CLI running as a native ACP agent.",
-        capabilities: [
-            "attachments",
-            "permissions",
-            "plans",
-            "terminal_output",
-            "create_session",
-        ],
-    },
-    {
-        id: "kilo-acp",
-        name: "Kilo",
-        company: "Kilo Code",
-        description: "Kilo CLI running as a native ACP agent.",
-        capabilities: [
-            "attachments",
-            "permissions",
-            "plans",
-            "terminal_output",
-            "create_session",
-            "fork_session",
-            "list_sessions",
-        ],
-    },
-    {
-        id: "opencode-acp",
-        name: "OpenCode",
-        company: "OpenCode",
-        description: "OpenCode CLI running as a native ACP agent.",
-        capabilities: [
-            "attachments",
-            "permissions",
-            "plans",
-            "terminal_output",
-            "create_session",
-            "prompt_queueing",
-            "user_input",
         ],
     },
 ];

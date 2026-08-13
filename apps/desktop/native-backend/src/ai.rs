@@ -1,10 +1,11 @@
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::process::Command as StdCommand;
 use std::sync::{
     atomic::{AtomicBool, AtomicU64, Ordering},
     mpsc::{self, Sender},
-    Arc, Mutex,
+    Arc, Mutex, OnceLock,
 };
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -57,6 +58,7 @@ use portable_pty::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
 use tokio::io::AsyncReadExt as TokioAsyncReadExt;
 use tokio::{process::Command, runtime::Builder, sync::oneshot};
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
@@ -73,7 +75,26 @@ use crate::{
 
 static SESSION_COUNTER: AtomicU64 = AtomicU64::new(1);
 static ACP_PROCESS_COUNTER: AtomicU64 = AtomicU64::new(1);
+static MANAGED_NODE_INSTALL_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
 const ELECTRON_AI_INTERACTIVE_AUTH_UNAVAILABLE: &str = "Interactive AI authentication is not available in the desktop shell yet. Use an existing CLI login, an environment/API key, or a custom gateway.";
+const AI_RUNTIME_INSTALL_CHANGED_EVENT: &str = "ai_runtime_install_changed";
+const CODEX_ACP_NPM_PACKAGES: &[&str] = &[
+    "@agentclientprotocol/codex-acp@1.2.0",
+    "@openai/codex@0.147.0",
+];
+const CLAUDE_ACP_NPM_PACKAGES: &[&str] = &["@agentclientprotocol/claude-agent-acp@0.66.0"];
+const MANAGED_NODE_VERSION: &str = "22.22.0";
+const MINIMUM_AGENT_NODE_MAJOR_VERSION: u64 = 22;
+const SYSTEM_CODEX_MARKER: &str = ".use-system-codex";
+const CODEX_NO_TELEMETRY_CONFIG: &str = r#"{"analytics":{"enabled":false},"feedback":{"enabled":false},"otel":{"exporter":"none","trace_exporter":"none","metrics_exporter":"none"}}"#;
+const NO_TELEMETRY_ENV: &[(&str, &str)] = &[
+    ("DO_NOT_TRACK", "1"),
+    ("DISABLE_TELEMETRY", "1"),
+    ("DISABLE_ERROR_REPORTING", "1"),
+    ("OTEL_SDK_DISABLED", "true"),
+    ("CLAUDE_CODE_ENABLE_TELEMETRY", "0"),
+    ("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1"),
+];
 const GROK_LOGIN_INVALIDATED_MESSAGE: &str =
     "Grok login looks invalid or expired. Run Grok login again to reconnect.";
 const GROK_STORED_XAI_API_KEY_INVALID_MESSAGE: &str =
@@ -228,6 +249,34 @@ struct AiRuntimeSetupPayload {
     anthropic_auth_token: Option<AiSecretPatch>,
     #[serde(default)]
     anthropic_api_key: Option<AiSecretPatch>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize)]
+#[serde(rename_all = "snake_case")]
+enum RuntimeInstallPhase {
+    Idle,
+    Installing,
+    Installed,
+    Failed,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct RuntimeInstallStatus {
+    runtime_id: String,
+    state: RuntimeInstallPhase,
+    message: Option<String>,
+    binary_path: Option<String>,
+}
+
+impl RuntimeInstallStatus {
+    fn idle(runtime_id: &str) -> Self {
+        Self {
+            runtime_id: runtime_id.to_string(),
+            state: RuntimeInstallPhase::Idle,
+            message: None,
+            binary_path: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -1175,6 +1224,7 @@ pub(crate) struct NativeAi {
     completed_url_elicitations: Arc<Mutex<VecDeque<String>>>,
     auth_terminal_sessions: Arc<Mutex<HashMap<String, AuthTerminalHandle>>>,
     auth_terminal_counter: Arc<AtomicU64>,
+    runtime_installs: Arc<Mutex<HashMap<String, RuntimeInstallStatus>>>,
 }
 
 impl NativeAi {
@@ -1209,6 +1259,7 @@ impl NativeAi {
             completed_url_elicitations: Arc::new(Mutex::new(VecDeque::new())),
             auth_terminal_sessions: Arc::new(Mutex::new(HashMap::new())),
             auth_terminal_counter: Arc::new(AtomicU64::new(1)),
+            runtime_installs: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -1230,11 +1281,7 @@ impl NativeAi {
     }
 
     pub(crate) fn list_runtimes(&self) -> Value {
-        let custom_runtimes = self.custom_runtimes.list().unwrap_or_else(|error| {
-            eprintln!("Failed to load custom ACP runtimes for the runtime catalog: {error}");
-            Vec::new()
-        });
-        json!(runtime_descriptors_with_custom(&custom_runtimes))
+        json!(advertised_runtime_descriptors())
     }
 
     pub(crate) fn list_custom_runtimes(&self) -> Result<Value, String> {
@@ -1290,6 +1337,96 @@ impl NativeAi {
         )?))
     }
 
+    pub(crate) fn get_runtime_install_status(&self, args: &Value) -> Result<Value, String> {
+        let runtime_id = required_runtime_id(args)?;
+        validate_installable_runtime_id(&runtime_id)?;
+        let status = self
+            .runtime_installs
+            .lock()
+            .map_err(|error| format!("Internal runtime install state error: {error}"))?
+            .get(&runtime_id)
+            .cloned()
+            .unwrap_or_else(|| RuntimeInstallStatus::idle(&runtime_id));
+        Ok(json!(status))
+    }
+
+    pub(crate) fn start_runtime_install(&self, args: &Value) -> Result<Value, String> {
+        let runtime_id = required_runtime_id(args)?;
+        validate_installable_runtime_id(&runtime_id)?;
+
+        let setup = self
+            .inner
+            .lock()
+            .map_err(|error| format!("Internal AI state error: {error}"))?
+            .setup
+            .get(&runtime_id)
+            .cloned()
+            .unwrap_or_default();
+        let resolved = resolve_acp_command(&runtime_id, &setup);
+        if resolved.program.is_some() {
+            let status = RuntimeInstallStatus {
+                runtime_id: runtime_id.clone(),
+                state: RuntimeInstallPhase::Installed,
+                message: Some(
+                    "Using an existing compatible runtime; no download was needed.".to_string(),
+                ),
+                binary_path: resolved.display,
+            };
+            self.runtime_installs
+                .lock()
+                .map_err(|error| format!("Internal runtime install state error: {error}"))?
+                .insert(runtime_id, status.clone());
+            return Ok(json!(status));
+        }
+
+        {
+            let mut installs = self
+                .runtime_installs
+                .lock()
+                .map_err(|error| format!("Internal runtime install state error: {error}"))?;
+            if let Some(status) = installs.get(&runtime_id) {
+                if matches!(status.state, RuntimeInstallPhase::Installing) {
+                    return Ok(json!(status));
+                }
+            }
+            installs.insert(
+                runtime_id.clone(),
+                RuntimeInstallStatus {
+                    runtime_id: runtime_id.clone(),
+                    state: RuntimeInstallPhase::Installing,
+                    message: Some("Downloading the compatible agent runtime…".to_string()),
+                    binary_path: None,
+                },
+            );
+        }
+
+        let installs = Arc::clone(&self.runtime_installs);
+        let event_tx = self.event_tx.clone();
+        let install_runtime_id = runtime_id.clone();
+        thread::spawn(move || {
+            let status = match install_managed_runtime(&install_runtime_id) {
+                Ok(binary_path) => RuntimeInstallStatus {
+                    runtime_id: install_runtime_id.clone(),
+                    state: RuntimeInstallPhase::Installed,
+                    message: Some("Agent runtime installed successfully.".to_string()),
+                    binary_path: Some(binary_path.display().to_string()),
+                },
+                Err(message) => RuntimeInstallStatus {
+                    runtime_id: install_runtime_id.clone(),
+                    state: RuntimeInstallPhase::Failed,
+                    message: Some(message),
+                    binary_path: None,
+                },
+            };
+            if let Ok(mut installs) = installs.lock() {
+                installs.insert(install_runtime_id, status.clone());
+            }
+            emit_event(&event_tx, AI_RUNTIME_INSTALL_CHANGED_EVENT, json!(status));
+        });
+
+        self.get_runtime_install_status(&json!({ "runtimeId": runtime_id }))
+    }
+
     pub(crate) fn get_environment_diagnostics(&self) -> Value {
         let inherited_path: Option<String> =
             std::env::var_os("PATH").map(|value| value.to_string_lossy().into_owned());
@@ -1301,6 +1438,13 @@ impl NativeAi {
                     .collect::<Vec<_>>()
             })
             .unwrap_or_default();
+        let preferred_entries = executable_search_path_entries()
+            .into_iter()
+            .map(|path| path.display().to_string())
+            .collect::<Vec<_>>();
+        let preferred_path = std::env::join_paths(preferred_entries.iter().map(PathBuf::from))
+            .ok()
+            .map(|value| value.to_string_lossy().into_owned());
         let executables = diagnostic_executable_names()
             .into_iter()
             .map(|name| {
@@ -1310,9 +1454,8 @@ impl NativeAi {
                 })
             })
             .collect::<Vec<_>>();
-        let custom_runtimes = self.custom_runtimes.list().unwrap_or_default();
-        let runtime_catalog = RUNTIME_CATALOG.with_custom(&custom_runtimes);
-        let runtimes = runtime_descriptors_with_custom(&custom_runtimes)
+        let runtime_catalog = RUNTIME_CATALOG;
+        let runtimes = advertised_runtime_descriptors()
             .into_iter()
             .map(|descriptor| {
                 let runtime_id = descriptor.runtime.id.clone();
@@ -1368,8 +1511,8 @@ impl NativeAi {
         json!({
             "inherited_path": inherited_path,
             "inherited_entries": inherited_entries,
-            "preferred_path": inherited_path,
-            "preferred_entries": inherited_entries,
+            "preferred_path": preferred_path,
+            "preferred_entries": preferred_entries,
             "executables": executables,
             "runtimes": runtimes,
         })
@@ -2513,6 +2656,9 @@ impl NativeAi {
         command.env("COLUMNS", cols.to_string());
         command.env("LINES", rows.to_string());
         for (key, value) in &launch_config.env {
+            command.env(key, value);
+        }
+        for (key, value) in NO_TELEMETRY_ENV {
             command.env(key, value);
         }
 
@@ -4553,8 +4699,13 @@ fn acp_initialize_response_has_auth_method(
 fn apply_acp_process_environment(command: &mut Command, spec: &AcpProcessSpec) {
     if spec.environment_policy == ProcessEnvironmentPolicy::Isolated {
         command.env_clear();
+    } else if let Ok(path) = std::env::join_paths(executable_search_path_entries()) {
+        command.env("PATH", path);
     }
     for (key, value) in &spec.env {
+        command.env(key, value);
+    }
+    for (key, value) in NO_TELEMETRY_ENV {
         command.env(key, value);
     }
     if !matches!(
@@ -7602,12 +7753,9 @@ fn runtime_descriptors() -> Vec<AiRuntimeDescriptor> {
         .collect()
 }
 
-fn runtime_descriptors_with_custom(
-    custom_runtimes: &[neverwrite_ai::custom_runtimes::CustomAcpRuntimeDefinition],
-) -> Vec<AiRuntimeDescriptor> {
+fn advertised_runtime_descriptors() -> Vec<AiRuntimeDescriptor> {
     RUNTIME_CATALOG
-        .with_custom(custom_runtimes)
-        .definitions()
+        .advertised_definitions()
         .map(runtime_descriptor)
         .collect()
 }
@@ -7982,6 +8130,9 @@ fn acp_process_spec(
         .definition(runtime_id)
         .ok_or_else(|| format!("Unsupported AI runtime: {runtime_id}"))?;
     let resolved = resolve_acp_command(runtime_id, setup);
+    let managed_codex_uses_system_cli = runtime_id == CODEX_RUNTIME_ID
+        && matches!(&resolved.source, AiRuntimeBinarySource::Managed)
+        && managed_runtime_uses_system_codex(&managed_runtime_dir(runtime_id));
     let program = resolved.program.ok_or_else(|| {
         format!(
             "No {} runtime binary is configured.",
@@ -8001,6 +8152,14 @@ fn acp_process_spec(
         env.insert("XAI_API_KEY".to_string(), String::new());
     }
     let auth_method = effective_auth_method_for_acp_process_spec(runtime_id, setup);
+    enforce_runtime_privacy_config(runtime_id, &mut env);
+    if managed_codex_uses_system_cli {
+        let codex = find_program_on_path("codex").ok_or_else(|| {
+            "The managed Codex ACP adapter requires the previously discovered system Codex CLI. Reinstall the Codex runtime to repair it."
+                .to_string()
+        })?;
+        env.insert("CODEX_PATH".to_string(), codex.display().to_string());
+    }
     if runtime_id == CLAUDE_RUNTIME_ID
         && matches!(
             &claude_provider_routing,
@@ -8037,6 +8196,20 @@ fn acp_process_spec(
         auth_handshake: acp_auth_handshake_for_runtime(runtime_id),
         claude_provider_routing,
     })
+}
+
+fn enforce_runtime_privacy_config(runtime_id: &str, env: &mut HashMap<String, String>) {
+    if runtime_id != CODEX_RUNTIME_ID {
+        return;
+    }
+    // The Codex app-server defaults analytics off, while CODEX_CONFIG also
+    // applies the same policy to every thread created through the JS ACP
+    // adapter. Apply it after loading persisted setup so callers cannot
+    // accidentally re-enable telemetry for BifrostWrite-launched sessions.
+    env.insert(
+        "CODEX_CONFIG".to_string(),
+        CODEX_NO_TELEMETRY_CONFIG.to_string(),
+    );
 }
 
 fn setup_secret_env_overrides_inherited(
@@ -8112,6 +8285,30 @@ fn resolve_base_acp_command(runtime_id: &str, setup: &RuntimeSetupState) -> Reso
         }
     }
 
+    if let Some(path) = find_program_on_path(default_executable_name(runtime_id)) {
+        return ResolvedAcpCommand {
+            display: Some(path.display().to_string()),
+            program: Some(path),
+            args: Vec::new(),
+            source: AiRuntimeBinarySource::Env,
+        };
+    }
+
+    if let Some(path) = resolve_known_runtime_fallback(runtime_id) {
+        return ResolvedAcpCommand {
+            display: Some(path.display().to_string()),
+            program: Some(path),
+            args: Vec::new(),
+            source: AiRuntimeBinarySource::Env,
+        };
+    }
+
+    if let Some(resolved) = resolve_managed_acp_command(runtime_id) {
+        return resolved;
+    }
+
+    // Kept as a migration fallback for older development/package layouts. New
+    // releases do not put optional agent runtimes inside the application.
     if let Some(resolved) = resolve_packaged_acp_command(runtime_id) {
         return resolved;
     }
@@ -8140,24 +8337,6 @@ fn resolve_base_acp_command(runtime_id: &str, setup: &RuntimeSetupState) -> Reso
         }
     }
 
-    if let Some(path) = find_program_on_path(default_executable_name(runtime_id)) {
-        return ResolvedAcpCommand {
-            display: Some(path.display().to_string()),
-            program: Some(path),
-            args: Vec::new(),
-            source: AiRuntimeBinarySource::Env,
-        };
-    }
-
-    if let Some(path) = resolve_known_runtime_fallback(runtime_id) {
-        return ResolvedAcpCommand {
-            display: Some(path.display().to_string()),
-            program: Some(path),
-            args: Vec::new(),
-            source: AiRuntimeBinarySource::Env,
-        };
-    }
-
     ResolvedAcpCommand {
         program: None,
         args: Vec::new(),
@@ -8167,6 +8346,24 @@ fn resolve_base_acp_command(runtime_id: &str, setup: &RuntimeSetupState) -> Reso
             .or_else(|| Some(default_executable_name(runtime_id).to_string())),
         source: AiRuntimeBinarySource::Missing,
     }
+}
+
+fn resolve_managed_acp_command(runtime_id: &str) -> Option<ResolvedAcpCommand> {
+    let root = managed_runtime_dir(runtime_id);
+    let entry = managed_runtime_entry_path(runtime_id, &root)?;
+    if runtime_id == CODEX_RUNTIME_ID
+        && managed_runtime_uses_system_codex(&root)
+        && find_program_on_path("codex").is_none()
+    {
+        return None;
+    }
+    let node = resolve_agent_node_binary()?;
+    Some(ResolvedAcpCommand {
+        display: Some(entry.display().to_string()),
+        program: Some(node),
+        args: vec![entry.display().to_string()],
+        source: AiRuntimeBinarySource::Managed,
+    })
 }
 
 fn resolve_packaged_acp_command(runtime_id: &str) -> Option<ResolvedAcpCommand> {
@@ -8388,6 +8585,440 @@ fn home_dir() -> Option<PathBuf> {
     {
         std::env::var_os("HOME").map(PathBuf::from)
     }
+}
+
+fn validate_installable_runtime_id(runtime_id: &str) -> Result<(), String> {
+    if matches!(runtime_id, CODEX_RUNTIME_ID | CLAUDE_RUNTIME_ID) {
+        Ok(())
+    } else {
+        Err(format!(
+            "Only the Codex and Claude runtimes can be installed by BifrostWrite: {runtime_id}"
+        ))
+    }
+}
+
+fn managed_runtime_root() -> PathBuf {
+    std::env::var_os("BIFROSTWRITE_AGENT_RUNTIME_DIR")
+        .filter(|value| !value.to_string_lossy().trim().is_empty())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| app_data_dir().join("ai").join("agent-runtimes"))
+}
+
+fn managed_runtime_dir(runtime_id: &str) -> PathBuf {
+    managed_runtime_root().join(runtime_id)
+}
+
+fn managed_runtime_packages(runtime_id: &str) -> Result<&'static [&'static str], String> {
+    match runtime_id {
+        CODEX_RUNTIME_ID => Ok(CODEX_ACP_NPM_PACKAGES),
+        CLAUDE_RUNTIME_ID => Ok(CLAUDE_ACP_NPM_PACKAGES),
+        _ => Err(format!("Unsupported managed runtime: {runtime_id}")),
+    }
+}
+
+fn managed_runtime_entry_path(runtime_id: &str, root: &Path) -> Option<PathBuf> {
+    let package_dir = match runtime_id {
+        CODEX_RUNTIME_ID => ["@agentclientprotocol", "codex-acp"],
+        CLAUDE_RUNTIME_ID => ["@agentclientprotocol", "claude-agent-acp"],
+        _ => return None,
+    };
+    let entry = root
+        .join("node_modules")
+        .join(package_dir[0])
+        .join(package_dir[1])
+        .join("dist")
+        .join("index.js");
+    entry.is_file().then_some(entry)
+}
+
+fn managed_runtime_uses_system_codex(root: &Path) -> bool {
+    root.join(SYSTEM_CODEX_MARKER).is_file()
+}
+
+#[derive(Debug, Clone)]
+struct AgentNodeToolchain {
+    node: PathBuf,
+    npm: PathBuf,
+    npm_is_javascript: bool,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct ManagedNodeArchive {
+    file_name: &'static str,
+    sha256: &'static str,
+}
+
+fn managed_node_root() -> PathBuf {
+    managed_runtime_root()
+        .join("_node")
+        .join(format!("v{MANAGED_NODE_VERSION}"))
+}
+
+fn managed_node_binary_path(root: &Path) -> PathBuf {
+    root.join("bin").join(runtime_binary_name("node"))
+}
+
+fn managed_node_npm_cli_path(root: &Path) -> PathBuf {
+    root.join("lib")
+        .join("node_modules")
+        .join("npm")
+        .join("bin")
+        .join("npm-cli.js")
+}
+
+fn managed_node_toolchain_if_ready() -> Option<AgentNodeToolchain> {
+    let root = managed_node_root();
+    let node = managed_node_binary_path(&root);
+    let npm = managed_node_npm_cli_path(&root);
+    (node.is_file() && npm.is_file()).then_some(AgentNodeToolchain {
+        node,
+        npm,
+        npm_is_javascript: true,
+    })
+}
+
+fn parse_node_major_version(raw: &str) -> Option<u64> {
+    raw.trim()
+        .strip_prefix('v')?
+        .split('.')
+        .next()?
+        .parse()
+        .ok()
+}
+
+fn node_binary_is_compatible(node: &Path) -> bool {
+    StdCommand::new(node)
+        .arg("--version")
+        .output()
+        .ok()
+        .filter(|output| output.status.success())
+        .and_then(|output| String::from_utf8(output.stdout).ok())
+        .and_then(|version| parse_node_major_version(&version))
+        .is_some_and(|major| major >= MINIMUM_AGENT_NODE_MAJOR_VERSION)
+}
+
+fn managed_node_archive() -> Result<ManagedNodeArchive, String> {
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    {
+        return Ok(ManagedNodeArchive {
+            file_name: "node-v22.22.0-darwin-arm64.tar.gz",
+            sha256: "5ed4db0fcf1eaf84d91ad12462631d73bf4576c1377e192d222e48026a902640",
+        });
+    }
+    #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+    {
+        return Ok(ManagedNodeArchive {
+            file_name: "node-v22.22.0-darwin-x64.tar.gz",
+            sha256: "5ea50c9d6dea3dfa3abb66b2656f7a4e1c8cef23432b558d45fb538c7b5dedce",
+        });
+    }
+    #[allow(unreachable_code)]
+    Err("Automatic Node.js installation is currently supported only on macOS. Install Node.js 22 or newer and retry.".to_string())
+}
+
+fn sha256_file(path: &Path) -> Result<String, String> {
+    let mut file = std::fs::File::open(path)
+        .map_err(|error| format!("Failed to open the Node.js download: {error}"))?;
+    let mut hasher = Sha256::new();
+    let mut buffer = [0_u8; 64 * 1024];
+    loop {
+        let read = file
+            .read(&mut buffer)
+            .map_err(|error| format!("Failed to verify the Node.js download: {error}"))?;
+        if read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..read]);
+    }
+    Ok(format!("{:x}", hasher.finalize()))
+}
+
+fn ensure_managed_node_toolchain() -> Result<AgentNodeToolchain, String> {
+    let install_lock = MANAGED_NODE_INSTALL_LOCK.get_or_init(|| Mutex::new(()));
+    let _guard = install_lock
+        .lock()
+        .map_err(|error| format!("Internal Node.js install state error: {error}"))?;
+    if let Some(toolchain) = managed_node_toolchain_if_ready() {
+        return Ok(toolchain);
+    }
+
+    let archive = managed_node_archive()?;
+    let parent = managed_node_root()
+        .parent()
+        .ok_or_else(|| "Could not resolve the managed Node.js directory.".to_string())?
+        .to_path_buf();
+    std::fs::create_dir_all(&parent)
+        .map_err(|error| format!("Failed to create the Node.js runtime directory: {error}"))?;
+    let temp = parent.join(format!(
+        ".node.installing-{}",
+        uuid::Uuid::new_v4().simple()
+    ));
+    std::fs::create_dir_all(&temp)
+        .map_err(|error| format!("Failed to create the Node.js staging directory: {error}"))?;
+    let archive_path = temp.join(archive.file_name);
+    let url = format!(
+        "https://nodejs.org/dist/v{MANAGED_NODE_VERSION}/{}",
+        archive.file_name
+    );
+
+    let result = (|| -> Result<AgentNodeToolchain, String> {
+        let client = reqwest::blocking::Client::builder()
+            .timeout(Duration::from_secs(30 * 60))
+            .build()
+            .map_err(|error| format!("Failed to prepare the Node.js download: {error}"))?;
+        let mut response = client
+            .get(&url)
+            .header("User-Agent", "BifrostWrite agent runtime installer")
+            .send()
+            .and_then(reqwest::blocking::Response::error_for_status)
+            .map_err(|error| format!("Failed to download Node.js from {url}: {error}"))?;
+        let mut file = std::fs::File::create(&archive_path)
+            .map_err(|error| format!("Failed to create the Node.js archive: {error}"))?;
+        std::io::copy(&mut response, &mut file)
+            .map_err(|error| format!("Failed to save the Node.js download: {error}"))?;
+
+        let actual_sha256 = sha256_file(&archive_path)?;
+        if actual_sha256 != archive.sha256 {
+            return Err(format!(
+                "Node.js download checksum mismatch: expected {}, received {actual_sha256}.",
+                archive.sha256
+            ));
+        }
+
+        let output = StdCommand::new("tar")
+            .arg("-xzf")
+            .arg(&archive_path)
+            .arg("-C")
+            .arg(&temp)
+            .output()
+            .map_err(|error| format!("Failed to start the Node.js extractor: {error}"))?;
+        if !output.status.success() {
+            return Err(format!(
+                "Failed to extract Node.js: {}",
+                runtime_install_output_tail(&String::from_utf8_lossy(&output.stderr))
+            ));
+        }
+
+        let extracted = temp.join(archive.file_name.trim_end_matches(".tar.gz"));
+        let node = managed_node_binary_path(&extracted);
+        let npm = managed_node_npm_cli_path(&extracted);
+        if !node.is_file() || !npm.is_file() || !node_binary_is_compatible(&node) {
+            return Err(
+                "The downloaded Node.js archive is incomplete or incompatible.".to_string(),
+            );
+        }
+
+        let destination = managed_node_root();
+        if destination.exists() {
+            std::fs::remove_dir_all(&destination).map_err(|error| {
+                format!("Failed to replace the managed Node.js runtime: {error}")
+            })?;
+        }
+        std::fs::rename(&extracted, &destination)
+            .map_err(|error| format!("Failed to activate the Node.js runtime: {error}"))?;
+        managed_node_toolchain_if_ready()
+            .ok_or_else(|| "The managed Node.js runtime could not be activated.".to_string())
+    })();
+
+    let _ = std::fs::remove_dir_all(&temp);
+    result
+}
+
+fn resolve_agent_node_binary() -> Option<PathBuf> {
+    find_program_on_path("node")
+        .filter(|node| node_binary_is_compatible(node))
+        .or_else(|| managed_node_toolchain_if_ready().map(|toolchain| toolchain.node))
+}
+
+fn resolve_agent_node_toolchain<F>(mut find_program: F) -> Result<AgentNodeToolchain, String>
+where
+    F: FnMut(&str) -> Option<PathBuf>,
+{
+    if let Some(node) = find_program("node").filter(|node| node_binary_is_compatible(node)) {
+        if let Some(npm) = find_program("npm") {
+            return Ok(AgentNodeToolchain {
+                node,
+                npm,
+                npm_is_javascript: false,
+            });
+        }
+    }
+    ensure_managed_node_toolchain()
+}
+
+fn install_managed_runtime(runtime_id: &str) -> Result<PathBuf, String> {
+    install_managed_runtime_with_lookup(runtime_id, find_program_on_path)
+}
+
+fn install_managed_runtime_with_lookup<F>(
+    runtime_id: &str,
+    mut find_program: F,
+) -> Result<PathBuf, String>
+where
+    F: FnMut(&str) -> Option<PathBuf>,
+{
+    validate_installable_runtime_id(runtime_id)?;
+    if let Some(path) = find_program(default_executable_name(runtime_id)) {
+        return Ok(path);
+    }
+
+    // codex-acp is an adapter around the Codex CLI. When Codex is already
+    // installed, omit the npm package's optional 200+ MB platform binary and
+    // point the adapter at the system executable instead.
+    let system_codex = (runtime_id == CODEX_RUNTIME_ID)
+        .then(|| find_program("codex"))
+        .flatten();
+
+    let node_toolchain = resolve_agent_node_toolchain(&mut find_program)?;
+
+    let packages = managed_runtime_packages(runtime_id)?;
+    let parent = managed_runtime_root();
+    std::fs::create_dir_all(&parent)
+        .map_err(|error| format!("Failed to create the agent runtime directory: {error}"))?;
+    let temp = parent.join(format!(
+        ".{runtime_id}.installing-{}",
+        uuid::Uuid::new_v4().simple()
+    ));
+    std::fs::create_dir_all(&temp)
+        .map_err(|error| format!("Failed to create the temporary runtime directory: {error}"))?;
+
+    let include_optional_packages = system_codex.is_none();
+    let output =
+        run_npm_runtime_install(&node_toolchain, &temp, packages, include_optional_packages);
+    let output = match output {
+        Ok(output) => output,
+        Err(error) => {
+            let _ = std::fs::remove_dir_all(&temp);
+            return Err(format!("Failed to start npm: {error}"));
+        }
+    };
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let details = runtime_install_output_tail(if stderr.trim().is_empty() {
+            stdout.as_ref()
+        } else {
+            stderr.as_ref()
+        });
+        let _ = std::fs::remove_dir_all(&temp);
+        return Err(format!(
+            "Could not download the {runtime_id} runtime with npm. {details}"
+        ));
+    }
+
+    let entry = managed_runtime_entry_path(runtime_id, &temp).ok_or_else(|| {
+        let _ = std::fs::remove_dir_all(&temp);
+        format!("The downloaded {runtime_id} package did not contain its ACP entry point.")
+    })?;
+    if system_codex.is_some() {
+        std::fs::write(temp.join(SYSTEM_CODEX_MARKER), b"system Codex CLI\n")
+            .map_err(|error| format!("Failed to record the system Codex runtime: {error}"))?;
+    }
+    let destination = managed_runtime_dir(runtime_id);
+    let backup = parent.join(format!(
+        ".{runtime_id}.backup-{}",
+        uuid::Uuid::new_v4().simple()
+    ));
+    if destination.exists() {
+        std::fs::rename(&destination, &backup)
+            .map_err(|error| format!("Failed to replace the previous runtime: {error}"))?;
+    }
+    if let Err(error) = std::fs::rename(&temp, &destination) {
+        if backup.exists() {
+            let _ = std::fs::rename(&backup, &destination);
+        }
+        let _ = std::fs::remove_dir_all(&temp);
+        return Err(format!(
+            "Failed to activate the downloaded runtime: {error}"
+        ));
+    }
+    if backup.exists() {
+        let _ = std::fs::remove_dir_all(&backup);
+    }
+
+    Ok(destination.join(entry.strip_prefix(&temp).unwrap_or(&entry)))
+}
+
+fn run_npm_runtime_install(
+    node_toolchain: &AgentNodeToolchain,
+    destination: &Path,
+    packages: &[&str],
+    include_optional_packages: bool,
+) -> std::io::Result<std::process::Output> {
+    let destination = destination.to_string_lossy().into_owned();
+    let mut args = vec![
+        "install",
+        "--prefix",
+        destination.as_str(),
+        "--omit=dev",
+        "--no-audit",
+        "--no-fund",
+        "--ignore-scripts",
+        "--save=false",
+    ];
+    args.push(if include_optional_packages {
+        "--include=optional"
+    } else {
+        "--omit=optional"
+    });
+    let mut command = if node_toolchain.npm_is_javascript {
+        let mut command = StdCommand::new(&node_toolchain.node);
+        command.arg(&node_toolchain.npm);
+        command
+    } else {
+        #[cfg(target_os = "windows")]
+        {
+            let mut command = StdCommand::new("cmd.exe");
+            command
+                .arg("/d")
+                .arg("/s")
+                .arg("/c")
+                .arg(&node_toolchain.npm);
+            command
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            StdCommand::new(&node_toolchain.npm)
+        }
+    };
+
+    let mut path_entries = node_toolchain
+        .node
+        .parent()
+        .map(Path::to_path_buf)
+        .into_iter()
+        .collect::<Vec<_>>();
+    path_entries.extend(executable_search_path_entries());
+    if let Ok(path) = std::env::join_paths(path_entries) {
+        command.env("PATH", path);
+    }
+    for (key, value) in NO_TELEMETRY_ENV {
+        command.env(key, value);
+    }
+
+    command
+        .args(args)
+        .args(packages)
+        .env("NPM_CONFIG_UPDATE_NOTIFIER", "false")
+        .env("NPM_CONFIG_FUND", "false")
+        .env("NPM_CONFIG_AUDIT", "false")
+        .output()
+}
+
+fn runtime_install_output_tail(output: &str) -> String {
+    const MAX_CHARS: usize = 2_000;
+    let output = output.trim();
+    if output.chars().count() <= MAX_CHARS {
+        return output.to_string();
+    }
+    output
+        .chars()
+        .rev()
+        .take(MAX_CHARS)
+        .collect::<String>()
+        .chars()
+        .rev()
+        .collect()
 }
 
 pub(crate) fn app_data_dir() -> PathBuf {
@@ -10337,7 +10968,7 @@ fn default_executable_name(runtime_id: &str) -> &str {
 
 fn diagnostic_executable_names() -> Vec<&'static str> {
     RUNTIME_CATALOG
-        .definitions()
+        .advertised_definitions()
         .map(|definition| definition.default_executable())
         .collect()
 }
@@ -10351,12 +10982,43 @@ fn find_program_on_path(name: &str) -> Option<PathBuf> {
     if candidate.components().count() > 1 {
         return find_executable_candidate(candidate, &executable_extensions);
     }
-    let path_value = std::env::var_os("PATH")?;
     find_program_in_path_entries(
         name,
-        std::env::split_paths(&path_value),
+        executable_search_path_entries(),
         &executable_extensions,
     )
+}
+
+fn executable_search_path_entries() -> Vec<PathBuf> {
+    let mut entries = std::env::var_os("PATH")
+        .map(|value| std::env::split_paths(&value).collect::<Vec<_>>())
+        .unwrap_or_default();
+
+    #[cfg(target_os = "macos")]
+    entries.extend([
+        PathBuf::from("/opt/homebrew/bin"),
+        PathBuf::from("/usr/local/bin"),
+    ]);
+
+    #[cfg(not(target_os = "windows"))]
+    if let Some(home) = home_dir() {
+        entries.extend([
+            home.join(".local").join("bin"),
+            home.join(".npm-global").join("bin"),
+            home.join(".bun").join("bin"),
+            home.join(".cargo").join("bin"),
+            home.join(".local").join("share").join("mise").join("shims"),
+        ]);
+    }
+
+    #[cfg(target_os = "windows")]
+    if let Some(appdata) = std::env::var_os("APPDATA") {
+        entries.push(PathBuf::from(appdata).join("npm"));
+    }
+
+    let mut seen = HashSet::new();
+    entries.retain(|entry| !entry.as_os_str().is_empty() && seen.insert(entry.clone()));
+    entries
 }
 
 fn find_program_in_path_entries<I>(
@@ -11558,7 +12220,7 @@ mod tests {
     }
 
     #[test]
-    fn custom_runtime_descriptor_is_dynamic_and_conservative() {
+    fn custom_runtime_is_not_advertised_in_the_product_catalog() {
         let temp = tempfile::tempdir().unwrap();
         let native_ai = test_native_ai_with_secret_store(
             temp.path().join("runtime-setup.json"),
@@ -11571,19 +12233,14 @@ mod tests {
 
         let descriptors: Vec<AiRuntimeDescriptor> =
             serde_json::from_value(native_ai.list_runtimes()).unwrap();
-        let descriptor = descriptors
+        assert_eq!(descriptors.len(), 2);
+        assert!(descriptors.iter().all(|descriptor| matches!(
+            descriptor.runtime.id.as_str(),
+            CODEX_RUNTIME_ID | CLAUDE_RUNTIME_ID
+        )));
+        assert!(descriptors
             .iter()
-            .find(|descriptor| descriptor.runtime.id == definition.id)
-            .unwrap();
-        assert_eq!(descriptor.runtime.name, "Local agent");
-        assert_eq!(descriptor.runtime.capabilities, ["create_session"]);
-        assert!(descriptor
-            .runtime
-            .capabilities
-            .iter()
-            .all(|capability| !capability.contains("auth")));
-        assert_eq!(descriptor.models[0].id, "auto");
-        assert_eq!(descriptor.modes[0].id, "default");
+            .all(|descriptor| descriptor.runtime.id != definition.id));
 
         let status: AiRuntimeSetupStatus = serde_json::from_value(
             native_ai
@@ -11626,6 +12283,114 @@ mod tests {
         assert!(descriptors
             .iter()
             .all(|descriptor| descriptor.runtime.id != definition.id));
+    }
+
+    #[test]
+    fn managed_runtime_entry_resolves_only_supported_agent_packages() {
+        let temp = tempfile::tempdir().unwrap();
+        let codex_entry = temp
+            .path()
+            .join("node_modules")
+            .join("@agentclientprotocol")
+            .join("codex-acp")
+            .join("dist")
+            .join("index.js");
+        fs::create_dir_all(codex_entry.parent().unwrap()).unwrap();
+        fs::write(&codex_entry, "").unwrap();
+
+        assert_eq!(
+            managed_runtime_entry_path(CODEX_RUNTIME_ID, temp.path()),
+            Some(codex_entry)
+        );
+        assert_eq!(
+            managed_runtime_entry_path(GROK_RUNTIME_ID, temp.path()),
+            None
+        );
+    }
+
+    #[test]
+    fn managed_runtime_install_reuses_system_acp_without_npm() {
+        let system_acp = PathBuf::from("/test/bin/codex-acp");
+        let mut lookups = Vec::new();
+
+        let resolved = install_managed_runtime_with_lookup(CODEX_RUNTIME_ID, |name| {
+            lookups.push(name.to_string());
+            (name == "codex-acp").then(|| system_acp.clone())
+        })
+        .unwrap();
+
+        assert_eq!(resolved, system_acp);
+        assert_eq!(lookups, ["codex-acp"]);
+    }
+
+    #[test]
+    fn managed_runtime_install_rejects_unadvertised_agents() {
+        let error = install_managed_runtime_with_lookup(GROK_RUNTIME_ID, |_| None).unwrap_err();
+
+        assert!(error.contains("Only the Codex and Claude runtimes"));
+    }
+
+    #[test]
+    fn managed_agent_node_version_and_integrity_are_pinned() {
+        assert_eq!(
+            managed_runtime_packages(CODEX_RUNTIME_ID).unwrap(),
+            [
+                "@agentclientprotocol/codex-acp@1.2.0",
+                "@openai/codex@0.147.0",
+            ]
+        );
+        assert_eq!(
+            managed_runtime_packages(CLAUDE_RUNTIME_ID).unwrap(),
+            ["@agentclientprotocol/claude-agent-acp@0.66.0"]
+        );
+        assert_eq!(parse_node_major_version("v22.22.0\n"), Some(22));
+        assert_eq!(parse_node_major_version("22.22.0"), None);
+        assert_eq!(parse_node_major_version("vnot-a-version"), None);
+
+        #[cfg(target_os = "macos")]
+        {
+            let archive = managed_node_archive().unwrap();
+            assert!(archive.file_name.starts_with("node-v22.22.0-darwin-"));
+            assert!(archive.file_name.ends_with(".tar.gz"));
+            assert_eq!(archive.sha256.len(), 64);
+            assert!(archive
+                .sha256
+                .chars()
+                .all(|character| character.is_ascii_hexdigit()));
+        }
+        #[cfg(not(target_os = "macos"))]
+        assert!(managed_node_archive()
+            .unwrap_err()
+            .contains("supported only on macOS"));
+    }
+
+    #[test]
+    fn agent_processes_force_telemetry_off() {
+        let environment = NO_TELEMETRY_ENV.iter().copied().collect::<HashMap<_, _>>();
+
+        assert_eq!(environment.get("DO_NOT_TRACK"), Some(&"1"));
+        assert_eq!(environment.get("OTEL_SDK_DISABLED"), Some(&"true"));
+        assert_eq!(
+            environment.get("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"),
+            Some(&"1")
+        );
+
+        let codex_config: Value = serde_json::from_str(CODEX_NO_TELEMETRY_CONFIG).unwrap();
+        assert_eq!(codex_config["analytics"]["enabled"], false);
+        assert_eq!(codex_config["feedback"]["enabled"], false);
+        assert_eq!(codex_config["otel"]["exporter"], "none");
+        assert_eq!(codex_config["otel"]["trace_exporter"], "none");
+        assert_eq!(codex_config["otel"]["metrics_exporter"], "none");
+
+        let mut codex_environment = HashMap::from([(
+            "CODEX_CONFIG".to_string(),
+            r#"{"analytics":{"enabled":true}}"#.to_string(),
+        )]);
+        enforce_runtime_privacy_config(CODEX_RUNTIME_ID, &mut codex_environment);
+        assert_eq!(
+            codex_environment.get("CODEX_CONFIG").map(String::as_str),
+            Some(CODEX_NO_TELEMETRY_CONFIG)
+        );
     }
 
     #[test]
@@ -12126,7 +12891,10 @@ mod tests {
             .capabilities
             .iter()
             .any(|capability| capability == "grok-login"));
-        assert!(diagnostic_executable_names().contains(&"grok"));
+        assert!(!diagnostic_executable_names().contains(&"grok"));
+        assert!(advertised_runtime_descriptors()
+            .iter()
+            .all(|descriptor| descriptor.runtime.id != GROK_RUNTIME_ID));
     }
 
     #[test]

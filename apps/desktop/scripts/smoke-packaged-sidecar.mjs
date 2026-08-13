@@ -111,7 +111,9 @@ async function findSidecarPath() {
 function assertExecutableMode(stats, executablePath, description) {
     if (process.platform === "win32") return;
     if ((stats.mode & 0o111) === 0) {
-        throw new Error(`Packaged ${description} is not executable: ${executablePath}`);
+        throw new Error(
+            `Packaged ${description} is not executable: ${executablePath}`,
+        );
     }
 }
 
@@ -127,7 +129,9 @@ async function findCodeModeHostPath(sidecarPath) {
         stats = await fs.stat(hostPath);
     } catch (error) {
         if (error?.code === "ENOENT") {
-            throw new Error(`Packaged Codex code-mode host is missing: ${hostPath}`);
+            throw new Error(
+                `Packaged Codex code-mode host is missing: ${hostPath}`,
+            );
         }
         throw new Error(
             `Could not inspect packaged Codex code-mode host: ${hostPath}`,
@@ -135,14 +139,17 @@ async function findCodeModeHostPath(sidecarPath) {
         );
     }
     if (!stats.isFile()) {
-        throw new Error(`Packaged Codex code-mode host is not a file: ${hostPath}`);
+        throw new Error(
+            `Packaged Codex code-mode host is not a file: ${hostPath}`,
+        );
     }
     assertExecutableMode(stats, hostPath, "Codex code-mode host");
     return hostPath;
 }
 
 async function findCodexAcpPath(sidecarPath) {
-    const acpName = process.platform === "win32" ? "codex-acp.exe" : "codex-acp";
+    const acpName =
+        process.platform === "win32" ? "codex-acp.exe" : "codex-acp";
     const acpPath = path.join(path.dirname(sidecarPath), "binaries", acpName);
 
     let stats;
@@ -150,11 +157,16 @@ async function findCodexAcpPath(sidecarPath) {
         stats = await fs.stat(acpPath);
     } catch (error) {
         if (error?.code === "ENOENT") {
-            throw new Error(`Packaged Codex ACP runtime is missing: ${acpPath}`);
+            throw new Error(
+                `Packaged Codex ACP runtime is missing: ${acpPath}`,
+            );
         }
-        throw new Error(`Could not inspect packaged Codex ACP runtime: ${acpPath}`, {
-            cause: error,
-        });
+        throw new Error(
+            `Could not inspect packaged Codex ACP runtime: ${acpPath}`,
+            {
+                cause: error,
+            },
+        );
     }
     if (!stats.isFile()) {
         throw new Error(`Packaged Codex ACP runtime is not a file: ${acpPath}`);
@@ -196,7 +208,9 @@ function readRequestBody(request) {
     return new Promise((resolve, reject) => {
         const chunks = [];
         request.on("data", (chunk) => chunks.push(chunk));
-        request.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+        request.on("end", () =>
+            resolve(Buffer.concat(chunks).toString("utf8")),
+        );
         request.on("error", reject);
     });
 }
@@ -259,7 +273,8 @@ async function startResponsesMock({ marker, expectedToolOutput }) {
                         item.type === "custom_tool_call_output" &&
                         item.call_id === "neverwrite-code-mode-call",
                 );
-                const toolOutputText = collectStringValues(toolOutput).join("\n");
+                const toolOutputText =
+                    collectStringValues(toolOutput).join("\n");
                 if (!expectedToolOutput(toolOutputText)) {
                     throw new Error(
                         `Code-mode output did not satisfy the smoke expectation: ${JSON.stringify(toolOutput)}`,
@@ -281,7 +296,9 @@ async function startResponsesMock({ marker, expectedToolOutput }) {
                     responseCompleted("neverwrite-smoke-response-2"),
                 ];
             } else {
-                throw new Error(`Unexpected Responses request ${requests.length}`);
+                throw new Error(
+                    `Unexpected Responses request ${requests.length}`,
+                );
             }
 
             response.writeHead(200, {
@@ -354,7 +371,9 @@ class AcpClient {
             message = JSON.parse(line);
         } catch (error) {
             this.failPending(
-                new Error(`Invalid JSON from packaged Codex ACP runtime: ${error}`),
+                new Error(
+                    `Invalid JSON from packaged Codex ACP runtime: ${error}`,
+                ),
             );
             return;
         }
@@ -461,10 +480,13 @@ async function directChildProcesses(parentPid) {
         ).trim();
         if (!output) return [];
         const parsed = JSON.parse(output);
-        return (Array.isArray(parsed) ? parsed : [parsed]).map((processInfo) => ({
-            pid: processInfo.ProcessId,
-            command: processInfo.ExecutablePath || processInfo.CommandLine || "",
-        }));
+        return (Array.isArray(parsed) ? parsed : [parsed]).map(
+            (processInfo) => ({
+                pid: processInfo.ProcessId,
+                command:
+                    processInfo.ExecutablePath || processInfo.CommandLine || "",
+            }),
+        );
     }
 
     const output = await capture("ps", ["-ww", "-axo", "pid=,ppid=,command="]);
@@ -533,7 +555,10 @@ async function runCodeModeTurn({
         const initialized = await client.request("initialize", {
             protocolVersion: 1,
             clientCapabilities: {},
-            clientInfo: { name: "BifrostWrite packaging smoke", version: "0.0.0" },
+            clientInfo: {
+                name: "BifrostWrite packaging smoke",
+                version: "0.0.0",
+            },
         });
         if (
             initialized?.agentInfo?.name !== "codex-acp" ||
@@ -567,7 +592,9 @@ async function runCodeModeTurn({
             );
         }
         if (mock.requests.length !== 2) {
-            throw new Error(`Expected two Responses requests, received ${mock.requests.length}`);
+            throw new Error(
+                `Expected two Responses requests, received ${mock.requests.length}`,
+            );
         }
 
         const sawCodeModeResult = client.notifications.some(
@@ -576,7 +603,9 @@ async function runCodeModeTurn({
                 notification.update.content?.text === marker,
         );
         if (!sawCodeModeResult) {
-            throw new Error("ACP did not publish the packaged code-mode result");
+            throw new Error(
+                "ACP did not publish the packaged code-mode result",
+            );
         }
         if (requireStandaloneHost) {
             await assertStandaloneHostProcess(client.pid, hostPath);
@@ -689,7 +718,9 @@ async function smokePing(sidecarPath) {
                 message = JSON.parse(line);
             } catch (error) {
                 cleanup();
-                reject(new Error(`Invalid JSON response from sidecar: ${error}`));
+                reject(
+                    new Error(`Invalid JSON response from sidecar: ${error}`),
+                );
                 return;
             }
 
@@ -720,13 +751,41 @@ if (!stats.isFile()) {
 }
 
 assertExecutableMode(stats, sidecarPath, "sidecar");
-const codexAcpPath = await findCodexAcpPath(sidecarPath);
-const codeModeHostPath = await findCodeModeHostPath(sidecarPath);
-await smokeCodexAcpCodeMode(codexAcpPath, codeModeHostPath);
-await smokeMissingCodeModeHostFailsClosed(codexAcpPath, codeModeHostPath);
 await smokePing(sidecarPath);
 
-console.log(`Packaged Codex ACP completed a code-mode turn: ${codexAcpPath}`);
-console.log(`Packaged Codex code-mode host executed JavaScript: ${codeModeHostPath}`);
-console.log("Packaged Codex ACP failed closed with a missing code-mode host.");
-console.log(`Packaged native backend sidecar responded to ping: ${sidecarPath}`);
+if (process.env.BIFROSTWRITE_SMOKE_OPTIONAL_AGENT_RUNTIMES === "1") {
+    const codexAcpPath = await findCodexAcpPath(sidecarPath);
+    const codeModeHostPath = await findCodeModeHostPath(sidecarPath);
+    await smokeCodexAcpCodeMode(codexAcpPath, codeModeHostPath);
+    await smokeMissingCodeModeHostFailsClosed(codexAcpPath, codeModeHostPath);
+    console.log(
+        `Optional Codex ACP completed a code-mode turn: ${codexAcpPath}`,
+    );
+    console.log(
+        `Optional Codex code-mode host executed JavaScript: ${codeModeHostPath}`,
+    );
+    console.log(
+        "Optional Codex ACP failed closed with a missing code-mode host.",
+    );
+} else {
+    for (const relativePath of ["binaries", "embedded"]) {
+        const optionalRuntimePath = path.join(
+            path.dirname(sidecarPath),
+            relativePath,
+        );
+        try {
+            await fs.access(optionalRuntimePath);
+            throw new Error(
+                `Optional agent runtimes must not be bundled in the application: ${optionalRuntimePath}`,
+            );
+        } catch (error) {
+            if (error?.code !== "ENOENT") throw error;
+        }
+    }
+    console.log(
+        "Packaged application excludes optional Codex, Claude, and Node runtimes.",
+    );
+}
+console.log(
+    `Packaged native backend sidecar responded to ping: ${sidecarPath}`,
+);

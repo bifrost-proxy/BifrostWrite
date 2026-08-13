@@ -135,7 +135,7 @@ describe("openClaudeCodeTerminalWithContext", () => {
         });
         expect(getWrittenInputs()).toEqual([
             "cd '/vault root'\n",
-            "claude --dangerously-skip-permissions --model claude-sonnet-4-6 --continue\n",
+            "env DO_NOT_TRACK=1 DISABLE_TELEMETRY=1 DISABLE_ERROR_REPORTING=1 OTEL_SDK_DISABLED=true CLAUDE_CODE_ENABLE_TELEMETRY=0 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 claude --dangerously-skip-permissions --model claude-sonnet-4-6 --continue\n",
         ]);
         expect(vi.mocked(invoke)).not.toHaveBeenCalledWith(
             "devtools_read_claude_transcript",
@@ -158,7 +158,7 @@ describe("openClaudeCodeTerminalWithContext", () => {
 
         expect(getWrittenInputs()).toEqual([
             "cd '/vault root'\n",
-            "claude --continue\n",
+            "env DO_NOT_TRACK=1 DISABLE_TELEMETRY=1 DISABLE_ERROR_REPORTING=1 OTEL_SDK_DISABLED=true CLAUDE_CODE_ENABLE_TELEMETRY=0 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 claude --continue\n",
         ]);
         expect(warnSpy).toHaveBeenCalledWith(
             expect.stringContaining(
@@ -212,7 +212,7 @@ describe("openClaudeCodeTerminalWithContext", () => {
 
         expect(getWrittenInputs()).toEqual([
             "cd '/vault root/Draft Folder'\n",
-            `claude --session-id ${FIXED_SESSION_UUID}\n`,
+            `env DO_NOT_TRACK=1 DISABLE_TELEMETRY=1 DISABLE_ERROR_REPORTING=1 OTEL_SDK_DISABLED=true CLAUDE_CODE_ENABLE_TELEMETRY=0 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 claude --session-id ${FIXED_SESSION_UUID}\n`,
             [
                 '@"Project Notes/One note.md"',
                 '@"assets/chart (v1).png"',

@@ -50,7 +50,15 @@ APP_BINARY="$APP_PATH/Contents/MacOS/bifrostwrite"
 SIDECAR="$APP_PATH/Contents/Resources/native-backend/neverwrite-native-backend"
 test -x "$APP_BINARY"
 test -x "$SIDECAR"
+test ! -e "$APP_PATH/Contents/Resources/native-backend/binaries"
+test ! -e "$APP_PATH/Contents/Resources/native-backend/embedded"
 test ! -e "$APP_PATH/Contents/Frameworks/Electron Framework.framework"
+
+DMG_SIZE=$(stat -f%z "$DMG_PATH")
+if [[ "$DMG_SIZE" -gt $((100 * 1024 * 1024)) ]]; then
+  echo "DMG exceeds the 100 MiB size limit: $DMG_SIZE bytes" >&2
+  exit 1
+fi
 
 ARCHS=" $(lipo -archs "$APP_BINARY") "
 if [[ "$ARCHS" != *" $EXPECTED_ARCH "* ]]; then

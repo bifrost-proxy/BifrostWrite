@@ -641,18 +641,11 @@ async function main() {
     await client.invoke("start_open_vault", { path: vaultPath });
 
     const runtimes = await client.invoke("ai_list_runtimes");
-    for (const runtimeId of [
-      "codex-acp",
-      "claude-acp",
-      "grok-acp",
-      "kilo-acp",
-      "opencode-acp",
-    ]) {
-      assert(
-        runtimes.some((runtime) => runtime.runtime.id === runtimeId),
-        `${runtimeId} runtime descriptor missing`,
-      );
-    }
+    assert(
+      runtimes.map((runtime) => runtime.runtime.id).sort().join(",") ===
+        "claude-acp,codex-acp",
+      "public runtime catalog should contain only Claude and Codex",
+    );
 
     const customCapturePath = path.join(runtimeDir, "custom-acp-capture.json");
     const customShellMarkerPath = path.join(runtimeDir, "shell-must-not-run");
@@ -683,13 +676,11 @@ async function main() {
       "custom runtime definition should have stable launch identity",
     );
     const runtimesWithCustom = await client.invoke("ai_list_runtimes");
-    const customDescriptor = runtimesWithCustom.find(
-      (runtime) => runtime.runtime.id === customDefinition.id,
-    );
-    assert(customDescriptor, "custom runtime descriptor missing");
     assert(
-      customDescriptor.runtime.capabilities.join(",") === "create_session",
-      "custom runtime descriptor should advertise conservative capabilities",
+      !runtimesWithCustom.some(
+        (runtime) => runtime.runtime.id === customDefinition.id,
+      ),
+      "custom runtime must not be exposed in the public runtime catalog",
     );
     const customSetup = await client.invoke("ai_get_setup_status", {
       runtimeId: customDefinition.id,
@@ -759,12 +750,27 @@ async function main() {
         customCapture.env.OPENAI_API_KEY === undefined,
       "custom runtime must not inherit sidecar or provider secrets",
     );
+    assert(
+      customCapture.env.DO_NOT_TRACK === "1" &&
+        customCapture.env.DISABLE_TELEMETRY === "1" &&
+        customCapture.env.DISABLE_ERROR_REPORTING === "1" &&
+        customCapture.env.OTEL_SDK_DISABLED === "true" &&
+        customCapture.env.CLAUDE_CODE_ENABLE_TELEMETRY === "0" &&
+        customCapture.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC === "1",
+      "custom runtime must inherit the zero-telemetry policy",
+    );
     const allowedCustomEnv = new Set([
       "APPDATA",
+      "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+      "CLAUDE_CODE_ENABLE_TELEMETRY",
+      "DISABLE_ERROR_REPORTING",
+      "DISABLE_TELEMETRY",
+      "DO_NOT_TRACK",
       "HOME",
       "LANG",
       "LC_ALL",
       "LOCALAPPDATA",
+      "OTEL_SDK_DISABLED",
       "SystemRoot",
       "TEMP",
       "TMP",
@@ -1118,10 +1124,10 @@ async function main() {
       !runtimesAfterCustomDelete.some(
         (runtime) => runtime.runtime.id === customDefinition.id,
       ) &&
-        runtimesAfterCustomDelete.some(
+        !runtimesAfterCustomDelete.some(
           (runtime) => runtime.runtime.id === secondDefinition.id,
         ),
-      "deleting one custom definition must not affect other runtimes",
+      "custom runtimes must remain outside the public runtime catalog",
     );
     const customHistories = await client.invoke("ai_load_session_histories", {
       vaultPath,

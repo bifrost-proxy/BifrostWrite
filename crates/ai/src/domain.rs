@@ -165,6 +165,7 @@ pub enum AiRuntimeBinarySource {
     Bundled,
     Custom,
     Env,
+    Managed,
     Vendor,
     Missing,
 }

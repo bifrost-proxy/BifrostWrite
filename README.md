@@ -27,7 +27,7 @@ BifrostWrite 是一个基于 Tauri 2、React 和 Rust 构建的桌面知识工�
 
 - **多格式写作**：编辑 Markdown、Mermaid、CSV、文本和代码文件，并可查看 PDF、图片及 Excalidraw 概念图。
 - **知识关联**：支持双向链接、反向链接、标签、全文检索、书签以及 2D/3D 知识图谱。
-- **智能体协作**：可运行 Codex、Claude、Grok、Kilo、OpenCode 等智能体会话，并保存附件、会话记录和本地历史。
+- **智能体协作**：当前支持 Codex 与 Claude 智能体会话，并保存附件、会话记录和本地历史。
 - **可控的 AI 修改**：在编辑器、聊天或独立审阅页中检查差异，按文件或代码块接受、拒绝修改。
 - **多窗口工作流**：支持标签页拆分、独立窗口、跨窗口事件以及单实例深链路由。
 - **网页采集**：浏览器扩展通过本机认证接口，将网页、选区或链接保存到知识库。
@@ -53,7 +53,7 @@ brew uninstall --cask bifrostwrite
 
 ## 技术方案
 
-BifrostWrite 使用操作系统 WebView 承载 React 界面，以 Tauri 2 作为轻量桌面壳，并通过 Rust Sidecar 承载文件、索引、终端和智能体等领域能力。发行包不携带独立浏览器运行时，因此能够显著降低安装体积和空闲资源占用。
+BifrostWrite 使用操作系统 WebView 承载 React 界面，以 Tauri 2 作为轻量桌面壳，并通过 Rust Sidecar 承载文件、索引、终端和智能体等领域能力。发行包不携带独立浏览器、Node.js 或智能体运行时，因此能够显著降低安装体积和空闲资源占用。主程序不集成任何遥测或崩溃上报 SDK；由应用启动的 Claude/Codex 进程也会强制关闭非必要遥测与错误上报。
 
 ```text
 React 19 + TypeScript + Vite
@@ -81,7 +81,7 @@ apps/desktop/native-backend/  Rust 领域 Sidecar
 apps/desktop/scripts/         原生运行时装配、构建与冒烟测试
 apps/web-clipper/             浏览器网页采集扩展
 crates/                       共享 Rust 领域模块
-vendor/                       随应用发布的 ACP 运行时及兼容代码
+vendor/                       ACP 协议兼容代码与开发期参考实现
 ```
 
 ## 技术设计
@@ -124,7 +124,7 @@ npm install
 npm run dev
 ```
 
-首次启动会编译 Rust 原生后端。应用设置页可配置所需智能体；部分提供方还要求本机 CLI 登录或 API Key。
+首次启动会编译 Rust 原生后端。应用设置页可配置 Codex 或 Claude；应用会优先复用本机已有的兼容 ACP 运行时，缺失时可按需安装；如果已安装普通 Codex CLI，只下载 ACP 适配层并直接复用它，不再重复下载 Codex 平台二进制。BifrostWrite 主程序不依赖 Node.js；如果按需运行时确实需要 Node.js 且本机没有兼容版本，应用会把经过固定 SHA-256 校验的 Node.js 22 下载到自身应用数据目录，不修改系统 Node.js 环境。部分身份验证方式还要求已有 CLI 登录或 API Key。
 
 开发版本使用独立的应用配置，可与已安装的正式版同时运行。若两个版本打开同一个知识库，库内文件与隐藏状态仍然共享；并行测试写入或审阅流程时建议使用临时知识库。
 

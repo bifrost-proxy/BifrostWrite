@@ -36,6 +36,15 @@ export const ZH_CN_TRANSLATIONS: Readonly<Record<string, string>> = {
     "System default": "跟随系统",
     "Simplified Chinese": "简体中文",
     "Choose the language used by the application.": "选择应用界面所使用的语言。",
+    "Downloading…": "下载中…",
+    "Failed to install the agent runtime.": "智能体运行时安装失败。",
+    "Agent runtime installation timed out.": "智能体运行时安装超时。",
+    "The managed Codex ACP adapter requires the previously discovered system Codex CLI. Reinstall the Codex runtime to repair it.":
+        "Codex ACP 适配层需要此前发现的系统 Codex CLI。请重新安装 Codex 运行时以修复此问题。",
+    "Codex ACP runtime discovered on the system or installed on demand.":
+        "使用系统中已发现或按需安装的 Codex ACP 运行时。",
+    "Claude ACP runtime discovered on the system or installed on demand.":
+        "使用系统中已发现或按需安装的 Claude ACP 运行时。",
     "Open last vault on launch": "启动时打开上次使用的知识库",
     "Automatically reopen the last vault when BifrostWrite starts.":
         "BifrostWrite 启动时自动重新打开上次使用的知识库。",
@@ -302,6 +311,32 @@ type PatternTranslation = readonly [
 ];
 
 const ZH_CN_PATTERN_TRANSLATIONS: readonly PatternTranslation[] = [
+    [
+        /^Failed to download Node\.js from (.+): (.+)$/,
+        (match) => `无法从 ${match[1]} 下载 Node.js：${match[2]}`,
+    ],
+    [
+        /^Node\.js download checksum mismatch: expected (.+), received (.+)\.$/,
+        (match) =>
+            `Node.js 下载文件校验失败：预期 ${match[1]}，实际 ${match[2]}。`,
+    ],
+    [
+        /^The downloaded Node\.js archive is incomplete or incompatible\.$/,
+        () => "下载的 Node.js 压缩包不完整或不兼容。",
+    ],
+    [
+        /^Could not download the (.+) runtime with npm\. (.+)$/,
+        (match) => `无法通过 npm 下载 ${match[1]} 运行时。${match[2]}`,
+    ],
+    [
+        /^The downloaded (.+) package did not contain its ACP entry point\.$/,
+        (match) => `下载的 ${match[1]} 软件包不包含 ACP 入口文件。`,
+    ],
+    [/^Failed to start npm: (.+)$/, (match) => `无法启动 npm：${match[1]}`],
+    [
+        /^Failed to (create|replace|activate) (.+): (.+)$/,
+        (match) => `无法${match[1] === "create" ? "创建" : match[1] === "replace" ? "替换" : "启用"}${match[2]}：${match[3]}`,
+    ],
     [/^Move "(.+)" to Trash\?$/, (match) => `将“${match[1]}”移到废纸篓？`],
     [
         /^Delete folder "(.+)" and all its contents\?$/,
