@@ -774,14 +774,20 @@ const headingRule: NodeRule = (node, context) => {
     if (headingLevel === null) return;
 
     registerRevealSensitiveRange(context, "line", node.from, node.to);
-    if (selectionTouchesLine(context.state, node.from, node.to)) {
-        return;
-    }
+    const editingHeadingLine = selectionTouchesLine(
+        context.state,
+        node.from,
+        node.to,
+    );
 
     if (
         headingLevel === 1 &&
         isLeadingDocumentHeading(context.state, node.from)
     ) {
+        if (editingHeadingLine) {
+            pushDeco(context, node.from, node.to, headingMarks[headingLevel]);
+            return;
+        }
         const hideTo = getLeadingHeadingHideTo(context.state, node.to);
         hideRange(context, node.from, hideTo);
         return;
@@ -831,6 +837,8 @@ const headingRule: NodeRule = (node, context) => {
     }
 
     for (const hm of headerMarks) {
+        if (editingHeadingLine) continue;
+
         let hideFrom = hm.from;
         let hideTo = hm.to;
 

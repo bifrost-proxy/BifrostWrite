@@ -11,11 +11,16 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{mpsc, Arc, Mutex};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{
+    menu::{Menu, MenuItem},
+    AppHandle, Emitter, Manager,
+};
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_opener::OpenerExt;
 
 const PRODUCT_NAME: &str = "BifrostWrite";
+const OPEN_SETTINGS_MENU_ID: &str = "app:open-settings";
+const MENU_ACTION_EVENT: &str = "menu-action";
 const PREVIEW_SCHEME: &str = "bifrostwrite-file";
 const BACKEND_BINARY: &str = if cfg!(windows) {
     "neverwrite-native-backend.exe"
@@ -400,6 +405,33 @@ fn parse_line_fragment(fragment: Option<&str>) -> (Option<u64>, Option<u64>) {
 
 pub fn run() {
     tauri::Builder::default()
+        .menu(|app| {
+            let menu = Menu::default(app)?;
+
+            #[cfg(target_os = "macos")]
+            if let Some(app_submenu) = menu
+                .items()?
+                .into_iter()
+                .next()
+                .and_then(|item| item.as_submenu().cloned())
+            {
+                let settings = MenuItem::with_id(
+                    app,
+                    OPEN_SETTINGS_MENU_ID,
+                    "Settings…",
+                    true,
+                    Some("Command+,"),
+                )?;
+                app_submenu.insert(&settings, 1)?;
+            }
+
+            Ok(menu)
+        })
+        .on_menu_event(|app, event| {
+            if event.id().as_ref() == OPEN_SETTINGS_MENU_ID {
+                let _ = app.emit(MENU_ACTION_EVENT, OPEN_SETTINGS_MENU_ID);
+            }
+        })
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();

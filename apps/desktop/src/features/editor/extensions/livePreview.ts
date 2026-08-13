@@ -15,6 +15,7 @@ import {
     createCodeBlockLivePreviewExtension,
     createImageLivePreviewExtension,
     createImageResizeExtension,
+    createTrailingAppendLineExtension,
     createTableLivePreviewExtension,
     type TableInteractionHandlers,
 } from "./livePreviewBlocks";
@@ -463,6 +464,28 @@ export function livePreviewExtension(
         mousedown(event: MouseEvent, view: EditorView) {
             const target = event.target as HTMLElement;
 
+            const trailingAppendLine = target.closest(
+                "[data-live-preview-trailing-append='true']",
+            );
+            if (trailingAppendLine) {
+                event.preventDefault();
+                collapsePreviewSelection(view);
+
+                const end = view.state.doc.length;
+                const needsNewline =
+                    end > 0 && view.state.doc.sliceString(end - 1) !== "\n";
+                view.dispatch({
+                    changes: needsNewline
+                        ? { from: end, insert: "\n" }
+                        : undefined,
+                    selection: { anchor: end + (needsNewline ? 1 : 0) },
+                    scrollIntoView: true,
+                    userEvent: "input",
+                });
+                view.focus();
+                return true;
+            }
+
             // A footnote reference renders as a tiny raised superscript number;
             // a plain mousedown would drop the caret inside the token (revealing
             // the raw `[^id]`). Jump to its definition instead — but only when
@@ -611,6 +634,7 @@ export function livePreviewExtension(
         createInlineLivePreviewPlugin(),
         createLeadingContentCollapseField(),
         createCodeBlockLivePreviewExtension(),
+        createTrailingAppendLineExtension(),
         createImageLivePreviewExtension(vaultRoot),
         createImageResizeExtension(),
         createTableLivePreviewExtension(interactions),

@@ -7,8 +7,8 @@ import {
 import { getCurrentWindow } from "@bifrostwrite/runtime";
 import { useLayoutStore, type SidebarView } from "../../app/store/layoutStore";
 import {
-    getDesktopPlatform,
-    getTrafficLightSpacerWidth,
+    WINDOW_CHROME_BAR_HEIGHT,
+    WINDOW_CHROME_CONTROL_SIZE,
 } from "../../app/utils/platform";
 import { useAppUpdateStore } from "../../features/updates/store";
 import { FileTree } from "../../features/vault/FileTree";
@@ -24,8 +24,6 @@ import { VaultSwitcher } from "../../features/vault/VaultSwitcher";
 // view body, and the VaultSwitcher footer (which hosts Settings entry).
 // macOS vibrancy shows through via the already-transparent ancestors
 // (see AppLayout + index.css).
-
-const IS_MACOS = getDesktopPlatform() === "macos";
 
 // Primary tabs are labeled; secondary ones stay compact (icon-only) so all
 // fit on a single row without truncation at default sidebar width.
@@ -160,10 +158,6 @@ export function SidebarShell({ onOpenSettings }: SidebarShellProps) {
 
     const updateAvailable = useAppUpdateStore((state) => !!state.status?.update);
 
-    const trafficLightInsetHeight = IS_MACOS
-        ? Math.max(28, getTrafficLightSpacerWidth() / 2 + 12)
-        : 0;
-
     // Tab clicks only switch the view; they never change the docked/peek
     // state. Docking is an explicit action (toggle button or shortcut), so
     // browsing views inside the Arc peek overlay keeps the sidebar hidden.
@@ -193,8 +187,8 @@ export function SidebarShell({ onOpenSettings }: SidebarShellProps) {
                 onMouseDown={startWindowDrag}
                 className="flex items-center justify-end"
                 style={{
-                    height: Math.max(trafficLightInsetHeight, 38),
-                    padding: "0 8px",
+                    height: WINDOW_CHROME_BAR_HEIGHT,
+                    padding: "0 4px",
                     flexShrink: 0,
                     WebkitAppRegion: "drag",
                 } as CSSProperties}
@@ -207,8 +201,8 @@ export function SidebarShell({ onOpenSettings }: SidebarShellProps) {
                     aria-label={translate("Hide sidebar")}
                     className="no-drag ub-chrome-btn flex items-center justify-center rounded-md"
                     style={{
-                        width: 32,
-                        height: 32,
+                        width: WINDOW_CHROME_CONTROL_SIZE,
+                        height: WINDOW_CHROME_CONTROL_SIZE,
                         border: "1px solid transparent",
                         background: "transparent",
                         color: "var(--text-secondary)",
@@ -216,8 +210,8 @@ export function SidebarShell({ onOpenSettings }: SidebarShellProps) {
                     }}
                 >
                     <svg
-                        width="20"
-                        height="20"
+                        width="16"
+                        height="16"
                         viewBox="0 0 16 16"
                         fill="none"
                         stroke="currentColor"

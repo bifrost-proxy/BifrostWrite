@@ -1406,6 +1406,58 @@ export function createCodeBlockLivePreviewExtension() {
     });
 }
 
+class TrailingAppendLineWidget extends WidgetType {
+    toDOM() {
+        const line = document.createElement("div");
+        line.className = "cm-lp-trailing-append-line";
+        line.dataset.livePreviewTrailingAppend = "true";
+        line.setAttribute("contenteditable", "false");
+        line.setAttribute("aria-label", "Add content after the last block");
+        return line;
+    }
+
+    ignoreEvent() {
+        return false;
+    }
+}
+
+function buildTrailingAppendLine(state: EditorState): DecorationSet {
+    if (
+        state.doc.length === 0 ||
+        state.doc.sliceString(state.doc.length - 1) === "\n"
+    ) {
+        return Decoration.none;
+    }
+
+    return Decoration.set([
+        Decoration.widget({
+            widget: new TrailingAppendLineWidget(),
+            block: true,
+            side: 1,
+        }).range(state.doc.length),
+    ]);
+}
+
+/**
+ * Live preview can collapse the final source line of a block (notably the
+ * closing fence of a code block) to zero height. Keep a virtual line after a
+ * non-empty document so the user can click below the block and continue
+ * writing. The real newline is inserted only when that line is activated.
+ */
+export function createTrailingAppendLineExtension() {
+    return StateField.define<DecorationSet>({
+        create: buildTrailingAppendLine,
+        update(decorations, transaction) {
+            return transaction.docChanged
+                ? buildTrailingAppendLine(transaction.state)
+                : decorations;
+        },
+        provide(field) {
+            return EditorView.decorations.from(field);
+        },
+    });
+}
+
 export class InlineMathWidget extends WidgetType {
     private tex: string;
 

@@ -236,8 +236,8 @@ export function FloatingSelectionToolbar({
                 <button
                     key={button.action}
                     type="button"
-                    title={button.title}
-                    aria-label={button.title}
+                    title={translate(button.title)}
+                    aria-label={translate(button.title)}
                     onMouseDown={(event) => {
                         event.preventDefault();
                     }}
@@ -271,7 +271,7 @@ export function FloatingSelectionToolbar({
                         event.currentTarget.style.background = "transparent";
                     }}
                 >
-                    {translate(String(button.label))}
+                    {button.label}
                 </button>
             ))}
             {onAddToChat && (

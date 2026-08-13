@@ -8,6 +8,7 @@ import {
 } from "./MarkdownNoteHeader";
 import { resetSystemUsernameCacheForTests } from "../okf/systemUsername";
 import { useVaultStore } from "../../app/store/vaultStore";
+import { useSettingsStore } from "../../app/store/settingsStore";
 
 function renderWith(overrides: Partial<MarkdownNoteHeaderProps> = {}) {
     const props: MarkdownNoteHeaderProps = {
@@ -54,6 +55,10 @@ function renderHeader(lineWrapping: boolean) {
 }
 
 describe("MarkdownNoteHeader", () => {
+    beforeEach(() => {
+        useSettingsStore.getState().reset();
+    });
+
     afterEach(() => {
         vi.restoreAllMocks();
     });
@@ -107,6 +112,26 @@ describe("MarkdownNoteHeader", () => {
             flexWrap: "wrap",
             minWidth: "0",
         });
+    });
+
+    it("places editor view toggles beside document status and updates settings", () => {
+        renderWith({ lineWrapping: true });
+
+        const livePreview = screen.getByRole("button", {
+            name: "Disable Live Preview",
+        });
+        const lineWrappingButton = screen.getByRole("button", {
+            name: "Disable Line Wrapping",
+        });
+
+        expect(livePreview).toHaveAttribute("aria-pressed", "true");
+        expect(lineWrappingButton).toHaveAttribute("aria-pressed", "true");
+
+        fireEvent.click(livePreview);
+        fireEvent.click(lineWrappingButton);
+
+        expect(useSettingsStore.getState().livePreviewEnabled).toBe(false);
+        expect(useSettingsStore.getState().lineWrapping).toBe(false);
     });
 
     it("recalculates the title height when the available width changes", async () => {

@@ -643,6 +643,7 @@ export function MultiPaneWorkspace() {
         >
             <WorkspaceSplitContainer
                 node={layoutTree}
+                isTopLeftBranch
                 focusedPaneId={focusedPaneId}
                 externalFileDropPaneId={externalFileDropPaneId}
                 onPanePointerDown={handlePanePointerDown}

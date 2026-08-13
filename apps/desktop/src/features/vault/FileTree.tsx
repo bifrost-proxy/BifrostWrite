@@ -2199,13 +2199,6 @@ export function FileTree() {
         (s) => s.fileTreeExtensionFilter,
     );
 
-    // Editor/workspace toggles that the unified toolbar exposes alongside the
-    // tree-specific actions. Sourced from the same stores the old utility
-    // row in SidebarShell used to read.
-    const livePreviewEnabled = useSettingsStore((s) => s.livePreviewEnabled);
-    const lineWrapping = useSettingsStore((s) => s.lineWrapping);
-    const setSetting = useSettingsStore((s) => s.setSetting);
-
     const [sortMode, setSortMode] = useState<SortMode>(
         () => (safeStorageGetItem(SORT_KEY) as SortMode | null) ?? "name_asc",
     );
@@ -5625,94 +5618,6 @@ export function FileTree() {
                             />
                         </svg>
                     )}
-                </ToolbarBtn>
-
-                {/* Thin divider between tree-specific ops and editor toggles. */}
-                <span
-                    aria-hidden="true"
-                    style={{
-                        width: 1,
-                        height: 16,
-                        margin: "0 4px",
-                        backgroundColor:
-                            "color-mix(in srgb, var(--border) 60%, transparent)",
-                        flexShrink: 0,
-                    }}
-                />
-
-                <ToolbarBtn
-                    title={
-                        livePreviewEnabled
-                            ? translate("Disable Live Preview")
-                            : translate("Enable Live Preview")
-                    }
-                    active={livePreviewEnabled}
-                    onClick={() =>
-                        setSetting("livePreviewEnabled", !livePreviewEnabled)
-                    }
-                    size={metrics.toolbarButton}
-                    iconScale={metrics.toolbarIconScale}
-                >
-                    {livePreviewEnabled ? (
-                        <svg
-                            width="15"
-                            height="15"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                            <circle cx="12" cy="12" r="3" />
-                        </svg>
-                    ) : (
-                        <svg
-                            width="15"
-                            height="15"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                            <line x1="1" y1="1" x2="23" y2="23" />
-                        </svg>
-                    )}
-                </ToolbarBtn>
-
-                <ToolbarBtn
-                    title={
-                        lineWrapping
-                            ? translate("Disable Line Wrapping")
-                            : translate("Enable Line Wrapping")
-                    }
-                    active={lineWrapping}
-                    onClick={() => setSetting("lineWrapping", !lineWrapping)}
-                    size={metrics.toolbarButton}
-                    iconScale={metrics.toolbarIconScale}
-                >
-                    <svg
-                        width="15"
-                        height="15"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <path d="M4 6h16" />
-                        <path d="M4 12h10a3 3 0 1 1 0 6H9" />
-                        <path d="m9 15-3 3 3 3" />
-                        {!lineWrapping && (
-                            <line x1="5" y1="5" x2="19" y2="19" />
-                        )}
-                    </svg>
                 </ToolbarBtn>
 
                 {sortMenuOpen && (

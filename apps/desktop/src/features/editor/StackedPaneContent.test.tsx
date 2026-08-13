@@ -196,6 +196,36 @@ describe("StackedPaneContent", () => {
         ).toHaveAttribute("aria-selected", "false");
     });
 
+    it("renders spine titles upright from top to bottom", () => {
+        setEditorTabs(
+            [
+                {
+                    id: "n1",
+                    kind: "note",
+                    noteId: "note-1",
+                    title: "Alpha",
+                    content: "A",
+                },
+            ],
+            "n1",
+        );
+        enableStackedOnFocusedPane();
+
+        renderComponent(<EditorPaneContent />);
+
+        const spineTitle = screen
+            .getByRole("tab", { name: /alpha/i })
+            .querySelector("span");
+
+        expect(spineTitle).toHaveStyle({
+            writingMode: "vertical-rl",
+            textOrientation: "upright",
+        });
+        expect(spineTitle).not.toHaveStyle({
+            transform: "rotate(180deg)",
+        });
+    });
+
     it("activates a panel when its spine is clicked", () => {
         setEditorTabs(
             [

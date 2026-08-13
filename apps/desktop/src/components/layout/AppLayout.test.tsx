@@ -12,6 +12,7 @@ import {
 } from "vitest";
 import { AppLayout } from "./AppLayout";
 import { useLayoutStore } from "../../app/store/layoutStore";
+import { getMockCurrentWindow } from "../../test/test-utils";
 import {
     FILE_TREE_NOTE_DRAG_EVENT,
     type FileTreeNoteDragDetail,
@@ -88,6 +89,14 @@ function firePointer(
     fireEvent(target, event);
 }
 
+function getStartDraggingMock() {
+    return (
+        getMockCurrentWindow() as unknown as {
+            startDragging: ReturnType<typeof vi.fn>;
+        }
+    ).startDragging;
+}
+
 describe("AppLayout", () => {
     const originalResizeObserver = globalThis.ResizeObserver;
     const originalSetPointerCapture = HTMLElement.prototype.setPointerCapture;
@@ -122,6 +131,7 @@ describe("AppLayout", () => {
 
     beforeEach(() => {
         MockResizeObserver.instances = [];
+        getStartDraggingMock().mockClear();
         useLayoutStore.setState({
             sidebarCollapsed: false,
             sidebarWidth: 280,
@@ -144,6 +154,22 @@ describe("AppLayout", () => {
         expect(screen.getByText("Left")).toBeInTheDocument();
         expect(screen.getByText("Center")).toBeInTheDocument();
         expect(screen.getByText("Right")).toBeInTheDocument();
+    });
+
+    it("starts native window dragging from the sidebar top band", () => {
+        render(
+            <AppLayout
+                left={<div>Left</div>}
+                center={<div>Center</div>}
+                right={<div>Right</div>}
+            />,
+        );
+
+        fireEvent.mouseDown(screen.getByTestId("sidebar-drag-strip"), {
+            button: 0,
+        });
+
+        expect(getStartDraggingMock()).toHaveBeenCalledTimes(1);
     });
 
     it("keeps the right panel outside the center column", () => {

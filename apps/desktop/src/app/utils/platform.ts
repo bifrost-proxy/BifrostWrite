@@ -1,5 +1,8 @@
 export type DesktopPlatform = "macos" | "windows" | "linux";
 
+export const WINDOW_CHROME_BAR_HEIGHT = 34;
+export const WINDOW_CHROME_CONTROL_SIZE = 26;
+
 export interface WindowChromeLayout {
     platform: DesktopPlatform;
     leadingInsetWidth: number;
@@ -52,13 +55,14 @@ export function isMacOSTahoe(): boolean {
 }
 
 const TRAFFIC_LIGHT_X = 14;
-// Traffic-light Y is chosen to vertically center the ~12px native buttons
-// inside the 34px WindowChrome bar: (34 - 12) / 2 = 11. Keeping the same
-// offset on legacy and Tahoe means the tab bar and traffic lights line up
-// identically regardless of macOS version.
-const TRAFFIC_LIGHT_Y = 11;
-const TRAFFIC_LIGHT_SPACER_LEGACY = 68;
-const TRAFFIC_LIGHT_SPACER_TAHOE = 72;
+// Tao treats this value as the extra height below the native controls, not as
+// their top offset. A 20px inset centers the traffic lights against our 33px
+// pane bar instead of leaving them pinned near the window's top edge.
+const TRAFFIC_LIGHT_Y = 20;
+// Keep a comfortable gap after the zoom button before pane navigation starts.
+// The Tahoe controls are slightly wider, so they receive a little more room.
+const TRAFFIC_LIGHT_SPACER_LEGACY = 80;
+const TRAFFIC_LIGHT_SPACER_TAHOE = 84;
 const TITLEBAR_PADDING_TOP_LEGACY = 0;
 const TITLEBAR_PADDING_TOP_TAHOE = 0;
 

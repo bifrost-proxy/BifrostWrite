@@ -488,6 +488,66 @@ describe("code block live preview", () => {
         parent.remove();
     });
 
+    it("lets the user append content after a fenced code block at EOF", () => {
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+
+        const original = "```ts\nconst value = 1;\n```";
+        const view = new EditorView({
+            state: createLivePreviewState(original),
+            parent,
+        });
+
+        const appendLine = view.dom.querySelector<HTMLElement>(
+            "[data-live-preview-trailing-append='true']",
+        );
+        expect(appendLine).not.toBeNull();
+
+        appendLine?.dispatchEvent(
+            new MouseEvent("mousedown", { bubbles: true, clientY: 1 }),
+        );
+
+        expect(view.state.doc.toString()).toBe(`${original}\n`);
+        expect(view.state.selection.main.head).toBe(original.length + 1);
+        expect(
+            view.dom.querySelector(
+                "[data-live-preview-trailing-append='true']",
+            ),
+        ).toBeNull();
+
+        view.dispatch({
+            changes: {
+                from: view.state.selection.main.head,
+                insert: "After the block",
+            },
+        });
+        expect(view.state.doc.toString()).toBe(
+            `${original}\nAfter the block`,
+        );
+
+        view.destroy();
+        parent.remove();
+    });
+
+    it("uses an existing trailing blank line instead of a virtual append line", () => {
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+
+        const view = new EditorView({
+            state: createLivePreviewState("```\ncode\n```\n"),
+            parent,
+        });
+
+        expect(
+            view.dom.querySelector(
+                "[data-live-preview-trailing-append='true']",
+            ),
+        ).toBeNull();
+
+        view.destroy();
+        parent.remove();
+    });
+
     it("renders pdf embeds when the file name contains brackets", () => {
         const parent = document.createElement("div");
         document.body.appendChild(parent);

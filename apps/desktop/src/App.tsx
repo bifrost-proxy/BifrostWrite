@@ -88,7 +88,11 @@ import {
 } from "./app/shortcuts/nativeMenu";
 import { AltGraphTracker } from "./app/shortcuts/altGraph";
 import { useShortcutOverrides } from "./app/shortcuts/useShortcutOverrides";
-import { getDesktopPlatform } from "./app/utils/platform";
+import {
+    getDesktopPlatform,
+    WINDOW_CHROME_BAR_HEIGHT,
+    WINDOW_CHROME_CONTROL_SIZE,
+} from "./app/utils/platform";
 import {
     decreaseAppZoom,
     increaseAppZoom,
@@ -249,7 +253,12 @@ function RightPanelTabBar({
     return (
         <div
             className="flex items-center gap-1"
-            style={{ padding: "8px 8px 6px", flexShrink: 0 }}
+            style={{
+                height: WINDOW_CHROME_BAR_HEIGHT,
+                padding: "4px 8px",
+                boxSizing: "border-box",
+                flexShrink: 0,
+            }}
         >
             {RIGHT_PANEL_TABS.map((tab) => {
                 const active = view === tab.value;
@@ -264,7 +273,7 @@ function RightPanelTabBar({
                         style={{
                             flex: 1,
                             minWidth: 0,
-                            height: 26,
+                            height: WINDOW_CHROME_CONTROL_SIZE,
                             padding: "0 6px",
                             border: active
                                 ? "1px solid color-mix(in srgb, var(--accent) 22%, var(--border))"
@@ -294,8 +303,8 @@ function RightPanelTabBar({
                 aria-label={translate("Hide right panel")}
                 className="ub-chrome-btn flex items-center justify-center shrink-0 rounded-md"
                 style={{
-                    width: 26,
-                    height: 26,
+                    width: WINDOW_CHROME_CONTROL_SIZE,
+                    height: WINDOW_CHROME_CONTROL_SIZE,
                     border: "1px solid transparent",
                     background: "transparent",
                     color: "var(--text-secondary)",

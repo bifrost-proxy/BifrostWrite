@@ -511,7 +511,7 @@ describe("createInlineLivePreviewPlugin", () => {
         parent.remove();
     });
 
-    it("shows raw heading syntax while the caret is editing that heading line", () => {
+    it("shows heading syntax without shrinking the rendered heading while editing", () => {
         const doc = "## Heading";
         const { plugin, parent, view } = createView(
             doc,
@@ -525,7 +525,7 @@ describe("createInlineLivePreviewPlugin", () => {
             decorations.some((deco) =>
                 deco.className.split(" ").includes("cm-lp-h2"),
             ),
-        ).toBe(false);
+        ).toBe(true);
 
         view.destroy();
         parent.remove();

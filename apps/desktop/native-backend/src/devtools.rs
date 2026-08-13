@@ -172,10 +172,16 @@ impl DevTerminalManager {
                 {
                     return Err(format!("Invalid binary name: {name}"));
                 }
-                // Use a login shell so the full user PATH is available (important
-                // on macOS where the Tauri app inherits a stripped environment PATH).
+                // Use the user's login shell so its PATH initialization is
+                // available (important on macOS where the Tauri app inherits a
+                // stripped PATH and the user may configure Node/npm in zsh).
                 #[cfg(unix)]
-                let found = std::process::Command::new("sh")
+                let login_shell = env::var("SHELL")
+                    .ok()
+                    .filter(|shell| Path::new(shell).is_absolute())
+                    .unwrap_or_else(|| "/bin/sh".to_string());
+                #[cfg(unix)]
+                let found = std::process::Command::new(login_shell)
                     .args(["-lc", &format!("command -v {name}")])
                     .output()
                     .map(|o| o.status.success())

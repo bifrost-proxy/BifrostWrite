@@ -35,6 +35,7 @@ interface NodeConstraints {
 
 interface WorkspaceSplitContainerProps {
     node: WorkspaceLayoutNode;
+    isTopLeftBranch?: boolean;
     focusedPaneId: string | null;
     externalFileDropPaneId: string | null;
     onPanePointerDown: () => void;
@@ -94,12 +95,14 @@ function clampSplitResize(
 
 const WorkspacePane = memo(function WorkspacePane({
     paneId,
+    isTopLeftPane,
     isFocused,
     isExternalFileDropActive,
     onPanePointerDown,
     onPaneFocus,
 }: {
     paneId: string;
+    isTopLeftPane: boolean;
     isFocused: boolean;
     isExternalFileDropActive: boolean;
     onPanePointerDown: () => void;
@@ -143,7 +146,11 @@ const WorkspacePane = memo(function WorkspacePane({
                     }}
                 />
             ) : null}
-            <EditorPaneBar paneId={paneId} isFocused={isFocused} />
+            <EditorPaneBar
+                paneId={paneId}
+                isFocused={isFocused}
+                isTopLeftPane={isTopLeftPane}
+            />
             <EditorPaneContent
                 paneId={paneId}
                 emptyStateMessage={translate("This pane is empty. Open a note here or close the pane from its menu.")}
@@ -154,6 +161,7 @@ const WorkspacePane = memo(function WorkspacePane({
 
 export function WorkspaceSplitContainer({
     node,
+    isTopLeftBranch = false,
     focusedPaneId,
     externalFileDropPaneId,
     onPanePointerDown,
@@ -285,6 +293,7 @@ export function WorkspaceSplitContainer({
         return (
             <WorkspacePane
                 paneId={node.paneId}
+                isTopLeftPane={isTopLeftBranch}
                 isFocused={node.paneId === focusedPaneId}
                 isExternalFileDropActive={
                     node.paneId === externalFileDropPaneId
@@ -327,6 +336,9 @@ export function WorkspaceSplitContainer({
                         >
                             <WorkspaceSplitContainer
                                 node={child}
+                                isTopLeftBranch={
+                                    isTopLeftBranch && index === 0
+                                }
                                 focusedPaneId={focusedPaneId}
                                 externalFileDropPaneId={externalFileDropPaneId}
                                 onPanePointerDown={onPanePointerDown}

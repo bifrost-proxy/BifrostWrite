@@ -6625,6 +6625,132 @@ describe("chatStore", () => {
         ]);
     });
 
+    it("creates a new assistant row when a completed runtime message id is reused", async () => {
+        await useChatStore.getState().initialize();
+
+        const activeSessionId = getActiveSessionId();
+        useChatStore.getState().applyMessageDelta({
+            session_id: activeSessionId,
+            message_id: "reused-assistant-id",
+            delta: "First reply",
+            role: "assistant",
+        });
+        flushDeltasSync();
+        useChatStore.getState().applyMessageCompleted({
+            session_id: activeSessionId,
+            message_id: "reused-assistant-id",
+            role: "assistant",
+            turn_complete: false,
+        });
+
+        useChatStore.getState().applyMessageDelta({
+            session_id: activeSessionId,
+            message_id: "runtime-user-next",
+            delta: "Next question",
+            role: "user",
+        });
+        flushDeltasSync();
+        useChatStore.getState().applyMessageCompleted({
+            session_id: activeSessionId,
+            message_id: "runtime-user-next",
+            role: "user",
+        });
+
+        useChatStore.getState().applyMessageDelta({
+            session_id: activeSessionId,
+            message_id: "reused-assistant-id",
+            delta: "Second ",
+            role: "assistant",
+        });
+        flushDeltasSync();
+        useChatStore.getState().applyMessageDelta({
+            session_id: activeSessionId,
+            message_id: "reused-assistant-id",
+            delta: "reply",
+            role: "assistant",
+        });
+        flushDeltasSync();
+        useChatStore.getState().applyMessageCompleted({
+            session_id: activeSessionId,
+            message_id: "reused-assistant-id",
+            role: "assistant",
+            turn_complete: false,
+        });
+
+        const messages =
+            useChatStore.getState().sessionsById[activeSessionId]?.messages ?? [];
+        expect(
+            messages.map((message) => ({
+                id: message.id,
+                role: message.role,
+                content: message.content,
+                inProgress: message.inProgress,
+            })),
+        ).toEqual([
+            {
+                id: "reused-assistant-id",
+                role: "assistant",
+                content: "First reply",
+                inProgress: false,
+            },
+            {
+                id: "runtime-user-next",
+                role: "user",
+                content: "Next question",
+                inProgress: false,
+            },
+            {
+                id: expect.stringMatching(/^reused-assistant-id:/),
+                role: "assistant",
+                content: "Second reply",
+                inProgress: false,
+            },
+        ]);
+    });
+
+    it("does not append a reused assistant id across a later user message", async () => {
+        await useChatStore.getState().initialize();
+
+        const activeSessionId = getActiveSessionId();
+        useChatStore.getState().applyMessageDelta({
+            session_id: activeSessionId,
+            message_id: "still-open-assistant-id",
+            delta: "Earlier reply",
+            role: "assistant",
+        });
+        flushDeltasSync();
+
+        useChatStore.getState().applyMessageDelta({
+            session_id: activeSessionId,
+            message_id: "later-user-id",
+            delta: "Later question",
+            role: "user",
+        });
+        flushDeltasSync();
+        useChatStore.getState().applyMessageCompleted({
+            session_id: activeSessionId,
+            message_id: "later-user-id",
+            role: "user",
+        });
+
+        useChatStore.getState().applyMessageDelta({
+            session_id: activeSessionId,
+            message_id: "still-open-assistant-id",
+            delta: "Later reply",
+            role: "assistant",
+        });
+        flushDeltasSync();
+
+        const messages =
+            useChatStore.getState().sessionsById[activeSessionId]?.messages ?? [];
+        expect(messages.map((message) => message.content)).toEqual([
+            "Earlier reply",
+            "Later question",
+            "Later reply",
+        ]);
+        expect(messages[2]?.id).toMatch(/^still-open-assistant-id:/);
+    });
+
     it("loads a session from backend and promotes it to the top of the history", async () => {
         await useChatStore.getState().initialize();
 

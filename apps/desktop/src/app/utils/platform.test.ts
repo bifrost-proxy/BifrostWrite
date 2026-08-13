@@ -33,15 +33,14 @@ describe("platform helpers", () => {
         expect(getDesktopPlatform()).toBe("macos");
         expect(getWindowChromeLayout()).toMatchObject({
             platform: "macos",
+            leadingInsetWidth: 80,
             windowControlsSide: "left",
         });
         expect(getManagedWindowChromeOptions()).toMatchObject({
             decorations: true,
             titleBarStyle: "overlay",
             hiddenTitle: true,
-            // y=11 vertically centers the 12px traffic lights in the 34px
-            // WindowChrome bar — same origin on every macOS version.
-            trafficLightPosition: { x: 14, y: 11 },
+            trafficLightPosition: { x: 14, y: 20 },
         });
     });
 

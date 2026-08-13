@@ -59,7 +59,7 @@ const EXCALIDRAW_RUNTIME_SUPPORTED = canUseExcalidrawRuntime();
 // between panels (Andy Matuschak "sliding panes" / Obsidian stacked tabs).
 const PREFERRED_PANEL_WIDTH = 600;
 
-// Width of a panel's vertical spine (rotated title).
+// Width of a panel's vertical spine (upright top-to-bottom title).
 const SPINE_WIDTH = 32;
 
 // Floor for the panel width so a panel never collapses to (almost) nothing when
@@ -694,7 +694,7 @@ function SpineTitle({ title }: { title: string }) {
                     fontSize: 12,
                     fontWeight: 600,
                     writingMode: "vertical-rl",
-                    transform: "rotate(180deg)",
+                    textOrientation: "upright",
                     maxHeight: "100%",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
