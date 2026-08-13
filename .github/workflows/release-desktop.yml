@@ -44,6 +44,7 @@ jobs:
           fi
           VERSION="${RELEASE_TAG#v}"
           node scripts/sync-tauri-version.mjs --check "$VERSION"
+          node scripts/check-no-telemetry.mjs
           echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
@@ -82,7 +83,7 @@ jobs:
         working-directory: apps/desktop
         run: npm ci
 
-      - name: Build and stage native runtime
+      - name: Build and stage lightweight native backend
         working-directory: apps/desktop
         run: node scripts/stage-tauri-sidecar.mjs --target ${{ matrix.target }}
 
@@ -118,7 +119,12 @@ jobs:
           SIDECAR="$APP_PATH/Contents/Resources/native-backend/neverwrite-native-backend"
           test -x "$APP_BINARY"
           test -x "$SIDECAR"
+          test ! -e "$APP_PATH/Contents/Resources/native-backend/binaries"
+          test ! -e "$APP_PATH/Contents/Resources/native-backend/embedded"
           test ! -e "$APP_PATH/Contents/Frameworks/Electron Framework.framework"
+
+          DMG_SIZE=$(stat -f%z "$DMG_PATH")
+          test "$DMG_SIZE" -le $((100 * 1024 * 1024))
 
           case "${{ matrix.target }}" in
             aarch64-apple-darwin) EXPECTED_ARCH=arm64 ;;

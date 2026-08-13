@@ -31,9 +31,11 @@ pub(crate) struct BuiltInRuntimeDefinition {
     acp_args: &'static [&'static str],
     acp_protocol: AcpProtocolFlavor,
     supports_native_resume: bool,
+    advertised: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
 pub(crate) enum RuntimeDefinition<'a> {
     BuiltIn(&'a BuiltInRuntimeDefinition),
     Custom(&'a CustomAcpRuntimeDefinition),
@@ -136,8 +138,16 @@ impl RuntimeCatalog {
             .map(RuntimeDefinition::BuiltIn)
     }
 
+    #[allow(dead_code)]
     pub(crate) fn definitions(&self) -> impl Iterator<Item = RuntimeDefinition<'_>> {
         self.built_ins.iter().map(RuntimeDefinition::BuiltIn)
+    }
+
+    pub(crate) fn advertised_definitions(&self) -> impl Iterator<Item = RuntimeDefinition<'_>> {
+        self.built_ins
+            .iter()
+            .filter(|definition| definition.advertised)
+            .map(RuntimeDefinition::BuiltIn)
     }
 
     pub(crate) fn validate_id(&self, runtime_id: &str) -> Result<(), String> {
@@ -146,6 +156,7 @@ impl RuntimeCatalog {
             .ok_or_else(|| format!("Unsupported AI runtime: {runtime_id}"))
     }
 
+    #[allow(dead_code)]
     pub(crate) fn with_custom<'a>(
         &'a self,
         custom: &'a [CustomAcpRuntimeDefinition],
@@ -157,11 +168,13 @@ impl RuntimeCatalog {
     }
 }
 
+#[allow(dead_code)]
 pub(crate) struct RuntimeCatalogView<'a> {
     built_ins: &'a RuntimeCatalog,
     custom: &'a [CustomAcpRuntimeDefinition],
 }
 
+#[allow(dead_code)]
 impl<'a> RuntimeCatalogView<'a> {
     pub(crate) fn definition(&self, runtime_id: &str) -> Option<RuntimeDefinition<'a>> {
         self.built_ins.definition(runtime_id).or_else(|| {
@@ -188,21 +201,23 @@ const BUILT_IN_RUNTIME_DEFINITIONS: &[BuiltInRuntimeDefinition] = &[
         id: CODEX_RUNTIME_ID,
         name: "Codex",
         description: "OpenAI Codex-compatible agent runtime.",
-        default_executable: "codex",
+        default_executable: "codex-acp",
         bin_env_var: "BIFROSTWRITE_CODEX_ACP_BIN",
         acp_args: NO_ACP_ARGS,
         acp_protocol: AcpProtocolFlavor::Current,
         supports_native_resume: true,
+        advertised: true,
     },
     BuiltInRuntimeDefinition {
         id: CLAUDE_RUNTIME_ID,
         name: "Claude",
         description: "Claude ACP-compatible agent runtime.",
-        default_executable: "claude",
+        default_executable: "claude-agent-acp",
         bin_env_var: "BIFROSTWRITE_CLAUDE_ACP_BIN",
         acp_args: NO_ACP_ARGS,
         acp_protocol: AcpProtocolFlavor::Current,
         supports_native_resume: false,
+        advertised: true,
     },
     BuiltInRuntimeDefinition {
         id: GROK_RUNTIME_ID,
@@ -213,6 +228,7 @@ const BUILT_IN_RUNTIME_DEFINITIONS: &[BuiltInRuntimeDefinition] = &[
         acp_args: GROK_ACP_ARGS,
         acp_protocol: AcpProtocolFlavor::Legacy12,
         supports_native_resume: false,
+        advertised: false,
     },
     BuiltInRuntimeDefinition {
         id: KILO_RUNTIME_ID,
@@ -223,6 +239,7 @@ const BUILT_IN_RUNTIME_DEFINITIONS: &[BuiltInRuntimeDefinition] = &[
         acp_args: SHELL_ACP_ARGS,
         acp_protocol: AcpProtocolFlavor::Current,
         supports_native_resume: false,
+        advertised: false,
     },
     BuiltInRuntimeDefinition {
         id: OPENCODE_RUNTIME_ID,
@@ -233,6 +250,7 @@ const BUILT_IN_RUNTIME_DEFINITIONS: &[BuiltInRuntimeDefinition] = &[
         acp_args: SHELL_ACP_ARGS,
         acp_protocol: AcpProtocolFlavor::Current,
         supports_native_resume: false,
+        advertised: false,
     },
 ];
 
@@ -311,13 +329,13 @@ mod tests {
         let expected = vec![
             (
                 CODEX_RUNTIME_ID,
-                "codex",
+                "codex-acp",
                 Some("BIFROSTWRITE_CODEX_ACP_BIN"),
                 Vec::<String>::new(),
             ),
             (
                 CLAUDE_RUNTIME_ID,
-                "claude",
+                "claude-agent-acp",
                 Some("BIFROSTWRITE_CLAUDE_ACP_BIN"),
                 Vec::new(),
             ),

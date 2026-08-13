@@ -38,6 +38,7 @@ function parseArgs(argv) {
     const args = {
         target: process.env.BIFROSTWRITE_TAURI_RELEASE_TARGET?.trim() || null,
         skipBuild: false,
+        includeAgentRuntimes: false,
     };
 
     for (let index = 0; index < argv.length; index += 1) {
@@ -53,9 +54,13 @@ function parseArgs(argv) {
             args.skipBuild = true;
             continue;
         }
+        if (arg === "--include-agent-runtimes") {
+            args.includeAgentRuntimes = true;
+            continue;
+        }
 
         throw new Error(
-            `Unknown argument "${arg}". Supported args: --target <rust-target|universal-apple-darwin>, --skip-build.`,
+            `Unknown argument "${arg}". Supported args: --target <rust-target|universal-apple-darwin>, --skip-build, --include-agent-runtimes.`,
         );
     }
 
@@ -455,7 +460,8 @@ async function resolveEmbeddedNodeSource(targetTriple) {
 }
 
 async function resolveClaudeEmbeddedSource() {
-    const configuredSource = process.env.BIFROSTWRITE_CLAUDE_EMBEDDED_DIR?.trim();
+    const configuredSource =
+        process.env.BIFROSTWRITE_CLAUDE_EMBEDDED_DIR?.trim();
     if (configuredSource) {
         if (!(await pathExists(configuredSource))) {
             throw new Error(
@@ -514,11 +520,7 @@ async function lipoCreate(inputPaths, outputPath) {
 
 async function verifyUniversalBinary(filePath, description) {
     try {
-        await run(
-            "lipo",
-            universalMacLipoVerifyArgs(filePath),
-            appRoot,
-        );
+        await run("lipo", universalMacLipoVerifyArgs(filePath), appRoot);
     } catch (error) {
         throw new Error(
             `${description} universal override must contain arm64 and x86_64: ${filePath}`,
@@ -671,11 +673,6 @@ const nativeBackendName = executableNameForTarget(
 );
 const stagedPath = path.join(stagedDir, nativeBackendName);
 const isUniversalMac = isMacUniversalTarget(targetTriple);
-const codexRuntimePlan = createCodexRuntimeBundlePlan({
-    targetTriple,
-    workspaceRoot,
-    skipBuild: args.skipBuild,
-});
 
 let stagingNativeBackendPath;
 
@@ -710,40 +707,49 @@ if (isUniversalMac) {
     );
 }
 
-// Both companion binaries come from one Cargo invocation for each target.
-for (const buildTarget of codexRuntimePlan.buildTargets) {
-    await buildCodexForTarget(buildTarget);
-}
+let stagingCodexRuntime = [];
+let nodeSource = null;
+let claudeEmbeddedSource = null;
+if (args.includeAgentRuntimes) {
+    const codexRuntimePlan = createCodexRuntimeBundlePlan({
+        targetTriple,
+        workspaceRoot,
+        skipBuild: args.skipBuild,
+    });
 
-// Resolve and validate the complete pair before replacing the existing staging tree.
-await validateCodexRuntimeBundleInputs(codexRuntimePlan, pathExists);
-await validateCodexRuntimeBundleArchitectures(
-    codexRuntimePlan,
-    targetTriple,
-    readExecutableHeader,
-);
-if (isUniversalMac) {
-    for (const binary of codexRuntimePlan.binaries) {
-        if (binary.inputPaths.length === 1) {
-            await verifyUniversalBinary(
-                binary.inputPaths[0],
-                binary.description,
-            );
+    // This opt-in path is retained for runtime development and smoke tests.
+    // Production bundles intentionally exclude these optional large assets.
+    for (const buildTarget of codexRuntimePlan.buildTargets) {
+        await buildCodexForTarget(buildTarget);
+    }
+    await validateCodexRuntimeBundleInputs(codexRuntimePlan, pathExists);
+    await validateCodexRuntimeBundleArchitectures(
+        codexRuntimePlan,
+        targetTriple,
+        readExecutableHeader,
+    );
+    if (isUniversalMac) {
+        for (const binary of codexRuntimePlan.binaries) {
+            if (binary.inputPaths.length === 1) {
+                await verifyUniversalBinary(
+                    binary.inputPaths[0],
+                    binary.description,
+                );
+            }
         }
     }
+    stagingCodexRuntime = await Promise.all(
+        codexRuntimePlan.binaries.map(async (binary) => ({
+            ...binary,
+            inputPaths: await Promise.all(
+                binary.inputPaths.map(materializeStagingSource),
+            ),
+        })),
+    );
+    nodeSource = await resolveEmbeddedNodeSource(targetTriple);
+    claudeEmbeddedSource = await resolveClaudeEmbeddedSource();
+    await installClaudeRuntimeDependencies(claudeEmbeddedSource, targetTriple);
 }
-const stagingCodexRuntime = await Promise.all(
-    codexRuntimePlan.binaries.map(async (binary) => ({
-        ...binary,
-        inputPaths: await Promise.all(
-            binary.inputPaths.map(materializeStagingSource),
-        ),
-    })),
-);
-
-const nodeSource = await resolveEmbeddedNodeSource(targetTriple);
-const claudeEmbeddedSource = await resolveClaudeEmbeddedSource();
-await installClaudeRuntimeDependencies(claudeEmbeddedSource, targetTriple);
 
 // Tauri release jobs must stage binaries for the requested target explicitly.
 // Reusing host binaries here would silently create a mismatched bundle.
@@ -754,13 +760,15 @@ if (Array.isArray(stagingNativeBackendPath)) {
 } else {
     await fs.copyFile(stagingNativeBackendPath, stagedPath);
 }
-await fs.mkdir(binariesDir, { recursive: true });
-for (const binary of stagingCodexRuntime) {
-    const outputPath = path.join(binariesDir, binary.outputName);
-    if (binary.inputPaths.length > 1) {
-        await lipoCreate(binary.inputPaths, outputPath);
-    } else {
-        await fs.copyFile(binary.inputPaths[0], outputPath);
+if (args.includeAgentRuntimes) {
+    await fs.mkdir(binariesDir, { recursive: true });
+    for (const binary of stagingCodexRuntime) {
+        const outputPath = path.join(binariesDir, binary.outputName);
+        if (binary.inputPaths.length > 1) {
+            await lipoCreate(binary.inputPaths, outputPath);
+        } else {
+            await fs.copyFile(binary.inputPaths[0], outputPath);
+        }
     }
 }
 if (isUniversalMac) {
@@ -772,31 +780,43 @@ if (isUniversalMac) {
         );
     }
 }
-await fs.mkdir(embeddedDir, { recursive: true });
-if (nodeSource.kind === "universal-directory") {
-    await stageUniversalEmbeddedNodeRuntime(nodeSource);
-} else {
-    await stageEmbeddedNodeRuntime(nodeSource, targetTriple);
+if (args.includeAgentRuntimes) {
+    await fs.mkdir(embeddedDir, { recursive: true });
+    if (nodeSource.kind === "universal-directory") {
+        await stageUniversalEmbeddedNodeRuntime(nodeSource);
+    } else {
+        await stageEmbeddedNodeRuntime(nodeSource, targetTriple);
+    }
+    await fs.cp(
+        claudeEmbeddedSource,
+        path.join(embeddedDir, "claude-agent-acp"),
+        {
+            recursive: true,
+            dereference: true,
+        },
+    );
 }
-await fs.cp(claudeEmbeddedSource, path.join(embeddedDir, "claude-agent-acp"), {
-    recursive: true,
-    dereference: true,
-});
 
 await ensureExecutableIfNeeded(stagedPath);
 for (const binary of stagingCodexRuntime) {
     await ensureExecutableIfNeeded(path.join(binariesDir, binary.outputName));
 }
 
-const stagedNodeBinary = path.join(
-    embeddedDir,
-    "node",
-    "bin",
-    executableNameForTarget("node", targetTriple),
-);
-if (await pathExists(stagedNodeBinary)) {
-    await ensureExecutableIfNeeded(stagedNodeBinary);
+if (args.includeAgentRuntimes) {
+    const stagedNodeBinary = path.join(
+        embeddedDir,
+        "node",
+        "bin",
+        executableNameForTarget("node", targetTriple),
+    );
+    if (await pathExists(stagedNodeBinary)) {
+        await ensureExecutableIfNeeded(stagedNodeBinary);
+    }
 }
 
 console.log(`Staged native backend sidecar at ${stagedPath}`);
-console.log(`Staged BifrostWrite ACP resources at ${stagedDir}`);
+console.log(
+    args.includeAgentRuntimes
+        ? `Staged optional BifrostWrite ACP resources at ${stagedDir}`
+        : "Skipped optional agent runtimes; they are installed on demand.",
+);

@@ -232,7 +232,9 @@ describe("SettingsPanel", () => {
         expect(screen.getByText("All")).toBeInTheDocument();
         expect(screen.getAllByText("Codex").length).toBeGreaterThan(0);
         expect(screen.getAllByText("Claude").length).toBeGreaterThan(0);
-        expect(screen.getByText("Kilo")).toBeInTheDocument();
+        expect(screen.queryByText("Kilo")).not.toBeInTheDocument();
+        expect(screen.queryByText("Grok")).not.toBeInTheDocument();
+        expect(screen.queryByText("OpenCode")).not.toBeInTheDocument();
     });
 
     it("lets users type a custom editor autosave delay", async () => {

@@ -83,6 +83,9 @@ jobs:
       - name: Cache Rust build outputs
         uses: Swatinem/rust-cache@v2
 
+      - name: Reject telemetry dependencies
+        run: node scripts/check-no-telemetry.mjs
+
       - name: Install desktop dependencies
         working-directory: apps/desktop
         run: npm ci

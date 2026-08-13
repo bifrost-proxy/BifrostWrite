@@ -1,7 +1,4 @@
-export type AcpContinuationStrategy =
-    | "resume"
-    | "load"
-    | "new_session_only";
+export type AcpContinuationStrategy = "resume" | "load" | "new_session_only";
 
 export type CustomRuntimeContinuationResult =
     | { status: "connected"; session: AIChatSession }
@@ -28,6 +25,7 @@ export type AIRuntimeBinarySource =
     | "bundled"
     | "custom"
     | "env"
+    | "managed"
     | "vendor"
     | "missing";
 
@@ -90,8 +88,7 @@ export interface AICustomAcpRuntimeDefinitionInput {
     authMode: "external";
 }
 
-export interface AICustomAcpRuntimeDefinition
-    extends AICustomAcpRuntimeDefinitionInput {
+export interface AICustomAcpRuntimeDefinition extends AICustomAcpRuntimeDefinitionInput {
     id: AICustomAcpRuntimeId;
     revision: number;
     launchFingerprint: string;
@@ -171,6 +168,19 @@ export interface AIRuntimeSetupStatus {
     hasGatewayUrl?: boolean;
     onboardingRequired: boolean;
     message?: string;
+}
+
+export type AIRuntimeInstallState =
+    | "idle"
+    | "installing"
+    | "installed"
+    | "failed";
+
+export interface AIRuntimeInstallStatus {
+    runtimeId: string;
+    state: AIRuntimeInstallState;
+    message?: string;
+    binaryPath?: string;
 }
 
 export interface AIResolvedExecutable {
@@ -520,11 +530,7 @@ export interface AIChatSession {
     pendingSessionError?: string | null;
     resumeContextPending?: boolean;
     resumeReconnectFailed?: boolean;
-    runtimeState?:
-        | "live"
-        | "persisted_only"
-        | "transcript_only"
-        | "detached";
+    runtimeState?: "live" | "persisted_only" | "transcript_only" | "detached";
 }
 
 export interface AIRuntimeDescriptor {
@@ -779,7 +785,7 @@ export type AIComposerPart =
           startLine: number;
           endLine: number;
       }
-    | {
+    | ({
           id: string;
           type: "screenshot";
           mimeType: string;
@@ -804,7 +810,7 @@ export type AIComposerPart =
                 managedAttachmentId?: never;
                 fileName?: string;
             }
-      )
+      ))
     | {
           id: string;
           type: "file_attachment";
