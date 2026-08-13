@@ -212,7 +212,9 @@ export function TagsPanel() {
                         className="text-xs px-3 py-2"
                         style={{ color: "var(--text-secondary)" }}
                     >
-                        {translate("No tags found")}
+                        {translate(
+                            "No tags found. Type #tag anywhere in the note body. Spaces or punctuation end a tag; frontmatter tag/tags fields are ignored.",
+                        )}
                     </p>
                 ) : filteredTags.length === 0 ? (
                     <p

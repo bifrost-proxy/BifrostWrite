@@ -32,6 +32,26 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.2.0] - 2026-08-14
+
+### Added
+
+- Added inline body tags using Apple Notes-style `#tag` syntax, with themed editor highlighting, Unicode and hierarchy support, automatic indexing, Tags panel aggregation, Search and Graph filtering, and matching Web Clipper output.
+- Added safe live rendering for common inline and block HTML in Markdown, with theme-aware presentation and one-click access to edit the original HTML source.
+- Added native macOS vibrancy and translucent glass effects outside document content areas.
+- Added hourly background update checks and an update button beside the main-window create control when a verified release is available.
+
+### Changed
+
+- Removed the legacy frontmatter tag model. `tag` and `tags` properties are now ordinary document properties and are ignored by indexing and filtering.
+- Reworked Simplified Chinese localization with product-specific terminology, preserved command syntax and brand names, translated dynamic editor and graph status text, and added automated coverage checks.
+- Updated Tag documentation throughout the user guide, editor architecture, troubleshooting guide, and Web Clipper instructions.
+
+### Fixed
+
+- Fixed live-preview block elements trapping appended content inside the final block, and added Shift+Enter and Command+Enter shortcuts to exit a block into a new paragraph.
+- Fixed editor, graph, search, AI, and accessibility labels that bypassed localization or used inaccurate machine translations.
+
 ## [1.1.2] - 2026-08-14
 
 ### Changed

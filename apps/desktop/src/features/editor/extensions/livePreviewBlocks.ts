@@ -15,6 +15,7 @@ import {
 import { syntaxTree } from "@codemirror/language";
 import type { SyntaxNode } from "@lezer/common";
 import katex from "katex";
+import { translate } from "../../../app/i18n";
 import {
     buildVaultPreviewUrlFromAbsolutePath,
     isAuthorizedVaultPreviewPath,
@@ -487,9 +488,11 @@ class ImageWidget extends WidgetType {
             img.style.display = "none";
             const fallback = document.createElement("span");
             fallback.className = "cm-inline-image-fallback";
-            fallback.textContent = `Image not found: ${truncateInlineImageLabel(
-                this.alt || this.src,
-            )}`;
+            fallback.textContent = translate(
+                `Image not found: ${truncateInlineImageLabel(
+                    this.alt || this.src,
+                )}`,
+            );
             content.appendChild(fallback);
         };
 
@@ -709,7 +712,7 @@ class YouTubeWidget extends WidgetType {
 
         const meta = document.createElement("div");
         meta.className = "cm-youtube-link-meta";
-        meta.textContent = "Play in app";
+        meta.textContent = translate("Play in app");
 
         body.appendChild(label);
         body.appendChild(meta);
@@ -911,7 +914,7 @@ class CodeBlockHeaderWidget extends WidgetType {
         const copyBtn = document.createElement("button");
         copyBtn.className = "cm-code-block-copy";
         copyBtn.type = "button";
-        copyBtn.setAttribute("aria-label", "Copy code block");
+        copyBtn.setAttribute("aria-label", translate("Copy code block"));
         setCodeBlockCopyButtonState(copyBtn, false);
         copyBtn.addEventListener("click", (e) => {
             e.preventDefault();
@@ -973,7 +976,7 @@ function setCodeBlockCopyButtonState(
     copied: boolean,
 ) {
     button.dataset.copied = copied ? "true" : "false";
-    button.title = copied ? "Copied" : "Copy";
+    button.title = translate(copied ? "Copied" : "Copy");
     button.replaceChildren(createCodeBlockCopyIcon(copied));
 }
 
@@ -1002,7 +1005,7 @@ class MermaidDiagramWidget extends WidgetType {
 
         const body = document.createElement("div");
         body.className = "cm-mermaid-preview-body";
-        body.textContent = "Rendering Mermaid diagram...";
+        body.textContent = translate("Rendering Mermaid diagram...");
         outer.appendChild(body);
 
         const expectedId = this.diagramId;
@@ -1081,7 +1084,7 @@ function renderMermaidError(container: HTMLElement, message: string) {
 
     const title = document.createElement("div");
     title.className = "cm-mermaid-preview-error-title";
-    title.textContent = "Mermaid diagram error";
+    title.textContent = translate("Mermaid diagram error");
 
     const detail = document.createElement("pre");
     detail.className = "cm-mermaid-preview-error-message";
@@ -1412,7 +1415,10 @@ class TrailingAppendLineWidget extends WidgetType {
         line.className = "cm-lp-trailing-append-line";
         line.dataset.livePreviewTrailingAppend = "true";
         line.setAttribute("contenteditable", "false");
-        line.setAttribute("aria-label", "Add content after the last block");
+        line.setAttribute(
+            "aria-label",
+            translate("Add content after the last block"),
+        );
         return line;
     }
 

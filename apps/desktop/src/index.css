@@ -478,14 +478,39 @@ html[data-desktop-platform="windows"] #root {
     background-color: transparent;
 }
 
-/* Sidebar translucent tint — muted frosted look instead of a fully
-   transparent panel. 82% in light, 85% in dark mode. Shared by the macOS
-   native "sidebar" vibrancy and the Windows 11 acrylic backgroundMaterial. */
+/* Native glass palette. The OS material provides the real wallpaper blur;
+   these translucent tints preserve theme identity and text contrast without
+   flattening the window back into opaque rectangles. */
 html[data-desktop-platform="macos"],
 html[data-desktop-platform="windows"] {
     --sidebar-vibrancy-tint: color-mix(
         in srgb,
-        var(--bg-primary) 82%,
+        var(--bg-primary) 68%,
+        transparent
+    );
+    --window-glass-panel: color-mix(
+        in srgb,
+        var(--bg-secondary) 66%,
+        transparent
+    );
+    --window-glass-chrome: color-mix(
+        in srgb,
+        var(--bg-secondary) 60%,
+        transparent
+    );
+    --window-glass-hairline: color-mix(
+        in srgb,
+        var(--border) 58%,
+        transparent
+    );
+    --window-glass-highlight: color-mix(
+        in srgb,
+        white 24%,
+        transparent
+    );
+    --window-glass-glow: color-mix(
+        in srgb,
+        var(--accent) 9%,
         transparent
     );
 }
@@ -493,7 +518,32 @@ html[data-desktop-platform="macos"].dark,
 html[data-desktop-platform="windows"].dark {
     --sidebar-vibrancy-tint: color-mix(
         in srgb,
-        var(--bg-primary) 85%,
+        var(--bg-primary) 72%,
+        transparent
+    );
+    --window-glass-panel: color-mix(
+        in srgb,
+        var(--bg-secondary) 70%,
+        transparent
+    );
+    --window-glass-chrome: color-mix(
+        in srgb,
+        var(--bg-secondary) 64%,
+        transparent
+    );
+    --window-glass-hairline: color-mix(
+        in srgb,
+        var(--border) 64%,
+        transparent
+    );
+    --window-glass-highlight: color-mix(
+        in srgb,
+        white 10%,
+        transparent
+    );
+    --window-glass-glow: color-mix(
+        in srgb,
+        var(--accent) 12%,
         transparent
     );
 }

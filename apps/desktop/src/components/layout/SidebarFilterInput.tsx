@@ -15,7 +15,7 @@ export interface SidebarFilterInputProps {
 export function SidebarFilterInput({
     value,
     onChange,
-    placeholder = "Filter...",
+    placeholder = translate("Filter..."),
     ariaLabel,
 }: SidebarFilterInputProps) {
     const inputRef = useRef<HTMLInputElement>(null);

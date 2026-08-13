@@ -203,18 +203,22 @@ const RENDERER_OPTIONS: GraphRendererMode[] = ["2d", "3d"];
 function formatQualityLabel(mode: GraphQualitySetting | GraphQualityMode) {
     switch (mode) {
         case "large-vault":
-            return "Large Vault";
+            return translate("Large Vault");
         default:
-            return mode.charAt(0).toUpperCase() + mode.slice(1);
+            return translate(
+                mode.charAt(0).toUpperCase() + mode.slice(1),
+            );
     }
 }
 
 function formatLayoutLabel(mode: GraphLayoutStrategy) {
     switch (mode) {
         case "overview-packed":
-            return "Overview Packed";
+            return translate("Overview Packed");
         default:
-            return mode.charAt(0).toUpperCase() + mode.slice(1);
+            return translate(
+                mode.charAt(0).toUpperCase() + mode.slice(1),
+            );
     }
 }
 
@@ -449,7 +453,10 @@ function VaultDefaultsSection({ vaultPath }: { vaultPath: string | null }) {
                 >
                     {(["global", "overview", "local"] as const).map((mode) => (
                         <option key={mode} value={mode}>
-                            {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                            {translate(
+                                mode.charAt(0).toUpperCase() +
+                                    mode.slice(1),
+                            )}
                         </option>
                     ))}
                 </select>
@@ -517,7 +524,9 @@ function ModeToggle() {
                         textTransform: "capitalize",
                     }}
                 >
-                    {mode}
+                    {translate(
+                        mode.charAt(0).toUpperCase() + mode.slice(1),
+                    )}
                 </button>
             ))}
         </div>

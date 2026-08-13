@@ -99,14 +99,12 @@ export function buildClipMarkdown(input: {
     if (input.clipData.extractedAt) {
         lines.push(`clipped_at: ${quoteYaml(input.clipData.extractedAt)}`);
     }
-    if (input.tags.length > 0) {
-        lines.push("tags:");
-        for (const tag of input.tags) {
-            lines.push(`  - ${quoteYaml(tag)}`);
-        }
-    }
-
     lines.push("---", "", `# ${resolvedTitle}`);
+
+    const inlineTags = input.tags.map((tag) => `#${tag}`).join(" ");
+    if (inlineTags) {
+        lines.push("", inlineTags);
+    }
 
     if (isYouTubeSourceUrl(input.clipData.metadata.url)) {
         lines.push("", input.clipData.metadata.url);

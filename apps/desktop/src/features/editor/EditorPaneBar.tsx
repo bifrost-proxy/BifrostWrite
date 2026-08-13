@@ -534,8 +534,12 @@ export function EditorPaneBar({
                     height: WINDOW_CHROME_BAR_HEIGHT,
                     minHeight: WINDOW_CHROME_BAR_HEIGHT,
                     boxSizing: "border-box",
-                    borderBottom: "1px solid var(--border)",
-                    background: "var(--bg-secondary)",
+                    borderBottom: "1px solid var(--window-glass-hairline, var(--border))",
+                    background: "var(--window-glass-chrome, var(--bg-secondary))",
+                    backdropFilter: "blur(28px) saturate(150%)",
+                    WebkitBackdropFilter: "blur(28px) saturate(150%)",
+                    boxShadow:
+                        "inset 0 1px 0 var(--window-glass-highlight, transparent), 0 8px 28px var(--window-glass-glow, transparent)",
                 }}
                 data-pane-empty={hasTabs ? undefined : "true"}
             >

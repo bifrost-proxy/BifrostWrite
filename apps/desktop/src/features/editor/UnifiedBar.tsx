@@ -969,12 +969,14 @@ export function UnifiedBar({ windowMode }: UnifiedBarProps) {
                 showLeadingInset
                 onLeadingInsetMouseDown={startWindowDrag}
                 shellStyle={{
-                    // Detached note windows adopt the same chrome as an
-                    // in-window pane bar: solid --bg-secondary surface with a
-                    // single bottom border. Keeps the tear-off visually
-                    // consistent with the panes the user just dragged from.
-                    background: "var(--bg-secondary)",
-                    borderBottom: "1px solid var(--border)",
+                    background:
+                        "var(--window-glass-chrome, var(--bg-secondary))",
+                    borderBottom:
+                        "1px solid var(--window-glass-hairline, var(--border))",
+                    backdropFilter: "blur(28px) saturate(150%)",
+                    WebkitBackdropFilter: "blur(28px) saturate(150%)",
+                    boxShadow:
+                        "inset 0 1px 0 var(--window-glass-highlight, transparent), 0 8px 28px var(--window-glass-glow, transparent)",
                 }}
                 barStyle={{ padding: "0 6px" }}
             >

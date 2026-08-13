@@ -10,6 +10,7 @@ import {
     type PointerEvent as ReactPointerEvent,
 } from "react";
 import type { WorkspaceLayoutNode } from "../../app/store/workspaceLayoutTree";
+import { WINDOW_CHROME_BAR_HEIGHT } from "../../app/utils/platform";
 import { EditorPaneBar } from "./EditorPaneBar";
 import { EditorPaneContent } from "./EditorPaneContent";
 
@@ -119,7 +120,7 @@ const WorkspacePane = memo(function WorkspacePane({
                 minHeight: MIN_PANE_HEIGHT,
                 border: "1px solid color-mix(in srgb, var(--border) 76%, transparent)",
                 borderRadius: 0,
-                background: "var(--bg-primary)",
+                background: `linear-gradient(to bottom, transparent 0, transparent ${WINDOW_CHROME_BAR_HEIGHT}px, var(--bg-primary) ${WINDOW_CHROME_BAR_HEIGHT}px, var(--bg-primary) 100%)`,
                 boxShadow: isExternalFileDropActive
                     ? "inset 0 0 0 1px color-mix(in srgb, var(--accent) 52%, transparent)"
                     : isFocused

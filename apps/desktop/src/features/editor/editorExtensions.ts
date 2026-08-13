@@ -25,6 +25,10 @@ import { vimStatusBarExtension } from "./extensions/vimStatusBar";
 import { resolveWikilink } from "./wikilinkResolution";
 import { navigateWikilink, getNoteLinkTarget } from "./wikilinkNavigation";
 import { resolveFrontendSpellcheckLanguage } from "../spellcheck/api";
+import {
+    hashtagDecorationExtension,
+    hashtagTheme,
+} from "./extensions/hashtags";
 
 export type LinkContextMenuState = {
     x: number;
@@ -234,6 +238,8 @@ export function getSyntaxExtension() {
     return [
         syntaxHighlighting(buildSyntaxHighlightStyle()),
         sourceHeadingDecorationExtension,
+        hashtagDecorationExtension,
+        hashtagTheme,
     ];
 }
 

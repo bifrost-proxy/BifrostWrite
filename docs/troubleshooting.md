@@ -51,6 +51,21 @@ The desktop API listens on `127.0.0.1:32145`. Pairing state is stored in the
 Tauri app-data directory as `web_clipper_auth.json`. Check that the desktop app
 is running, a vault is fully open, and another process is not using the port.
 
+If clipped tags do not appear in the desktop Tags panel, open the saved
+Markdown file and confirm that they are present in the body as `#tag` values.
+The clipper and desktop index intentionally ignore frontmatter properties named
+`tag` or `tags`.
+
+## Tags are missing from the Tags panel
+
+Tags must appear in Markdown body text, for example `#project #weekly`. Spaces
+and punctuation end a tag; `/` may be used inside a hierarchical name such as
+`#work/project`. A heading written as `# Heading` is not a tag.
+
+The index deliberately skips fenced code, indented code, inline code, escaped
+hashes such as `\#literal`, URL fragments, and all frontmatter. To filter a
+valid body tag in Search or Graph, omit the hash and enter `tag:project`.
+
 ## Homebrew installation
 
 ```bash

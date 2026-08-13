@@ -70,6 +70,7 @@ function buildMarkdownPreview(
     templateBody: string,
     notes?: string,
 ): string {
+    const templatePlacesTags = /\{\{\s*tags\s*\}\}/i.test(templateBody);
     return renderClipTemplate(templateBody, {
         clipData,
         title,
@@ -78,7 +79,7 @@ function buildMarkdownPreview(
         content: buildClipMarkdown({
             clipData,
             title,
-            tags,
+            tags: templatePlacesTags ? [] : tags,
             notes,
             contentMode,
         }),
@@ -602,6 +603,11 @@ export function App(_props: AppProps) {
                                         <label className="clip-label">
                                             Tags
                                         </label>
+                                        <p className="mt-0.5 text-[9px] leading-relaxed text-fg-dim">
+                                            Saved in the note body as #tags. Use
+                                            Space, Enter, or comma to separate
+                                            them; frontmatter tags are not used.
+                                        </p>
                                         <div className="mt-1">
                                             <TagEditor
                                                 tags={tags}

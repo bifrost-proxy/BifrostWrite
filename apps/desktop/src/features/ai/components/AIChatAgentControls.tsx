@@ -627,8 +627,10 @@ export function AIChatAgentControls({
                     label={translate("Model")}
                     value={selectedModelId}
                     searchable={shouldUseSearchableModelMenu(runtimeId)}
-                    searchPlaceholder="Search models..."
-                    emptySearchMessage="No models match that search."
+                    searchPlaceholder={translate("Search models...")}
+                    emptySearchMessage={translate(
+                        "No models match that search.",
+                    )}
                     options={lockedModelOptions}
                     onChange={(value) =>
                         modelConfig

@@ -344,7 +344,8 @@ function RightPanel() {
                             height: 34,
                             flexShrink: 0,
                             WebkitAppRegion: "drag",
-                            backgroundColor: "var(--sidebar-vibrancy-tint)",
+                            backgroundColor:
+                                "var(--window-glass-chrome, var(--sidebar-vibrancy-tint))",
                         } as React.CSSProperties
                     }
                 />
@@ -2352,13 +2353,14 @@ export default function App() {
                     center={
                         <div className="flex h-full min-h-0 flex-col overflow-hidden">
                             <EditorChromeBar />
-                            {/* Editor body paints its own opaque background so
-                                the translucent surfaces above read as frosted
-                                strips while the editor surface stays solid. */}
                             <div
                                 className="min-h-0 flex-1 overflow-hidden"
                                 style={{
-                                    backgroundColor: "var(--bg-primary)",
+                                    backgroundColor:
+                                        DESKTOP_PLATFORM === "macos" ||
+                                        DESKTOP_PLATFORM === "windows"
+                                            ? "transparent"
+                                            : "var(--bg-primary)",
                                 }}
                             >
                                 <MultiPaneWorkspace />

@@ -7,6 +7,7 @@ import {
     findPrevious,
     closeSearchPanel,
 } from "@codemirror/search";
+import { translate } from "../../../app/i18n";
 
 /**
  * Search match highlight theme — must be included in the editor extensions
@@ -115,7 +116,7 @@ export function createMarkdownSearchPanel(view: EditorView): Panel {
     // Input
     const input = document.createElement("input");
     input.type = "text";
-    input.placeholder = "Find…";
+    input.placeholder = translate("Find…");
     input.setAttribute("main-field", "true");
     Object.assign(input.style, {
         flex: "1",
@@ -228,7 +229,7 @@ export function createMarkdownSearchPanel(view: EditorView): Panel {
         }
         const { total, current } = countMatches(view, query);
         matchLabel.textContent =
-            total === 0 ? "No results" : `${current}/${total}`;
+            total === 0 ? translate("No results") : `${current}/${total}`;
     }
 
     function toggleOption(key: keyof SearchPanelOptions) {

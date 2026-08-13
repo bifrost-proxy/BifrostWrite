@@ -210,7 +210,7 @@ a simple frontmatter subset:
 
 - scalar `key: value`
 - list-style values with indented `- item` rows
-- property type hints for text, URL, date, list, and tags
+- property type hints for text, URL, date, and list
 
 `Editor.tsx` keeps a `frontmatterByTabId` ref keyed by note ID. In current
 source-mode architecture, `stripFrontmatter()` records the raw frontmatter but
@@ -226,6 +226,45 @@ dirty tracking, and save baselines are updated at the same time.
 
 Title derivation and leading-content collapse helpers live in
 [`noteTitleHelpers.ts`](../apps/desktop/src/features/editor/noteTitleHelpers.ts).
+
+## Inline Tags
+
+Tags are body syntax, not frontmatter properties. A Unicode-aware `#tag` can
+start anywhere in prose, and whitespace or punctuation terminates it. The
+shared hashtag decoration extension runs in both source mode and live preview,
+so tags keep the same theme-colored pill treatment when the editor mode
+changes. The vault parser applies the same body-only rule before populating the
+index used by the Tags panel, `tag:` search filters, and graph filters.
+
+Frontmatter keys named `tag` or `tags` are ordinary user properties and are
+never interpreted as tags. Do not add migration or compatibility paths for the
+removed frontmatter tag model. See [Tags](tags.md) for the user-facing syntax
+and exclusion rules.
+
+## HTML In Markdown
+
+Live Preview handles HTML through two deliberately separate paths:
+
+- semantic inline tags are interpreted by `livePreviewInline.ts`; their source
+  delimiters collapse while inactive, and the enclosed text receives the same
+  theme classes used by native Markdown formatting;
+- `HTMLBlock` syntax nodes are replaced by the sanitized block widget from
+  `htmlLivePreview.ts` while the selection is outside the source range.
+
+The block path uses DOMPurify with an explicit element and attribute allowlist.
+Executable, embedded, media, form, SVG, styling, class, ID, event-handler, and
+data-attribute surfaces are rejected. Theme styling belongs in
+`livePreviewTheme.ts`, not in document-provided CSS. External block links are
+limited to `http`, `https`, and `mailto` and are opened through the runtime
+boundary.
+
+Moving the cursor into an HTML block removes its replacement decoration and
+reveals the original source. The block widget's **HTML** affordance dispatches
+an editor-local event that places the selection inside the replaced range;
+this keeps the interaction editable without making sanitized child DOM part of
+the CodeMirror document. Source mode never installs the live-preview
+extension, so raw HTML remains fully editable there. See
+[HTML In Markdown](markdown-html.md) for the user-facing contract.
 
 ## Autosave And Dirty State
 

@@ -9,7 +9,7 @@ describe("Frontmatter helpers", () => {
         expect(
             parseFrontmatterRaw(`---
 title: Roadmap
-tags:
+aliases:
   - project
   - planning
 date: 2026-03-08
@@ -17,7 +17,7 @@ date: 2026-03-08
 `),
         ).toEqual([
             { key: "title", value: "Roadmap" },
-            { key: "tags", value: ["project", "planning"] },
+            { key: "aliases", value: ["project", "planning"] },
             { key: "date", value: "2026-03-08" },
         ]);
     });
@@ -26,13 +26,13 @@ date: 2026-03-08
         expect(
             serializeFrontmatterRaw([
                 { key: "title", value: "Roadmap" },
-                { key: "tags", value: ["project", "planning"] },
+                { key: "aliases", value: ["project", "planning"] },
                 { key: "empty", value: "" },
                 { key: "none", value: null },
             ]),
         ).toBe(`---
 title: Roadmap
-tags:
+aliases:
   - project
   - planning
 ---

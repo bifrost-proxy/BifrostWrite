@@ -10,6 +10,11 @@ OKF is permissive on consumption. BifrostWrite never rejects a note for having a
 unknown or missing field. Everything below is additive: notes without OKF
 frontmatter render exactly as before.
 
+Tags are intentionally outside OKF/frontmatter in BifrostWrite. Only inline
+body syntax such as `#project` enters the Tag index; frontmatter keys named
+`tag` or `tags` are ordinary properties and are ignored by Tag features. See
+[Tags](tags.md) for the complete syntax.
+
 ## The `status` field
 
 `status` is a BifrostWrite extension to OKF frontmatter that signals a document's

@@ -56,7 +56,10 @@ const SORT_OPTIONS: DropdownOption<SortOption>[] = [
 const OPERATORS = [
     { label: "file:", desc: "filename" },
     { label: "path:", desc: "file path" },
-    { label: "tag:", desc: "note tag" },
+    {
+        label: "tag:",
+        desc: "Filter by an inline body tag, for example tag:project. Do not include #.",
+    },
     { label: "content:", desc: "note body" },
     { label: "line:", desc: "same line" },
     { label: "section:", desc: "heading section" },
@@ -431,7 +434,9 @@ export function SearchView({ tabId }: SearchViewProps) {
                             <circle cx="8" cy="8" r="6" />
                             <path d="M8 7v4M8 5v.5" />
                         </svg>
-                        <span className="truncate">{parsed.explanation}</span>
+                        <span className="truncate">
+                            {translate(parsed.explanation)}
+                        </span>
                     </div>
                 )}
 
@@ -447,7 +452,7 @@ export function SearchView({ tabId }: SearchViewProps) {
                 <div className="flex flex-wrap gap-1.5 mt-3">
                     {OPERATORS.map((op) => (
                         <button
-                            key={translate(String(op.label))}
+                            key={op.label}
                             onClick={() =>
                                 handleInsertOperator(
                                     "insert" in op ? op.insert : op.label,
@@ -467,9 +472,9 @@ export function SearchView({ tabId }: SearchViewProps) {
                                 (e.currentTarget.style.borderColor =
                                     "var(--border)")
                             }
-                            title={op.desc}
+                            title={translate(op.desc)}
                         >
-                            {translate(String(op.label))}
+                            {op.label}
                         </button>
                     ))}
                     <span
@@ -489,8 +494,10 @@ export function SearchView({ tabId }: SearchViewProps) {
                         style={{ color: "var(--text-secondary)" }}
                     >
                         <span className="text-[11px]">
-                            {results.length} {translate("result")}
-                            {results.length !== 1 ? "s" : ""}
+                            {results.length}{" "}
+                            {translate(
+                                results.length === 1 ? "result" : "results",
+                            )}
                         </span>
                         <div className="flex items-center gap-2">
                             <Dropdown

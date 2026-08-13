@@ -1,4 +1,5 @@
 import { useState, type ReactElement } from "react";
+import { translate } from "../../../app/i18n";
 import {
     DIFF_ZOOM_MAX,
     DIFF_ZOOM_MIN,
@@ -62,7 +63,7 @@ export function DiffZoomControls({
         <>
             <DiffZoomButton
                 accent={accent}
-                ariaLabel="Decrease diff zoom"
+                ariaLabel={translate("Decrease diff zoom")}
                 disabled={!canDecrease}
                 onClick={() =>
                     onZoomChange(stepDiffZoom(zoom, -DIFF_ZOOM_STEP))
@@ -83,7 +84,7 @@ export function DiffZoomControls({
             </DiffZoomButton>
             <DiffZoomButton
                 accent={accent}
-                ariaLabel="Increase diff zoom"
+                ariaLabel={translate("Increase diff zoom")}
                 disabled={!canIncrease}
                 onClick={() => onZoomChange(stepDiffZoom(zoom, DIFF_ZOOM_STEP))}
             >

@@ -66,7 +66,8 @@ export function EditorChromeBar() {
                 WebkitAppRegion: "drag",
                 // Match the sidebar's theme tint so the strip reads as a
                 // continuation of the native titlebar overlay surface.
-                backgroundColor: "var(--sidebar-vibrancy-tint)",
+                backgroundColor:
+                    "var(--window-glass-chrome, var(--sidebar-vibrancy-tint))",
             } as CSSProperties}
         >
             <div

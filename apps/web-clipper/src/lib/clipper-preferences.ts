@@ -39,10 +39,10 @@ export function normalizeFolderHint(value: string): string {
 
 export function parseTagInput(value: string): string[] {
     return dedupeCaseInsensitive(
-        value
-            .split(/[,\n]/)
-            .map((part) => part.trim())
-            .filter(Boolean),
+        Array.from(
+            value.matchAll(/#?([\p{L}\p{N}_-][\p{L}\p{N}_/-]*)/gu),
+            (match) => match[1],
+        ),
         20,
     );
 }

@@ -861,6 +861,39 @@ describe("createInlineLivePreviewPlugin", () => {
         parent.remove();
     });
 
+    it("renders nested semantic inline HTML with theme classes", () => {
+        const doc = "<mark>hello <u>world</u></mark>";
+        const { plugin, parent, view } = createView(
+            doc,
+            EditorSelection.cursor(doc.length),
+        );
+
+        const decorations = collectDecorations(view, plugin);
+        expect(
+            decorations.some(
+                (deco) =>
+                    deco.from === 6 &&
+                    deco.to === 24 &&
+                    deco.className === "cm-lp-highlight",
+            ),
+        ).toBe(true);
+        expect(
+            decorations.some(
+                (deco) =>
+                    deco.from === 15 &&
+                    deco.to === 20 &&
+                    deco.className === "cm-lp-html-underline",
+            ),
+        ).toBe(true);
+        expect(hasHiddenRange(decorations, 0, 6)).toBe(true);
+        expect(
+            hasHiddenRange(decorations, 24, 31),
+        ).toBe(true);
+
+        view.destroy();
+        parent.remove();
+    });
+
     it("reveals footnote ref delimiters only while the token is active", () => {
         const doc = "[^ref]";
         const { plugin, parent, view } = createView(

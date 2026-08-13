@@ -20,7 +20,7 @@ export interface FrontmatterEntry {
     value: FrontmatterValue;
 }
 
-type PropType = "text" | "url" | "date" | "list" | "tags";
+type PropType = "text" | "url" | "date" | "list";
 
 export function parseFrontmatterRaw(raw: string): FrontmatterEntry[] {
     const yamlText = raw
@@ -187,7 +187,7 @@ function updateEntry(
 }
 
 function createEntryValue(type: PropType, rawValue: string): FrontmatterValue {
-    if (type === "list" || type === "tags") {
+    if (type === "list") {
         return rawValue
             .split(",")
             .map((item) => item.trim())
@@ -196,9 +196,7 @@ function createEntryValue(type: PropType, rawValue: string): FrontmatterValue {
     return rawValue.trim();
 }
 
-function detectType(key: string, value: FrontmatterValue): PropType {
-    const lk = key.toLowerCase();
-    if (lk === "tags" || lk === "tag") return "tags";
+function detectType(value: FrontmatterValue): PropType {
     if (Array.isArray(value)) return "list";
     if (typeof value === "string") {
         if (/^https?:\/\//.test(value)) return "url";
@@ -276,19 +274,6 @@ function CalendarIcon() {
     );
 }
 
-function TagIcon() {
-    return (
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-            <path
-                d="M2 8.5V3.5a1 1 0 0 1 1-1h5a1 1 0 0 1 .7.3l5 5a1 1 0 0 1 0 1.4l-4 4a1 1 0 0 1-1.4 0l-5-5A1 1 0 0 1 3 8.5Z"
-                stroke="currentColor"
-                strokeWidth="1.3"
-            />
-            <circle cx="5.5" cy="6.5" r="1" fill="currentColor" />
-        </svg>
-    );
-}
-
 function ListIcon() {
     return (
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
@@ -311,8 +296,6 @@ function TypeIcon({ type }: { type: PropType }) {
             return <LinkIcon />;
         case "date":
             return <CalendarIcon />;
-        case "tags":
-            return <TagIcon />;
         case "list":
             return <ListIcon />;
         default:
@@ -793,7 +776,7 @@ function PropertyEditor({
         );
     }
 
-    if (Array.isArray(value) || type === "list" || type === "tags") {
+    if (Array.isArray(value) || type === "list") {
         const items = Array.isArray(value) ? value : [];
         const removeItem = (value: string) => {
             const idx = items.indexOf(value);
@@ -875,7 +858,7 @@ function PropertyRow({
     onChange?: (nextValue: FrontmatterValue) => void;
     onContextMenu?: (event: React.MouseEvent<HTMLDivElement>) => void;
 }) {
-    const type = detectType(name, value);
+    const type = detectType(value);
     return (
         <div
             className="flex items-start gap-2 pl-3 pr-4 py-1"
@@ -1043,7 +1026,6 @@ function AddPropertyComposer({
                     <option value="url">{translate("URL")}</option>
                     <option value="date">{translate("Date")}</option>
                     <option value="list">{translate("List")}</option>
-                    <option value="tags">{translate("Tags")}</option>
                 </select>
                 {type === "date" ? (
                     <DateField
@@ -1056,7 +1038,7 @@ function AddPropertyComposer({
                         value={value}
                         onChange={(e) => setValue(e.target.value)}
                         placeholder={
-                            type === "list" || type === "tags"
+                            type === "list"
                                 ? translate("item 1, item 2, item 3")
                                 : translate("Value")
                         }

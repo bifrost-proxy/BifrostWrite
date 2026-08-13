@@ -34,7 +34,7 @@ describe("clip markdown", () => {
         });
 
         expect(markdown).toContain("---\ntitle: Custom title");
-        expect(markdown).toContain("\ntags:\n  - research\n  - web\n");
+        expect(markdown).toContain("\n#research #web\n");
         expect(markdown).toContain(
             "\nsource: https://example.com/articles/demo\n",
         );
@@ -46,6 +46,7 @@ describe("clip markdown", () => {
         expect(markdown.match(/^# Custom title$/gm)).toHaveLength(1);
         expect(markdown).toContain("> **Notes:** Keep for later.");
         expect(markdown).toContain("\nDemo body");
+        expect(markdown).not.toContain("\ntags:");
         expect(markdown).not.toContain("\nTags: research, web\n");
     });
 

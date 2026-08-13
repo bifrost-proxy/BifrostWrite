@@ -44,6 +44,7 @@ const runtimeMocks = vi.hoisted(() => {
         setTrafficLightsVisible: vi.fn().mockResolvedValue(undefined),
         setTheme: vi.fn().mockResolvedValue(undefined),
         setBackgroundColor: vi.fn().mockResolvedValue(undefined),
+        setEffects: vi.fn().mockResolvedValue(undefined),
         label,
     });
 
@@ -794,6 +795,9 @@ beforeEach(async () => {
         .mockReset()
         .mockResolvedValue(1);
     runtimeMocks.mockCurrentWindow.setTrafficLightsVisible
+        .mockReset()
+        .mockResolvedValue(undefined);
+    runtimeMocks.mockCurrentWindow.setEffects
         .mockReset()
         .mockResolvedValue(undefined);
     runtimeMocks.mockCurrentWebviewWindow.listen
