@@ -1,7 +1,7 @@
 {
     "name": "bifrostwrite-desktop",
     "private": true,
-    "version": "1.2.5",
+    "version": "1.2.6",
     "homepage": "https://github.com/bifrost-proxy/BifrostWrite",
     "type": "module",
     "engines": {

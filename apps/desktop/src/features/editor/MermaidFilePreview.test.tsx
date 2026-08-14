@@ -42,6 +42,9 @@ A --> B`;
         expect(screen.getByText("Rendering Mermaid diagram...")).toBeInTheDocument();
 
         expect(await screen.findByText("README Flow")).not.toBeNull();
+        expect(
+            screen.getByRole("button", { name: "Open Mermaid fullscreen" }),
+        ).toBeInTheDocument();
         expect(mockedRenderMermaidDiagram).toHaveBeenCalledWith(
             source,
             expect.stringMatching(/^mermaid-file-tab-1-/),

@@ -222,6 +222,11 @@ describe("code block live preview", () => {
             view.dom.querySelector(".cm-mermaid-preview svg foreignObject")
                 ?.textContent,
         ).toBe("README\u00a0Diagram");
+        expect(
+            view.dom.querySelector(
+                'button[aria-label="Open Mermaid fullscreen"]',
+            ),
+        ).not.toBeNull();
         expect(view.dom.querySelector(".cm-mermaid-preview-error")).toBeNull();
 
         view.destroy();

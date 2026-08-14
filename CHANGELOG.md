@@ -32,6 +32,12 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.2.6] - 2026-08-14
+
+### Added
+
+- Added a full-screen Mermaid viewer for Markdown and standalone Mermaid previews, with trackpad pinch zoom, native panning and scrolling, zoom controls, reset, Escape-to-close, and a dedicated close button.
+
 ## [1.2.5] - 2026-08-14
 
 ### Fixed
