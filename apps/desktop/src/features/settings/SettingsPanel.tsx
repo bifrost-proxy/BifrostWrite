@@ -5671,9 +5671,10 @@ export function SettingsPanel({
     const isStandaloneNativeTitlebarOverlay =
         standalone &&
         (desktopPlatform === "windows" || desktopPlatform === "linux");
-    // Standalone Settings uses the same native glass surfaces as the main
-    // window. The outer shell stays transparent so the material shows
-    // through, while the content pane re-anchors to a solid background.
+    // Standalone Settings keeps the native glass material, but its broad,
+    // text-heavy chrome uses stronger dedicated tints than the main window so
+    // wallpaper detail cannot compete with the title or navigation labels.
+    // The content pane remains fully opaque.
     const useWindowMaterial =
         standalone &&
         (desktopPlatform === "macos" || desktopPlatform === "windows");
@@ -5681,10 +5682,10 @@ export function SettingsPanel({
         ? "transparent"
         : "var(--bg-primary)";
     const chromeBackground = useWindowMaterial
-        ? "var(--window-glass-chrome, var(--bg-secondary))"
+        ? "var(--settings-window-glass-chrome, var(--bg-secondary))"
         : "var(--bg-secondary)";
     const sidebarBackground = useWindowMaterial
-        ? "var(--window-glass-panel, var(--bg-secondary))"
+        ? "var(--settings-window-glass-panel, var(--bg-secondary))"
         : "var(--bg-secondary)";
     const [active, setActive] = useState<Category>(resolvedInitialCategory);
     const [search, setSearch] = useState("");
