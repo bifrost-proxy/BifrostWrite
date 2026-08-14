@@ -32,6 +32,12 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.2.4] - 2026-08-14
+
+### Fixed
+
+- Reduced wallpaper bleed-through in the standalone Settings title bar and navigation sidebar with dedicated high-coverage glass tints, keeping text clear while preserving a subtle native material effect.
+
 ## [1.2.3] - 2026-08-14
 
 ### Fixed

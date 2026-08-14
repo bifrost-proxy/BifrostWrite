@@ -498,6 +498,19 @@ html[data-desktop-platform="windows"] {
         var(--bg-secondary) 72%,
         transparent
     );
+    /* Settings uses broad, text-heavy glass surfaces. Keep only a restrained
+       trace of the native material so wallpaper detail cannot compete with
+       the title or navigation labels. */
+    --settings-window-glass-panel: color-mix(
+        in srgb,
+        var(--bg-secondary) 94%,
+        transparent
+    );
+    --settings-window-glass-chrome: color-mix(
+        in srgb,
+        var(--bg-secondary) 96%,
+        transparent
+    );
     --window-glass-hairline: color-mix(
         in srgb,
         var(--border) 58%,
@@ -529,6 +542,16 @@ html[data-desktop-platform="windows"].dark {
     --window-glass-chrome: color-mix(
         in srgb,
         var(--bg-secondary) 76%,
+        transparent
+    );
+    --settings-window-glass-panel: color-mix(
+        in srgb,
+        var(--bg-secondary) 94%,
+        transparent
+    );
+    --settings-window-glass-chrome: color-mix(
+        in srgb,
+        var(--bg-secondary) 96%,
         transparent
     );
     --window-glass-hairline: color-mix(
