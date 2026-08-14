@@ -138,6 +138,33 @@ describe("AIChatMessageItem errors", () => {
 
         expect(onDismissMessage).toHaveBeenCalledWith("error:1");
     });
+
+    it("uses the theme-adaptive error palette for readable alerts", () => {
+        renderMessage({
+            id: "error:contrast",
+            role: "assistant",
+            kind: "error",
+            content: "Could not reconnect this chat.",
+            timestamp: Date.now(),
+        });
+
+        const alert = screen.getByText("Could not reconnect this chat.")
+            .parentElement;
+
+        expect(alert).toHaveStyle({ color: "var(--diff-remove)" });
+        expect(alert).toHaveAttribute(
+            "style",
+            expect.stringContaining(
+                "background-color: color-mix(in srgb, var(--diff-remove) 8%, var(--bg-primary))",
+            ),
+        );
+        expect(alert).toHaveAttribute(
+            "style",
+            expect.stringContaining(
+                "border: 1px solid color-mix(in srgb, var(--diff-remove) 28%, var(--border))",
+            ),
+        );
+    });
 });
 
 describe("AIChatMessageItem assistant references", () => {

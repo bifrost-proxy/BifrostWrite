@@ -32,6 +32,12 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.2.3] - 2026-08-14
+
+### Fixed
+
+- Fixed unreadable error and reconnection notices at the top and bottom of Agent execution windows by using theme-adaptive text, background, and border colors in both light and dark themes.
+
 ## [1.2.2] - 2026-08-14
 
 ### Fixed

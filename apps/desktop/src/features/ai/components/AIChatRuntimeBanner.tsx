@@ -20,10 +20,10 @@ export function AIChatRuntimeBanner({
     const tone =
         connection.status === "error"
             ? {
-                  border: "#dc2626",
+                  border: "var(--diff-remove)",
                   background:
-                      "color-mix(in srgb, #dc2626 12%, var(--bg-secondary))",
-                  color: "#fecaca",
+                      "color-mix(in srgb, var(--diff-remove) 10%, var(--bg-secondary))",
+                  color: "var(--diff-remove)",
               }
             : {
                   border: "var(--border)",
