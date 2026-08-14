@@ -32,6 +32,12 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.2.1] - 2026-08-14
+
+### Fixed
+
+- Fixed repeated live-preview mode toggles gradually scrolling the editor content and note header upward.
+
 ## [1.2.0] - 2026-08-14
 
 ### Added

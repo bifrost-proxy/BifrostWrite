@@ -1496,6 +1496,36 @@ export function Editor({
         [restoreScrollAnchor],
     );
 
+    const restoreModeToggleScrollPosition = useCallback(
+        (
+            view: EditorView,
+            position: Pick<TabScrollPosition, "top" | "left">,
+        ) => {
+            if (restoreScrollFrameRef.current !== null) {
+                cancelAnimationFrame(restoreScrollFrameRef.current);
+                restoreScrollFrameRef.current = null;
+            }
+
+            // Reconfiguring live preview changes the measured height of
+            // headings, lists, code blocks, and other rendered nodes. A
+            // document-position anchor is useful when reopening a note, but
+            // using it for this in-place mode switch introduces a rounding
+            // offset on every toggle. Preserve the exact viewport pixels so
+            // repeated clicks never walk the header and content upward.
+            restoreScrollFrameRef.current = requestAnimationFrame(() => {
+                if (viewRef.current !== view) {
+                    restoreScrollFrameRef.current = null;
+                    return;
+                }
+
+                view.scrollDOM.scrollTop = position.top;
+                view.scrollDOM.scrollLeft = position.left;
+                restoreScrollFrameRef.current = null;
+            });
+        },
+        [],
+    );
+
     const flushActiveNoteState = useCallback(
         ({ detach = false }: { detach?: boolean } = {}) => {
             const view = viewRef.current;
@@ -3422,6 +3452,13 @@ export function Editor({
         const nextMode = getEditorMode(livePreviewEnabled);
         const previousMode = livePreviewModeRef.current;
         const didModeChange = previousMode !== nextMode;
+        const modeToggleScrollPosition =
+            view && didModeChange
+                ? {
+                      top: view.scrollDOM.scrollTop,
+                      left: view.scrollDOM.scrollLeft,
+                  }
+                : null;
 
         if (view && activeNoteId && didModeChange) {
             saveTabScrollPosition(activeNoteId, view);
@@ -3443,8 +3480,8 @@ export function Editor({
                 ),
             ],
         });
-        if (view && activeNoteId && didModeChange) {
-            restoreTabScrollPosition(activeNoteId, view, nextMode);
+        if (view && modeToggleScrollPosition) {
+            restoreModeToggleScrollPosition(view, modeToggleScrollPosition);
         }
         livePreviewModeRef.current = nextMode;
         scheduleMergeViewSync();
@@ -3453,7 +3490,7 @@ export function Editor({
         handleOpenLinkContextMenu,
         inlineReviewEnabled,
         livePreviewEnabled,
-        restoreTabScrollPosition,
+        restoreModeToggleScrollPosition,
         saveTabScrollPosition,
         scheduleMergeViewSync,
         vaultPath,
