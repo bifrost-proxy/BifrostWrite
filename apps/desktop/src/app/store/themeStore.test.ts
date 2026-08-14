@@ -1,4 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../utils/platform", () => ({
+    getDesktopPlatform: () => "macos",
+}));
 import {
     disposeThemeStoreRuntime,
     initializeThemeStore,
