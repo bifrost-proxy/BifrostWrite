@@ -527,7 +527,7 @@ describe("Editor", () => {
         );
     });
 
-    it("projects the latest source scroll position back into live preview", async () => {
+    it("keeps the exact scroll position while toggling live preview", async () => {
         vi.useFakeTimers();
         setEditorTabs([
             {
@@ -541,7 +541,13 @@ describe("Editor", () => {
         renderComponent(<Editor />);
 
         vi.spyOn(EditorView.prototype, "posAtCoords").mockReturnValue(24);
-        vi.spyOn(EditorView.prototype, "coordsAtPos").mockReturnValue(null);
+        vi.spyOn(EditorView.prototype, "coordsAtPos").mockImplementation(
+            function (this: EditorView) {
+                const top =
+                    this.dom.dataset.livePreview === "true" ? 260 : 320;
+                return { left: 0, right: 0, top, bottom: top + 20 };
+            },
+        );
 
         await flushEditorViewUpdates();
 
