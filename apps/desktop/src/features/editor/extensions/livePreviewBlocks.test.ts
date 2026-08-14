@@ -192,7 +192,11 @@ describe("code block live preview", () => {
     it("renders Mermaid SVG blocks asynchronously", async () => {
         mockedRenderMermaidDiagram.mockResolvedValueOnce({
             status: "ok",
-            svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>Diagram</text></svg>',
+            svg: [
+                '<svg xmlns="http://www.w3.org/2000/svg"><foreignObject>',
+                '<div xmlns="http://www.w3.org/1999/xhtml">README&nbsp;Diagram</div>',
+                "</foreignObject></svg>",
+            ].join(""),
         });
         const parent = document.createElement("div");
         document.body.appendChild(parent);
@@ -215,8 +219,9 @@ describe("code block live preview", () => {
         await flushPromises();
 
         expect(
-            view.dom.querySelector(".cm-mermaid-preview svg text")?.textContent,
-        ).toBe("Diagram");
+            view.dom.querySelector(".cm-mermaid-preview svg foreignObject")
+                ?.textContent,
+        ).toBe("README\u00a0Diagram");
         expect(view.dom.querySelector(".cm-mermaid-preview-error")).toBeNull();
 
         view.destroy();

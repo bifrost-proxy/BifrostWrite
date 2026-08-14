@@ -4,6 +4,7 @@ import {
     renderMermaidDiagram,
     type MermaidRenderResult,
 } from "./mermaid/mermaidRenderer";
+import { parseMermaidSvg } from "./mermaid/mermaidSvg";
 
 type MermaidFilePreviewState =
     | { status: "idle" }
@@ -128,13 +129,6 @@ function toPreviewState(result: MermaidRenderResult): MermaidFilePreviewState {
     }
 
     return { status: "rendered", svg };
-}
-
-function parseMermaidSvg(svg: string): SVGElement | null {
-    const parsed = new DOMParser().parseFromString(svg, "image/svg+xml");
-    const root = parsed.documentElement;
-    if (root.nodeName.toLowerCase() !== "svg") return null;
-    return document.importNode(root, true) as unknown as SVGElement;
 }
 
 function sanitizeIdPart(value: string) {

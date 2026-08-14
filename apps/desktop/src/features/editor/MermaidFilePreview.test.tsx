@@ -30,14 +30,18 @@ describe("MermaidFilePreview", () => {
 A --> B`;
         mockedRenderMermaidDiagram.mockResolvedValueOnce({
             status: "ok",
-            svg: '<svg viewBox="0 0 10 10"><text>Flow</text></svg>',
+            svg: [
+                '<svg viewBox="0 0 10 10"><foreignObject>',
+                '<div xmlns="http://www.w3.org/1999/xhtml">README&nbsp;Flow</div>',
+                "</foreignObject></svg>",
+            ].join(""),
         });
 
         renderComponent(<MermaidFilePreview source={source} tabId="tab-1" />);
 
         expect(screen.getByText("Rendering Mermaid diagram...")).toBeInTheDocument();
 
-        expect(await screen.findByText("Flow")).not.toBeNull();
+        expect(await screen.findByText("README Flow")).not.toBeNull();
         expect(mockedRenderMermaidDiagram).toHaveBeenCalledWith(
             source,
             expect.stringMatching(/^mermaid-file-tab-1-/),
