@@ -10,6 +10,7 @@ import {
     type PointerEvent as ReactPointerEvent,
 } from "react";
 import type { WorkspaceLayoutNode } from "../../app/store/workspaceLayoutTree";
+import { WINDOW_CHROME_BAR_HEIGHT } from "../../app/utils/platform";
 import { EditorPaneBar } from "./EditorPaneBar";
 import { EditorPaneContent } from "./EditorPaneContent";
 
@@ -36,6 +37,7 @@ interface NodeConstraints {
 interface WorkspaceSplitContainerProps {
     node: WorkspaceLayoutNode;
     isTopLeftBranch?: boolean;
+    isTopRightBranch?: boolean;
     focusedPaneId: string | null;
     externalFileDropPaneId: string | null;
     onPanePointerDown: () => void;
@@ -96,6 +98,7 @@ function clampSplitResize(
 const WorkspacePane = memo(function WorkspacePane({
     paneId,
     isTopLeftPane,
+    isTopRightPane,
     isFocused,
     isExternalFileDropActive,
     onPanePointerDown,
@@ -103,6 +106,7 @@ const WorkspacePane = memo(function WorkspacePane({
 }: {
     paneId: string;
     isTopLeftPane: boolean;
+    isTopRightPane: boolean;
     isFocused: boolean;
     isExternalFileDropActive: boolean;
     onPanePointerDown: () => void;
@@ -116,7 +120,7 @@ const WorkspacePane = memo(function WorkspacePane({
                 minHeight: MIN_PANE_HEIGHT,
                 border: "1px solid color-mix(in srgb, var(--border) 76%, transparent)",
                 borderRadius: 0,
-                background: "var(--bg-primary)",
+                background: `linear-gradient(to bottom, transparent 0, transparent ${WINDOW_CHROME_BAR_HEIGHT}px, var(--bg-primary) ${WINDOW_CHROME_BAR_HEIGHT}px, var(--bg-primary) 100%)`,
                 boxShadow: isExternalFileDropActive
                     ? "inset 0 0 0 1px color-mix(in srgb, var(--accent) 52%, transparent)"
                     : isFocused
@@ -150,6 +154,7 @@ const WorkspacePane = memo(function WorkspacePane({
                 paneId={paneId}
                 isFocused={isFocused}
                 isTopLeftPane={isTopLeftPane}
+                isTopRightPane={isTopRightPane}
             />
             <EditorPaneContent
                 paneId={paneId}
@@ -162,6 +167,7 @@ const WorkspacePane = memo(function WorkspacePane({
 export function WorkspaceSplitContainer({
     node,
     isTopLeftBranch = false,
+    isTopRightBranch = false,
     focusedPaneId,
     externalFileDropPaneId,
     onPanePointerDown,
@@ -294,6 +300,7 @@ export function WorkspaceSplitContainer({
             <WorkspacePane
                 paneId={node.paneId}
                 isTopLeftPane={isTopLeftBranch}
+                isTopRightPane={isTopRightBranch}
                 isFocused={node.paneId === focusedPaneId}
                 isExternalFileDropActive={
                     node.paneId === externalFileDropPaneId
@@ -338,6 +345,13 @@ export function WorkspaceSplitContainer({
                                 node={child}
                                 isTopLeftBranch={
                                     isTopLeftBranch && index === 0
+                                }
+                                isTopRightBranch={
+                                    isTopRightBranch &&
+                                    index ===
+                                        (node.direction === "row"
+                                            ? node.children.length - 1
+                                            : 0)
                                 }
                                 focusedPaneId={focusedPaneId}
                                 externalFileDropPaneId={externalFileDropPaneId}

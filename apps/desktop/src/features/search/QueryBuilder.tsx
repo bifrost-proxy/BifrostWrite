@@ -199,7 +199,9 @@ export function Dropdown<T extends string>({
                         e.currentTarget.style.borderColor = "var(--border)";
                 }}
             >
-                <span className="truncate">{selected?.label ?? value}</span>
+                <span className="truncate">
+                    {translate(String(selected?.label ?? value))}
+                </span>
                 <svg
                     width="8"
                     height="8"

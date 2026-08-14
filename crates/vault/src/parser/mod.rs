@@ -88,7 +88,8 @@ mod tests {
 
     #[test]
     fn full_parse() {
-        let md = "---\ntitle: Test\ntags: [a]\n---\n# Test\n\nVer [[Otra Nota|link]] y #tag1\n";
+        let md =
+            "---\ntitle: Test\nauthors: [Ada]\n---\n# Test\n\nVer [[Otra Nota|link]] y #tag1\n";
         let note = parse_note("test", Path::new("test.md"), md);
         assert_eq!(note.title, "Test");
         assert_eq!(note.links.len(), 1);

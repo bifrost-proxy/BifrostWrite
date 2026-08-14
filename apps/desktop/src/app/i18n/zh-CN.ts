@@ -1,4 +1,5 @@
 import { GENERATED_ZH_CN_TRANSLATIONS } from "./zh-CN.generated";
+import { CURATED_ZH_CN_TRANSLATIONS } from "./zh-CN.curated";
 
 /**
  * Simplified Chinese UI translations. English source text is used as the key
@@ -6,6 +7,7 @@ import { GENERATED_ZH_CN_TRANSLATIONS } from "./zh-CN.generated";
  */
 export const ZH_CN_TRANSLATIONS: Readonly<Record<string, string>> = {
     ...GENERATED_ZH_CN_TRANSLATIONS,
+    ...CURATED_ZH_CN_TRANSLATIONS,
     // Product and technical terms that should not be machine-translated.
     BifrostWrite: "BifrostWrite",
     Codex: "Codex",
@@ -52,6 +54,8 @@ export const ZH_CN_TRANSLATIONS: Readonly<Record<string, string>> = {
     "Simplified Chinese": "简体中文",
     "Choose the language used by the application.": "选择应用界面所使用的语言。",
     "Downloading…": "下载中…",
+    "Install update": "安装更新",
+    "Installing update…": "正在安装更新…",
     "Failed to install the agent runtime.": "智能体运行时安装失败。",
     "Agent runtime installation timed out.": "智能体运行时安装超时。",
     "The managed Codex ACP adapter requires the previously discovered system Codex CLI. Reinstall the Codex runtime to repair it.":
@@ -101,6 +105,11 @@ export const ZH_CN_TRANSLATIONS: Readonly<Record<string, string>> = {
     "No maps match": "没有匹配的概念图：",
     "No results for": "没有找到：",
     "No tags match": "没有匹配的标签：",
+    "No tags found. Type #tag anywhere in the note body. Spaces or punctuation end a tag; frontmatter tag/tags fields are ignored.":
+        "尚未找到标签。请在笔记正文任意位置输入 #标签；空格或标点会结束标签，frontmatter 中的 tag/tags 字段不会生效。",
+    "inline #tag": "正文内的 #标签",
+    "Filter by an inline body tag, for example tag:project. Do not include #.":
+        "按正文标签筛选，例如 tag:项目；筛选值前不要输入 #。",
     "OR · -exclude · \"exact phrase\" · /regex/":
         "OR · -排除项 · \"精确短语\" · /正则表达式/",
     "Saving, startup, and general behavior": "保存、启动与通用行为",
@@ -327,6 +336,57 @@ type PatternTranslation = readonly [
 
 const ZH_CN_PATTERN_TRANSLATIONS: readonly PatternTranslation[] = [
     [
+        /^Image not found: (.+)$/,
+        (match) => `找不到图片：${match[1]}`,
+    ],
+    [
+        /^Accept overlapping group \((\d+) changes\)$/,
+        (match) => `接受重叠的 ${match[1]} 项变更`,
+    ],
+    [
+        /^Reject overlapping group \((\d+) changes\)$/,
+        (match) => `拒绝重叠的 ${match[1]} 项变更`,
+    ],
+    [
+        /^Accept (\d+) changes$/,
+        (match) => `接受 ${match[1]} 项变更`,
+    ],
+    [
+        /^Reject (\d+) changes$/,
+        (match) => `拒绝 ${match[1]} 项变更`,
+    ],
+    [/^Accept change$/, () => "接受此变更"],
+    [/^Reject change$/, () => "拒绝此变更"],
+    [
+        /^Showing ([\d,]+) of ([\d,]+) nodes$/,
+        (match) => `正在显示 ${match[1]} / ${match[2]} 个节点`,
+    ],
+    [
+        /^Showing a truncated graph \(([\d,]+) nodes\)$/,
+        (match) => `正在显示截断后的图谱（${match[1]} 个节点）`,
+    ],
+    [
+        /^Visible links: ([\d,]+) of ([\d,]+)$/,
+        (match) => `可见连线：${match[1]} / ${match[2]}`,
+    ],
+    [
+        /^Visible links: ([\d,]+)$/,
+        (match) => `可见连线：${match[1]}`,
+    ],
+    [
+        /^([\d,]+) nodes • ([\d,]+) links visible$/,
+        (match) => `可见 ${match[1]} 个节点、${match[2]} 条连线`,
+    ],
+    [
+        /^Hidden by limits: ([\d,]+) nodes • ([\d,]+) links$/,
+        (match) =>
+            `因数量上限隐藏：${match[1]} 个节点、${match[2]} 条连线`,
+    ],
+    [
+        /^Showing the full graph for the current mode and filters\.$/,
+        () => "当前模式和筛选条件下的图谱已完整显示。",
+    ],
+    [
         /^Failed to download Node\.js from (.+): (.+)$/,
         (match) => `无法从 ${match[1]} 下载 Node.js：${match[2]}`,
     ],
@@ -472,7 +532,34 @@ const ZH_CN_PATTERN_TRANSLATIONS: readonly PatternTranslation[] = [
     ],
 ];
 
+function translateSearchExplanation(source: string): string | null {
+    if (
+        !/(?:filename matching|path matching|content matching|line containing|section containing|title\/path matching|property \[|tag ["/])/.test(
+            source,
+        )
+    ) {
+        return null;
+    }
+
+    return source
+        .replace(/excluding /g, "排除")
+        .replace(/filename matching /g, "文件名匹配")
+        .replace(/path matching /g, "路径匹配")
+        .replace(/content matching /g, "正文匹配")
+        .replace(/line containing /g, "行内包含")
+        .replace(/section containing /g, "章节内包含")
+        .replace(/title\/path matching /g, "标题或路径匹配")
+        .replace(/property /g, "属性")
+        .replace(/tag /g, "标签为")
+        .replace(/"([^"]*)"/g, "“$1”")
+        .replace(/ or /g, " 或 ")
+        .replace(/, /g, "，");
+}
+
 export function translateZhCnPattern(source: string): string | null {
+    const searchExplanation = translateSearchExplanation(source);
+    if (searchExplanation) return searchExplanation;
+
     for (const [pattern, render] of ZH_CN_PATTERN_TRANSLATIONS) {
         const match = source.match(pattern);
         if (match) return render(match);

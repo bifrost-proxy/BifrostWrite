@@ -13,6 +13,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{mpsc, Arc, Mutex};
 use tauri::{
     menu::{Menu, MenuItem},
+    window::{Effect, EffectState, EffectsBuilder},
     AppHandle, Emitter, Manager,
 };
 use tauri_plugin_deep_link::DeepLinkExt;
@@ -463,6 +464,18 @@ pub fn run() {
 
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.set_title(PRODUCT_NAME);
+                let _ = window.set_effects(
+                    EffectsBuilder::new()
+                        .effects([
+                            Effect::Sidebar,
+                            Effect::UnderWindowBackground,
+                            Effect::Mica,
+                            Effect::Acrylic,
+                        ])
+                        .state(EffectState::FollowsWindowActiveState)
+                        .radius(12.0)
+                        .build(),
+                );
             }
             Ok(())
         })

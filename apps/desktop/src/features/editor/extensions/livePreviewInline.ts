@@ -7,7 +7,6 @@ import {
     WidgetType,
 } from "@codemirror/view";
 import {
-    EditorSelection,
     type EditorState,
     RangeSetBuilder,
     StateEffect,
@@ -80,10 +79,34 @@ const subscriptMark = Decoration.mark({ class: "cm-lp-subscript" });
 const superscriptMark = Decoration.mark({ class: "cm-lp-superscript" });
 const quoteContentMark = Decoration.mark({ class: "cm-lp-blockquote" });
 
+const INLINE_HTML_CLASS_BY_TAG: Readonly<Record<string, string | null>> = {
+    abbr: "cm-lp-html-abbr",
+    b: "cm-lp-bold",
+    cite: "cm-lp-italic",
+    code: "cm-lp-code",
+    del: "cm-lp-strikethrough",
+    em: "cm-lp-italic",
+    i: "cm-lp-italic",
+    ins: "cm-lp-html-inserted",
+    kbd: "cm-lp-kbd",
+    mark: "cm-lp-highlight",
+    q: "cm-lp-html-quote",
+    rp: "cm-lp-html-ruby-parenthesis",
+    rt: "cm-lp-html-ruby-text",
+    ruby: "cm-lp-html-ruby",
+    s: "cm-lp-strikethrough",
+    small: "cm-lp-html-small",
+    span: null,
+    strong: "cm-lp-bold",
+    sub: "cm-lp-subscript",
+    sup: "cm-lp-superscript",
+    time: null,
+    u: "cm-lp-html-underline",
+};
+
 const WIKILINK_RE = /\[\[([^\]]+)\]\]/g;
 const LOOSE_UNORDERED_LIST_RE = /^([ \t]*)([-+*]|[•◦▪‣–—−])([ \t]+)/;
 const FOOTNOTE_REF_RE = /\[\^([^\]\s]+)\]/g;
-const INLINE_HTML_RE = /<(sub|sup|kbd)>([^<\n]+)<\/\1>/gi;
 const INLINE_BR_RE = /<br\s*\/?>/gi;
 const BLOCK_MATH_RE = /\$\$([\s\S]+?)\$\$/g;
 const FOOTNOTE_DEF_RE = /^\[\^([^\]]+)\]:\s*(.*)$/;
@@ -219,6 +242,9 @@ const emptyListCaretAnchorDecoration = Decoration.widget({
     widget: emptyListCaretAnchorWidget,
     side: -1,
 });
+const emptyListPrefixHideMark = Decoration.mark({
+    class: "cm-lp-hidden cm-lp-empty-list-prefix",
+});
 
 function createMathMark(display: "inline" | "block") {
     return Decoration.mark({
@@ -230,8 +256,6 @@ function getHeadingLevel(nodeName: string): number | null {
     if (nodeName.startsWith("ATXHeading")) {
         return parseInt(nodeName.slice(10), 10);
     }
-    if (nodeName === "SetextHeading1") return 1;
-    if (nodeName === "SetextHeading2") return 2;
     return null;
 }
 
@@ -619,7 +643,7 @@ function moveEmptyListPrefixClickToContentStart(
 
     event.preventDefault();
     view.dispatch({
-        selection: EditorSelection.cursor(prefixEnd),
+        selection: { anchor: prefixEnd },
         scrollIntoView: true,
     });
     view.focus();
@@ -793,8 +817,6 @@ const headingRule: NodeRule = (node, context) => {
         return;
     }
 
-    const isSetext = node.name.startsWith("SetextHeading");
-
     // Collect header marks in a single pass
     const headerMarks: Array<{ from: number; to: number }> = [];
     const childCursor = node.node.cursor();
@@ -809,54 +831,22 @@ const headingRule: NodeRule = (node, context) => {
         } while (childCursor.nextSibling());
     }
 
-    // For setext headings, don't apply heading style while editing the
-    // underline.  This prevents the paragraph from suddenly becoming an h2
-    // when the user types "-" to start a list below it.
-    let editingUnderline = false;
-    if (isSetext) {
-        editingUnderline = headerMarks.some((markRange) => {
-            registerRevealSensitiveRange(
-                context,
-                "line",
-                markRange.from,
-                markRange.to,
-            );
-            return selectionTouchesLine(
-                context.state,
-                markRange.from,
-                markRange.to,
-            );
-        });
-    }
-
-    if (!editingUnderline) {
-        const mark = headingMarks[headingLevel];
-        if (mark) {
-            pushDeco(context, node.from, node.to, mark);
-        }
+    const mark = headingMarks[headingLevel];
+    if (mark) {
+        pushDeco(context, node.from, node.to, mark);
     }
 
     for (const hm of headerMarks) {
         if (editingHeadingLine) continue;
 
-        let hideFrom = hm.from;
+        const hideFrom = hm.from;
         let hideTo = hm.to;
 
-        if (node.name.startsWith("ATXHeading")) {
-            if (
-                hideTo < node.to &&
-                context.state.doc.sliceString(hideTo, hideTo + 1) === " "
-            ) {
-                hideTo++;
-            }
-        }
-
         if (
-            isSetext &&
-            hideFrom > node.from &&
-            context.state.doc.sliceString(hideFrom - 1, hideFrom) === "\n"
+            hideTo < node.to &&
+            context.state.doc.sliceString(hideTo, hideTo + 1) === " "
         ) {
-            hideFrom--;
+            hideTo++;
         }
 
         hideRange(context, hideFrom, hideTo);
@@ -936,7 +926,12 @@ const listMarkRule: NodeRule = (node, context) => {
         line.to,
     );
 
-    hideRange(context, line.from, hideTo);
+    hideRange(
+        context,
+        line.from,
+        hideTo,
+        activeEmptyItem ? emptyListPrefixHideMark : hideMark,
+    );
     if (activeEmptyItem && !isTaskItem) {
         addEmptyListCaretAnchor(context, hideTo);
     }
@@ -1208,9 +1203,15 @@ function applyNodeRules(context: BuildContext) {
         from: context.vpFrom,
         to: context.vpTo,
         enter(node) {
-            if (node.name === "Table" || node.name === "FencedCode") {
+            if (
+                node.name === "Table" ||
+                node.name === "FencedCode" ||
+                node.name === "HTMLBlock"
+            ) {
                 context.blockRanges.push({ from: node.from, to: node.to });
-                if (node.name === "Table") return false;
+                if (node.name === "Table" || node.name === "HTMLBlock") {
+                    return false;
+                }
             }
             if (node.name === "InlineCode") {
                 context.blockRanges.push({ from: node.from, to: node.to });
@@ -1232,8 +1233,102 @@ function applyNodeRules(context: BuildContext) {
 
 function rangeOverlapsBlock(context: BuildContext, from: number, to: number) {
     return context.blockRanges.some(
-        (range) => to >= range.from && from <= range.to,
+        (range) => to > range.from && from < range.to,
     );
+}
+
+type ParsedInlineHtmlTag = {
+    name: string;
+    closing: boolean;
+    selfClosing: boolean;
+};
+
+type OpenInlineHtmlTag = {
+    name: string;
+    from: number;
+    to: number;
+    className: string | null;
+};
+
+function parseInlineHtmlTag(source: string): ParsedInlineHtmlTag | null {
+    const match = source.match(
+        /^<\s*(\/?)\s*([A-Za-z][A-Za-z0-9-]*)\b[^>]*>$/s,
+    );
+    if (!match) return null;
+
+    return {
+        name: match[2].toLowerCase(),
+        closing: match[1] === "/",
+        selfClosing: /\/\s*>$/.test(source),
+    };
+}
+
+function applyInlineHtmlRules(context: BuildContext) {
+    const stack: OpenInlineHtmlTag[] = [];
+    const scanFrom = context.state.doc.lineAt(context.vpFrom).from;
+    const scanTo = context.state.doc.lineAt(context.vpTo).to;
+
+    syntaxTree(context.state).iterate({
+        from: scanFrom,
+        to: scanTo,
+        enter(node) {
+            if (node.name === "HTMLBlock") return false;
+            if (node.name !== "HTMLTag") return;
+            if (rangeOverlapsBlock(context, node.from, node.to)) return;
+
+            const parsed = parseInlineHtmlTag(
+                context.state.doc.sliceString(node.from, node.to),
+            );
+            if (!parsed || !(parsed.name in INLINE_HTML_CLASS_BY_TAG)) return;
+
+            if (!parsed.closing) {
+                if (!parsed.selfClosing) {
+                    stack.push({
+                        name: parsed.name,
+                        from: node.from,
+                        to: node.to,
+                        className: INLINE_HTML_CLASS_BY_TAG[parsed.name],
+                    });
+                }
+                return;
+            }
+
+            const opening = stack.at(-1);
+            if (!opening || opening.name !== parsed.name) {
+                const matchingIndex = stack.findLastIndex(
+                    (candidate) => candidate.name === parsed.name,
+                );
+                if (matchingIndex >= 0) stack.splice(matchingIndex);
+                return;
+            }
+            stack.pop();
+
+            const activeFrom = opening.from;
+            const activeTo = node.to;
+            hideRangeUnlessTokenActive(
+                context,
+                opening.from,
+                opening.to,
+                activeFrom,
+                activeTo,
+            );
+            if (opening.className && opening.to < node.from) {
+                pushDeco(
+                    context,
+                    opening.to,
+                    node.from,
+                    Decoration.mark({ class: opening.className }),
+                );
+            }
+            hideRangeUnlessTokenActive(
+                context,
+                node.from,
+                node.to,
+                activeFrom,
+                activeTo,
+            );
+        },
+    });
 }
 
 function applyRegexRules(context: BuildContext) {
@@ -1674,41 +1769,6 @@ function applyRichRegexRules(context: BuildContext) {
         }
     }
 
-    INLINE_HTML_RE.lastIndex = 0;
-    let htmlMatch: RegExpExecArray | null;
-    while ((htmlMatch = INLINE_HTML_RE.exec(context.vpText)) !== null) {
-        const absFrom = context.vpFrom + htmlMatch.index;
-        const absTo = absFrom + htmlMatch[0].length;
-        if (rangeOverlapsBlock(context, absFrom, absTo)) continue;
-
-        const tag = htmlMatch[1].toLowerCase();
-        const openTag = `<${tag}>`;
-        const closeTag = `</${tag}>`;
-        const contentFrom = absFrom + openTag.length;
-        const contentTo = absTo - closeTag.length;
-        const className =
-            tag === "kbd"
-                ? "cm-lp-kbd"
-                : tag === "sub"
-                  ? "cm-lp-subscript"
-                  : "cm-lp-superscript";
-
-        hideRangeUnlessTokenActive(
-            context,
-            absFrom,
-            contentFrom,
-            absFrom,
-            absTo,
-        );
-        pushDeco(
-            context,
-            contentFrom,
-            contentTo,
-            Decoration.mark({ class: className }),
-        );
-        hideRangeUnlessTokenActive(context, contentTo, absTo, absFrom, absTo);
-    }
-
     INLINE_BR_RE.lastIndex = 0;
     let breakMatch: RegExpExecArray | null;
     while ((breakMatch = INLINE_BR_RE.exec(context.vpText)) !== null) {
@@ -1804,6 +1864,7 @@ function buildInlineDecorations(
 
     applyFrontmatterHiding(context);
     applyNodeRules(context);
+    applyInlineHtmlRules(context);
     applyLooseListFallback(context);
     applyExtendedTaskFallback(context);
     applyHighlightRules(context);
@@ -2034,6 +2095,16 @@ export function createInlineLivePreviewPlugin() {
 
 function selectionOnLine(state: EditorState, from: number, to: number) {
     return state.selection.ranges.some((range) => {
+        // Selection updates triggered from pointer handlers can briefly cross
+        // an extension reconfiguration during development/HMR. Never let a
+        // transient malformed range take down the editor decoration pipeline.
+        if (
+            !range ||
+            !Number.isFinite(range.from) ||
+            !Number.isFinite(range.to)
+        ) {
+            return false;
+        }
         if (
             from === 0 &&
             range.empty &&

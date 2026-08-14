@@ -38,7 +38,7 @@ export function TagEditor({ tags, suggestions, onChange }: TagEditorProps) {
                             : "bg-fg/[0.06] text-fg-muted"
                     }`}
                 >
-                    {tag}
+                    #{tag}
                 </button>
             ))}
             <input
@@ -46,7 +46,11 @@ export function TagEditor({ tags, suggestions, onChange }: TagEditorProps) {
                 onChange={(event) => setDraft(event.target.value)}
                 onBlur={() => commitDraft(draft)}
                 onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === ",") {
+                    if (
+                        event.key === "Enter" ||
+                        event.key === "," ||
+                        event.key === " "
+                    ) {
                         event.preventDefault();
                         commitDraft(draft);
                     }
@@ -60,7 +64,7 @@ export function TagEditor({ tags, suggestions, onChange }: TagEditorProps) {
                     }
                 }}
                 list="tag-suggestions"
-                placeholder={tags.length === 0 ? "Add tag" : "+ Add tag"}
+                placeholder={tags.length === 0 ? "#tag" : "+ #tag"}
                 className="min-w-15 flex-1 bg-transparent text-[10px] text-fg-dim outline-none placeholder:text-fg-dim"
             />
             {suggestions.length > 0 && (

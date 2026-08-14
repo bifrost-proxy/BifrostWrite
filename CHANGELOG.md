@@ -32,6 +32,29 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.2.0] - 2026-08-14
+
+### Added
+
+- Added inline body tags using Apple Notes-style `#tag` syntax, with themed editor highlighting, Unicode and hierarchy support, automatic indexing, Tags panel aggregation, Search and Graph filtering, and matching Web Clipper output.
+- Added safe live rendering for common inline and block HTML in Markdown, with theme-aware presentation and one-click access to edit the original HTML source.
+- Added native macOS vibrancy with theme-tinted frosted glass outside document content areas, preserving blurred desktop color without exposing distracting background detail.
+- Added hourly background update checks and an update button beside the main-window create control when a verified release is available.
+
+### Changed
+
+- Removed the legacy frontmatter tag model. `tag` and `tags` properties are now ordinary document properties and are ignored by indexing and filtering.
+- Reworked Simplified Chinese localization with product-specific terminology, preserved command syntax and brand names, translated dynamic editor and graph status text, and added automated coverage checks.
+- Updated Tag documentation throughout the user guide, editor architecture, troubleshooting guide, and Web Clipper instructions.
+
+### Fixed
+
+- Fixed live-preview block elements trapping appended content inside the final block, and added Shift+Enter and Command+Enter shortcuts to exit a block into a new paragraph.
+- Fixed backtick entry so a single backtick remains literal instead of creating an automatic pair; pressing Enter after an opening three-backtick fence now inserts the matching closing fence and places the caret inside the code block.
+- Fixed live-preview list conversion causing the editor viewport and caret to jump when typing markers such as `1. ` or `- `.
+- Fixed empty list items rendering a near-zero-height caret, and stopped a lone `-` line from visually converting preceding plain text into a Setext heading; headings now require explicit `#` syntax.
+- Fixed editor, graph, search, AI, and accessibility labels that bypassed localization or used inaccurate machine translations.
+
 ## [1.1.2] - 2026-08-14
 
 ### Changed

@@ -15,7 +15,7 @@ interface ChatFindBarProps {
 
 function counterLabel(query: string, total: number, activeIndex: number): string {
     if (!query) return "";
-    if (total === 0) return "No results";
+    if (total === 0) return translate("No results");
     return `${activeIndex + 1}/${total}`;
 }
 
@@ -159,7 +159,7 @@ export function ChatFindBar({
             <FindIconButton
                 onClick={onPrev}
                 disabled={disabled}
-                ariaLabel="Previous match"
+                ariaLabel={translate("Previous match")}
                 title={translate("Previous match (Shift+Enter)")}
             >
                 <path d="M3 9L7 5L11 9" />
@@ -168,7 +168,7 @@ export function ChatFindBar({
             <FindIconButton
                 onClick={onNext}
                 disabled={disabled}
-                ariaLabel="Next match"
+                ariaLabel={translate("Next match")}
                 title={translate("Next match (Enter)")}
             >
                 <path d="M3 5L7 9L11 5" />
@@ -176,7 +176,7 @@ export function ChatFindBar({
 
             <FindIconButton
                 onClick={onClose}
-                ariaLabel="Close find"
+                ariaLabel={translate("Close find")}
                 title={translate("Close (Esc)")}
             >
                 <path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" />

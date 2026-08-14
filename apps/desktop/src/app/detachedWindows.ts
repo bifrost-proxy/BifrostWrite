@@ -488,6 +488,7 @@ export async function openSettingsWindow(
         minHeight: 480,
         center: true,
         focus: true,
+        transparent: true,
         ...getWebviewWindowChromeOptions(),
     });
     await waitForWindowReady(win);
@@ -504,6 +505,7 @@ export async function openVaultWindow(vaultPath: string) {
         minHeight: 600,
         center: true,
         focus: true,
+        transparent: true,
         ...getWebviewWindowChromeOptions(),
     });
 
@@ -534,6 +536,7 @@ export async function openDetachedNoteWindow(
         x: options?.position?.x,
         y: options?.position?.y,
         focus: true,
+        transparent: true,
         preventOverflow: true,
         ...getWebviewWindowChromeOptions(),
     });

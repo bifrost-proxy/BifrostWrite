@@ -939,11 +939,14 @@ export function AppLayout({ left, center, right }: AppLayoutProps) {
                         // still reads through but hover/selection highlights
                         // don't feel harsh.
                         backgroundColor: SIDEBAR_TRANSLUCENT_ENABLED
-                            ? "var(--sidebar-vibrancy-tint)"
+                            ? "var(--window-glass-panel)"
                             : "var(--bg-secondary)",
                         borderRight: SIDEBAR_TRANSLUCENT_ENABLED
-                            ? "none"
+                            ? "1px solid var(--window-glass-hairline)"
                             : "1px solid var(--border)",
+                        boxShadow: SIDEBAR_TRANSLUCENT_ENABLED
+                            ? "inset -1px 0 0 var(--window-glass-highlight), 12px 0 34px var(--window-glass-glow)"
+                            : "none",
                         transition: sidebarDockTransition,
                     }}
                 >
@@ -1097,13 +1100,16 @@ export function AppLayout({ left, center, right }: AppLayoutProps) {
                             flexShrink: 0,
                             overflow: "hidden",
                             backgroundColor: SIDEBAR_TRANSLUCENT_ENABLED
-                                ? "var(--sidebar-vibrancy-tint)"
+                                ? "var(--window-glass-panel)"
                                 : "var(--bg-secondary)",
                             borderLeft:
                                 SIDEBAR_TRANSLUCENT_ENABLED ||
                                 rightPanelCollapsed
-                                    ? "none"
+                                    ? "1px solid var(--window-glass-hairline)"
                                     : "1px solid var(--border)",
+                            boxShadow: SIDEBAR_TRANSLUCENT_ENABLED
+                                ? "inset 1px 0 0 var(--window-glass-highlight), -12px 0 34px var(--window-glass-glow)"
+                                : "none",
                             transition: isResizingRight
                                 ? "none"
                                 : "width 160ms cubic-bezier(0.22, 1, 0.36, 1)",
@@ -1193,15 +1199,17 @@ export function AppLayout({ left, center, right }: AppLayoutProps) {
                         // material to blur. Falls back to a solid surface on
                         // platforms without vibrancy.
                         backgroundColor: SIDEBAR_TRANSLUCENT_ENABLED
-                            ? "var(--sidebar-vibrancy-tint)"
+                            ? "var(--window-glass-panel)"
                             : "var(--bg-secondary)",
                         backdropFilter: SIDEBAR_TRANSLUCENT_ENABLED
-                            ? "blur(24px) saturate(140%)"
+                            ? "blur(30px) saturate(155%)"
                             : undefined,
                         WebkitBackdropFilter: SIDEBAR_TRANSLUCENT_ENABLED
-                            ? "blur(24px) saturate(140%)"
+                            ? "blur(30px) saturate(155%)"
                             : undefined,
-                        borderRight: "1px solid var(--border)",
+                        borderRight: SIDEBAR_TRANSLUCENT_ENABLED
+                            ? "1px solid var(--window-glass-hairline)"
+                            : "1px solid var(--border)",
                         boxShadow:
                             "4px 0 24px rgba(0, 0, 0, 0.22), 1px 0 6px rgba(0, 0, 0, 0.10)",
                     }}

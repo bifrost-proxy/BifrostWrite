@@ -15,11 +15,11 @@ describe("clipper preferences helpers", () => {
         );
     });
 
-    it("parses tags from comma and newline separated input", () => {
-        expect(parseTagInput("research, Article\nresearch, web")).toEqual([
+    it("parses tags with hashes, whitespace, punctuation, and hierarchy", () => {
+        expect(parseTagInput("#research Article\nresearch, web/project")).toEqual([
             "research",
             "Article",
-            "web",
+            "web/project",
         ]);
     });
 

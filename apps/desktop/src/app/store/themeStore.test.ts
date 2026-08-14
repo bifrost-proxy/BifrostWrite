@@ -1,4 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../utils/platform", () => ({
+    getDesktopPlatform: () => "macos",
+}));
 import {
     disposeThemeStoreRuntime,
     initializeThemeStore,
@@ -51,6 +55,7 @@ describe("themeStore global persistence", () => {
                 __mockCurrentWindow: {
                     setTheme: ReturnType<typeof vi.fn>;
                     setBackgroundColor: ReturnType<typeof vi.fn>;
+                    setEffects: ReturnType<typeof vi.fn>;
                 };
             }
         ).__mockCurrentWindow;
@@ -60,8 +65,18 @@ describe("themeStore global persistence", () => {
 
         expect(runtimeWindow.setTheme).toHaveBeenLastCalledWith("dark");
         expect(runtimeWindow.setBackgroundColor).toHaveBeenLastCalledWith(
-            "#2e3440",
+            "#00000000",
         );
+        expect(runtimeWindow.setEffects).toHaveBeenLastCalledWith({
+            effects: [
+                "sidebar",
+                "underWindowBackground",
+                "mica",
+                "acrylic",
+            ],
+            state: "followsWindowActiveState",
+            radius: 12,
+        });
     });
 
     it("forces light native chrome when the system theme is dark", () => {
@@ -88,6 +103,7 @@ describe("themeStore global persistence", () => {
                 __mockCurrentWindow: {
                     setTheme: ReturnType<typeof vi.fn>;
                     setBackgroundColor: ReturnType<typeof vi.fn>;
+                    setEffects: ReturnType<typeof vi.fn>;
                 };
             }
         ).__mockCurrentWindow;
@@ -98,7 +114,7 @@ describe("themeStore global persistence", () => {
         });
         expect(runtimeWindow.setTheme).toHaveBeenLastCalledWith("light");
         expect(runtimeWindow.setBackgroundColor).toHaveBeenLastCalledWith(
-            "#f8fafc",
+            "#00000000",
         );
     });
 

@@ -848,7 +848,9 @@ export function GraphViewController({
                                         lineHeight: 1.35,
                                     }}
                                 >
-                                    {graphStatusMessage.detail}
+                                    {translate(
+                                        String(graphStatusMessage.detail),
+                                    )}
                                 </div>
                             </>
                         )}

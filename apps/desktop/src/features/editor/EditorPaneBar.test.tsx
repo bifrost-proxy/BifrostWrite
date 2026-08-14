@@ -10,7 +10,15 @@ import { useSettingsStore } from "../../app/store/settingsStore";
 import { useLayoutStore } from "../../app/store/layoutStore";
 import { useVaultStore } from "../../app/store/vaultStore";
 import { useChatStore } from "../ai/store/chatStore";
+import { useAppUpdateStore } from "../updates/store";
 import { EditorPaneBar } from "./EditorPaneBar";
+
+vi.mock("../updates/sensitiveState", () => ({
+    readSettledSensitiveUpdateState: vi.fn().mockResolvedValue({
+        items: [],
+        requiresConfirmation: false,
+    }),
+}));
 
 const originalUserAgent = navigator.userAgent;
 const originalPlatform = navigator.platform;
@@ -197,6 +205,7 @@ describe("EditorPaneBar", () => {
             "primary",
         );
         useSettingsStore.getState().reset();
+        useAppUpdateStore.getState().reset();
         useLayoutStore.setState({ sidebarCollapsed: false });
         getStartDraggingMock().mockClear();
     });
@@ -237,6 +246,50 @@ describe("EditorPaneBar", () => {
         );
 
         expect(getStartDraggingMock()).not.toHaveBeenCalled();
+    });
+
+    it("shows an available update immediately before New tab in the top-right pane", async () => {
+        useVaultStore.setState({ vaultPath: "/vault" });
+        const installAvailableUpdate = vi.fn().mockResolvedValue(undefined);
+        useAppUpdateStore.setState({
+            initialized: true,
+            status: {
+                enabled: true,
+                currentVersion: "1.1.2",
+                channel: "stable",
+                endpoint: "https://github.com/bifrost-proxy/BifrostWrite/releases",
+                message: null,
+                update: {
+                    body: "Update notes",
+                    currentVersion: "1.1.2",
+                    version: "1.1.3",
+                    date: "2026-08-14T00:00:00Z",
+                    rawJson: {},
+                    target: "aarch64-apple-darwin",
+                    downloadUrl: "https://example.test/BifrostWrite.dmg",
+                },
+            },
+            installAvailableUpdate,
+        });
+
+        renderComponent(
+            <EditorPaneBar
+                paneId="primary"
+                isFocused
+                isTopRightPane
+            />,
+        );
+
+        const updateButton = screen.getByRole("button", {
+            name: "Install update 1.1.3",
+        });
+        const newTabButton = screen.getByRole("button", { name: "New tab" });
+        expect(newTabButton.previousElementSibling).toBe(updateButton);
+
+        fireEvent.click(updateButton);
+        await waitFor(() =>
+            expect(installAvailableUpdate).toHaveBeenCalledOnce(),
+        );
     });
 
     it("reserves the macOS traffic-light area in the top-left pane when the sidebar is collapsed", () => {

@@ -73,7 +73,7 @@ describe("template engine", () => {
         expect(markdown).toContain("# Custom title");
         expect(markdown).toContain("Rendered body");
         expect(markdown).toContain("https://example.com/articles/demo");
-        expect(markdown).toContain("research, web");
+        expect(markdown).toContain("#research #web");
         expect(markdown).toContain("Clips/Web");
     });
 });

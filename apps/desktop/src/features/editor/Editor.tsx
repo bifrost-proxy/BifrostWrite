@@ -140,6 +140,7 @@ import { shouldEnableInlineReviewMergeView } from "./editorReviewGate";
 import { resolveMarkdownCodeLanguage } from "./codeLanguage";
 import {
     activateWikilinkSuggesterAnnotation,
+    completeMarkdownCodeFence,
     markdownAutopairExtension,
 } from "./extensions/markdownAutopair";
 import {
@@ -2494,6 +2495,10 @@ export function Editor({
                                 }
                                 return openSearchPanel(view);
                             },
+                        },
+                        {
+                            key: "Enter",
+                            run: completeMarkdownCodeFence,
                         },
                         {
                             key: "Enter",

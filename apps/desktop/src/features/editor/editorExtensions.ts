@@ -25,6 +25,10 @@ import { vimStatusBarExtension } from "./extensions/vimStatusBar";
 import { resolveWikilink } from "./wikilinkResolution";
 import { navigateWikilink, getNoteLinkTarget } from "./wikilinkNavigation";
 import { resolveFrontendSpellcheckLanguage } from "../spellcheck/api";
+import {
+    hashtagDecorationExtension,
+    hashtagTheme,
+} from "./extensions/hashtags";
 
 export type LinkContextMenuState = {
     x: number;
@@ -60,7 +64,11 @@ export const baseTheme = EditorView.theme({
         paddingBottom: "72px",
         scrollbarColor: "var(--app-scrollbar-thumb) transparent",
         minWidth: 0,
-        overflowAnchor: "auto",
+        // CodeMirror maintains its own height map and viewport compensation.
+        // Native browser scroll anchoring competes with that bookkeeping when
+        // live preview turns a line such as `1. ` into a rendered list item,
+        // causing the viewport to jump in both directions.
+        overflowAnchor: "none",
     },
     '&[data-line-wrapping="false"] .cm-scroller': {
         overflowX: "auto",
@@ -118,6 +126,13 @@ export const baseTheme = EditorView.theme({
         {
             textDecoration: "none",
         },
+    ".cm-source-setext-plain, .cm-source-setext-plain *": {
+        color: "var(--text-primary) !important",
+        fontSize: "inherit !important",
+        fontWeight: "inherit !important",
+        lineHeight: "inherit !important",
+        textDecoration: "none !important",
+    },
     ".cm-cursor": {
         borderLeftColor: "var(--text-primary)",
         borderLeftWidth: "2px",
@@ -187,6 +202,9 @@ export function getActiveLineExtension(enabled: boolean): Extension {
 const sourceHeadingDecoration = Decoration.mark({
     class: "cm-source-heading",
 });
+const sourceSetextPlainDecoration = Decoration.mark({
+    class: "cm-source-setext-plain",
+});
 
 function buildSourceHeadingDecorations(view: EditorView) {
     const builder = new RangeSetBuilder<Decoration>();
@@ -195,11 +213,13 @@ function buildSourceHeadingDecorations(view: EditorView) {
         from: 0,
         to: view.state.doc.length,
         enter(node) {
-            if (
-                node.name.startsWith("ATXHeading") ||
-                node.name.startsWith("SetextHeading")
-            ) {
+            if (node.name.startsWith("ATXHeading")) {
                 builder.add(node.from, node.to, sourceHeadingDecoration);
+            } else if (node.name.startsWith("SetextHeading")) {
+                // BifrostWrite exposes headings through explicit `#` syntax.
+                // CommonMark's single-hyphen Setext form is too easy to
+                // trigger while starting a list, so keep it visually plain.
+                builder.add(node.from, node.to, sourceSetextPlainDecoration);
             }
         },
     });
@@ -234,6 +254,8 @@ export function getSyntaxExtension() {
     return [
         syntaxHighlighting(buildSyntaxHighlightStyle()),
         sourceHeadingDecorationExtension,
+        hashtagDecorationExtension,
+        hashtagTheme,
     ];
 }
 

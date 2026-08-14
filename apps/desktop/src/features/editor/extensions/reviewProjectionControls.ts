@@ -12,6 +12,7 @@ import {
     WidgetType,
 } from "@codemirror/view";
 import { LruCache } from "../lruCache";
+import { translate } from "../../../app/i18n";
 import type {
     ReviewChunk,
     ReviewChunkId,
@@ -551,7 +552,7 @@ class ReviewControlWidget extends WidgetType {
         if (this.entry.kind === "panel-only") {
             const note = document.createElement("span");
             note.className = "cm-review-chunk-ambiguous";
-            note.textContent = "Review in Changes";
+            note.textContent = translate("Review in Changes");
             wrap.appendChild(note);
             anchor.appendChild(wrap);
             return anchor;
@@ -561,7 +562,7 @@ class ReviewControlWidget extends WidgetType {
             wrap.dataset.reviewOverlap = "true";
             const overlapNote = document.createElement("span");
             overlapNote.className = "cm-review-chunk-overlap";
-            overlapNote.textContent = "Overlapping";
+            overlapNote.textContent = translate("Overlapping");
             wrap.appendChild(overlapNote);
         }
 
@@ -640,14 +641,14 @@ function createDecisionButton(
     button.className = `cm-review-action cm-review-action-${type}`;
     button.dataset.reviewDecision = type;
     button.dataset.reviewDecisionScope = options.scope;
-    button.title = defaultTitle;
+    button.title = translate(defaultTitle);
     if (options.hunkId) {
         button.dataset.reviewHunkKey = options.hunkId.key;
         button.dataset.reviewHunkTrackedVersion = String(
             options.hunkId.trackedVersion,
         );
     }
-    button.textContent = type === "accept" ? "Accept" : "Reject";
+    button.textContent = translate(type === "accept" ? "Accept" : "Reject");
     button.onmousedown = (event) => {
         event.preventDefault();
         event.stopPropagation();

@@ -117,6 +117,14 @@ function syncDesktopWindowChrome(themeName: ThemeName, isDark: boolean) {
     const palette = themes[themeName];
     const colors = isDark ? palette.dark : palette.light;
     const runtimeWindow = getCurrentWindow();
+    const effectsWindow = runtimeWindow as typeof runtimeWindow & {
+        setEffects?: (effects: {
+            effects: string[];
+            state?: "followsWindowActiveState" | "active" | "inactive";
+            radius?: number;
+        }) => Promise<void>;
+    };
+    const platform = getDesktopPlatform();
 
     if (typeof runtimeWindow.setTheme === "function") {
         void runtimeWindow.setTheme(isDark ? "dark" : "light").catch(() => {
@@ -126,16 +134,39 @@ function syncDesktopWindowChrome(themeName: ThemeName, isDark: boolean) {
     }
 
     if (typeof runtimeWindow.setBackgroundColor === "function") {
-        void runtimeWindow.setBackgroundColor(colors.bgPrimary).catch(() => {
+        const backgroundColor =
+            platform === "macos" || platform === "windows"
+                ? "#00000000"
+                : colors.bgPrimary;
+        void runtimeWindow.setBackgroundColor(backgroundColor).catch(() => {
             // Best effort on platforms/runtime versions without native
             // background-color support.
         });
     }
 
+    if (
+        (platform === "macos" || platform === "windows") &&
+        typeof effectsWindow.setEffects === "function"
+    ) {
+        void effectsWindow
+            .setEffects({
+                effects: [
+                    "sidebar",
+                    "underWindowBackground",
+                    "mica",
+                    "acrylic",
+                ],
+                state: "followsWindowActiveState",
+                radius: 12,
+            })
+            .catch(() => {
+                // Native glass is best effort on older platform/runtime builds.
+            });
+    }
+
     // Windows / Linux: keep titleBarOverlay caption symbols legible. The
     // overlay itself stays transparent so the renderer-painted chrome shows
     // through.
-    const platform = getDesktopPlatform();
     if (platform !== "windows" && platform !== "linux") return;
     const symbolColor = colors.textPrimary;
     if (typeof runtimeWindow.setTitleBarOverlay !== "function") return;

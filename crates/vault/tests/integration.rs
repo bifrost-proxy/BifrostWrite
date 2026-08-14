@@ -11,7 +11,7 @@ fn setup_vault() -> (TempDir, Vault) {
     // Create some sample notes.
     fs::write(
         dir.path().join("nota1.md"),
-        "---\ntitle: Primera Nota\ntags: [rust]\n---\n# Primera Nota\n\nContenido con [[nota2]] y #proyecto\n",
+        "---\ntitle: Primera Nota\nauthors: [Ada]\n---\n# Primera Nota\n\nContenido con [[nota2]] y #proyecto\n",
     )
     .unwrap();
 

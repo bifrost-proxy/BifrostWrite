@@ -6,6 +6,7 @@ use neverwrite_types::{
     AdvancedSearchFileScope, AdvancedSearchParams, NoteDocument, NoteId, NotePath, PdfDocument,
     PdfMetadata, SearchTermParam, TextRange, VaultEntryDto, WikiLink,
 };
+use neverwrite_vault::parser::parse_note;
 use neverwrite_vault::Vault;
 
 fn make_note(
@@ -173,6 +174,26 @@ fn tags_index() {
     let web_notes = index.get_notes_by_tag("web");
     assert_eq!(web_notes.len(), 1);
     assert_eq!(web_notes[0].0, "carpeta/nota3");
+}
+
+#[test]
+fn tags_index_uses_only_inline_body_hashtags() {
+    let legacy = parse_note(
+        "legacy",
+        &PathBuf::from("legacy.md"),
+        "---\ntags: [obsolete]\ntag: archived\n---\nNo inline tags.",
+    );
+    let current = parse_note(
+        "current",
+        &PathBuf::from("current.md"),
+        "正文#项目 #研发/编辑器",
+    );
+    let index = VaultIndex::build(vec![legacy, current]);
+
+    assert!(index.get_notes_by_tag("obsolete").is_empty());
+    assert!(index.get_notes_by_tag("archived").is_empty());
+    assert_eq!(index.get_notes_by_tag("项目")[0].0, "current");
+    assert_eq!(index.get_notes_by_tag("研发/编辑器")[0].0, "current");
 }
 
 // --- Wikilink resolution tests ---

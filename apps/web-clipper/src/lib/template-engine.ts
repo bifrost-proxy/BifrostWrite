@@ -83,7 +83,7 @@ export function renderClipTemplate(
     context: ClipTemplateContext,
 ): string {
     const now = new Date();
-    const tags = context.tags.join(", ");
+    const tags = context.tags.map((tag) => `#${tag}`).join(" ");
     const values: Record<string, string> = {
         title: context.title || context.clipData.metadata.title,
         url: context.clipData.metadata.url,

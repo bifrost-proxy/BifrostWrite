@@ -1224,7 +1224,7 @@ export function AgentsSidebarPanel() {
                     value={filterText}
                     onChange={setFilterText}
                     placeholder={translate("Filter threads...")}
-                    ariaLabel="Filter threads"
+                    ariaLabel={translate("Filter threads")}
                 />
             </div>
 

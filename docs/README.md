@@ -29,6 +29,8 @@ remain reviewable.
 ## Editor And Workspace
 
 - [Editor Architecture](editor-architecture.md): CodeMirror, live preview, Mermaid rendering, wikilinks, frontmatter/properties, autosave, dirty tabs, merge view, inline review overlays, and power-user invariants.
+- [Tags](tags.md): inline `#tag` syntax, editor rendering, indexing, filtering, exclusions, and the explicit rejection of frontmatter-based tags.
+- [HTML In Markdown](markdown-html.md): safe inline and block HTML rendering, source-first editing, theme integration, sanitization, and supported elements.
 - [Open Knowledge Format (OKF)](okf.md): the `status` and `type` frontmatter fields, canonical status values, where status appears (file tree dot, editor badge/banner), the "Show document status" setting, and `okf_version` vault detection.
 - [Terminal Architecture](terminal-integration.md): PTY sidecar boundary, xterm rendering, terminal persistence, Claude Code integration, and validation notes.
 - [Subagents Working State Map](concept-maps/codex-subagents-working-state-map.excalidraw): visual working map for subagent state and coordination.
@@ -36,6 +38,20 @@ remain reviewable.
 Use these when touching the editor surface, tab model, pane/workspace behavior,
 selection/cursor handling, live preview, inline review rendering, or terminal
 tabs.
+
+### Tag Quick Reference
+
+Tags are written directly in Markdown body text as `#tag`; they are not
+frontmatter properties. The `#` may appear at the start of a line, after a
+space, or immediately after ordinary prose. Spaces and punctuation end a tag,
+so write multiple tags as `#project #weekly`. Unicode names and `/` hierarchy
+such as `#研发/编辑器` are supported.
+
+The left **Tags** panel collects these body tags automatically. Search and
+graph filters use the tag name without the hash, for example `tag:project`.
+Fenced code, inline code, escaped hashes, URL fragments, and frontmatter keys
+named `tag` or `tags` are ignored. See [Tags](tags.md) for examples and the
+complete rules.
 
 ## Data, Privacy, And Diagnostics
 
@@ -55,4 +71,4 @@ tokens, provider credentials, or personally sensitive paths.
 These currently live next to their implementation/release artifacts because
 they are tightly coupled to package-specific workflows.
 
-Last updated: July 6, 2026.
+Last updated: August 14, 2026.

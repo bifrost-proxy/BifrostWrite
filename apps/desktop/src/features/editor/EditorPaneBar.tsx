@@ -32,6 +32,8 @@ import { isSearchTab, SEARCH_TAB_TITLE } from "../search/searchTab";
 import { useSettingsStore } from "../../app/store/settingsStore";
 import { useLayoutStore } from "../../app/store/layoutStore";
 import { useVaultStore } from "../../app/store/vaultStore";
+import { useAppUpdateStore } from "../updates/store";
+import { readSettledSensitiveUpdateState } from "../updates/sensitiveState";
 import {
     ContextMenu,
     type ContextMenuEntry,
@@ -88,6 +90,7 @@ interface EditorPaneBarProps {
     paneId: string;
     isFocused: boolean;
     isTopLeftPane?: boolean;
+    isTopRightPane?: boolean;
 }
 
 function getPaneHeaderActionButtonStyle(active = false) {
@@ -143,6 +146,7 @@ export function EditorPaneBar({
     paneId,
     isFocused,
     isTopLeftPane = false,
+    isTopRightPane = false,
 }: EditorPaneBarProps) {
     void isFocused;
     const pane = useEditorStore((state) =>
@@ -182,6 +186,15 @@ export function EditorPaneBar({
     );
     const rightPanelWidth = useLayoutStore((state) => state.rightPanelWidth);
     const vaultPath = useVaultStore((state) => state.vaultPath);
+    const availableAppUpdate = useAppUpdateStore(
+        (state) => state.status?.update ?? null,
+    );
+    const installingAppUpdate = useAppUpdateStore(
+        (state) => state.installing,
+    );
+    const installAvailableAppUpdate = useAppUpdateStore(
+        (state) => state.installAvailableUpdate,
+    );
     const [tabContextMenu, setTabContextMenu] = useState<ContextMenuState<{
         tabId: string;
     }> | null>(null);
@@ -196,6 +209,28 @@ export function EditorPaneBar({
         getDesktopPlatform() === "macos" &&
         sidebarCollapsed &&
         isTopLeftPane;
+    const showAppUpdateButton =
+        windowMode === "main" &&
+        isTopRightPane &&
+        availableAppUpdate !== null;
+    const appUpdateButtonLabel = installingAppUpdate
+        ? translate("Installing update…")
+        : `${translate("Install update")} ${
+              availableAppUpdate?.version ?? ""
+          }`.trim();
+    const handleInstallAppUpdate = useCallback(() => {
+        void (async () => {
+            const sensitiveState = await readSettledSensitiveUpdateState();
+            if (sensitiveState.requiresConfirmation) {
+                await openSettingsWindow(vaultPath, { section: "updates" });
+                return;
+            }
+
+            await installAvailableAppUpdate().catch(() =>
+                openSettingsWindow(vaultPath, { section: "updates" }),
+            );
+        })();
+    }, [installAvailableAppUpdate, vaultPath]);
     const {
         editingKey,
         editValue,
@@ -499,8 +534,12 @@ export function EditorPaneBar({
                     height: WINDOW_CHROME_BAR_HEIGHT,
                     minHeight: WINDOW_CHROME_BAR_HEIGHT,
                     boxSizing: "border-box",
-                    borderBottom: "1px solid var(--border)",
-                    background: "var(--bg-secondary)",
+                    borderBottom: "1px solid var(--window-glass-hairline, var(--border))",
+                    background: "var(--window-glass-chrome, var(--bg-secondary))",
+                    backdropFilter: "blur(28px) saturate(150%)",
+                    WebkitBackdropFilter: "blur(28px) saturate(150%)",
+                    boxShadow:
+                        "inset 0 1px 0 var(--window-glass-highlight, transparent), 0 8px 28px var(--window-glass-glow, transparent)",
                 }}
                 data-pane-empty={hasTabs ? undefined : "true"}
             >
@@ -892,6 +931,41 @@ export function EditorPaneBar({
                 <div className="flex shrink-0 items-center px-1.5">
                     {vaultPath && (
                         <Fragment>
+                            {showAppUpdateButton ? (
+                                <button
+                                    type="button"
+                                    data-app-update-button="true"
+                                    onClick={handleInstallAppUpdate}
+                                    disabled={installingAppUpdate}
+                                    className="ub-chrome-btn inline-flex shrink-0 items-center justify-center"
+                                    aria-label={appUpdateButtonLabel}
+                                    title={appUpdateButtonLabel}
+                                    style={{
+                                        ...getPaneHeaderActionButtonStyle(true),
+                                        marginRight: 2,
+                                    }}
+                                >
+                                    <svg
+                                        width="12"
+                                        height="12"
+                                        viewBox="0 0 16 16"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="1.8"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className={
+                                            installingAppUpdate
+                                                ? "animate-pulse"
+                                                : undefined
+                                        }
+                                    >
+                                        <path d="M8 2.5v8" />
+                                        <path d="M4.75 7.5 8 10.75l3.25-3.25" />
+                                        <path d="M3 13.5h10" />
+                                    </svg>
+                                </button>
+                            ) : null}
                             <button
                                 type="button"
                                 data-new-tab-button="true"

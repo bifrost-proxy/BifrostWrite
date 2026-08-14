@@ -125,7 +125,7 @@ import {
     openDeepLinkFile,
     type DeepLinkOpenFilePayload,
 } from "./features/deep-link/openDeepLinkFile";
-import { useAppUpdateStore } from "./features/updates/store";
+import { startAppUpdateBackgroundChecks } from "./features/updates/store";
 import {
     buildWindowOperationalState,
     WINDOW_OPERATIONAL_STATE_PUBLISH_DEBOUNCE_MS,
@@ -344,7 +344,8 @@ function RightPanel() {
                             height: 34,
                             flexShrink: 0,
                             WebkitAppRegion: "drag",
-                            backgroundColor: "var(--sidebar-vibrancy-tint)",
+                            backgroundColor:
+                                "var(--window-glass-chrome, var(--sidebar-vibrancy-tint))",
                         } as React.CSSProperties
                     }
                 />
@@ -1413,7 +1414,8 @@ export default function App() {
         if (windowMode !== "main") {
             return;
         }
-        void useAppUpdateStore.getState().initialize({ backgroundCheck: true });
+
+        return startAppUpdateBackgroundChecks();
     }, [windowMode]);
 
     useEffect(() => {
@@ -2351,13 +2353,14 @@ export default function App() {
                     center={
                         <div className="flex h-full min-h-0 flex-col overflow-hidden">
                             <EditorChromeBar />
-                            {/* Editor body paints its own opaque background so
-                                the translucent surfaces above read as frosted
-                                strips while the editor surface stays solid. */}
                             <div
                                 className="min-h-0 flex-1 overflow-hidden"
                                 style={{
-                                    backgroundColor: "var(--bg-primary)",
+                                    backgroundColor:
+                                        DESKTOP_PLATFORM === "macos" ||
+                                        DESKTOP_PLATFORM === "windows"
+                                            ? "transparent"
+                                            : "var(--bg-primary)",
                                 }}
                             >
                                 <MultiPaneWorkspace />

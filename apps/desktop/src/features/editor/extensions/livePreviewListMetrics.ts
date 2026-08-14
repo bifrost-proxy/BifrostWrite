@@ -3,8 +3,11 @@ export type LivePreviewListKind = "unordered" | "ordered" | "task";
 export const LIVE_PREVIEW_UNORDERED_MARKER_WIDTH_EM = 1.3;
 export const LIVE_PREVIEW_TASK_MARKER_WIDTH_EM = 1.2;
 export const LIVE_PREVIEW_LIST_MARKER_GAP_EM = 0.55;
-export const LIVE_PREVIEW_LIST_PADDING_Y_EM = 0.08;
-export const LIVE_PREVIEW_LIST_CONTINUATION_PADDING_Y_EM = 0.04;
+// List syntax can appear while the user is still typing. Keep its vertical
+// metrics identical to a normal editor line so converting `1. ` or `- ` into
+// live preview never moves the caret or changes the surrounding layout.
+export const LIVE_PREVIEW_LIST_PADDING_Y_EM = 0;
+export const LIVE_PREVIEW_LIST_CONTINUATION_PADDING_Y_EM = 0;
 export const LIVE_PREVIEW_LIST_NESTING_STEP_EM = 0.24;
 export const LIVE_PREVIEW_TASK_CHECKBOX_SIZE_EM = 0.92;
 export const LIVE_PREVIEW_TASK_CHECKBOX_RADIUS_EM = 0.24;

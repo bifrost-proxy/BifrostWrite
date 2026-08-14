@@ -36,11 +36,11 @@ mod tests {
 
     #[test]
     fn simple_frontmatter() {
-        let text = "---\ntitle: Mi Nota\ntags:\n  - rust\n  - web\n---\n# Contenido";
+        let text = "---\ntitle: Mi Nota\nauthors:\n  - Ada\n  - Linus\n---\n# Contenido";
         let fm = extract_frontmatter(text).unwrap();
         assert_eq!(fm["title"], "Mi Nota");
-        assert_eq!(fm["tags"][0], "rust");
-        assert_eq!(fm["tags"][1], "web");
+        assert_eq!(fm["authors"][0], "Ada");
+        assert_eq!(fm["authors"][1], "Linus");
     }
 
     #[test]

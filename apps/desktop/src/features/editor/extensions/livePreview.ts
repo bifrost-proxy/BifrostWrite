@@ -33,6 +33,7 @@ import {
     LIVE_PREVIEW_TASK_MARKER_WIDTH_EM,
 } from "./livePreviewListMetrics";
 import { livePreviewTheme } from "./livePreviewTheme";
+import { createHtmlBlockLivePreviewExtension } from "./htmlLivePreview";
 
 const TASK_TOGGLE_HOVER_CLASS = "cm-lp-task-toggle-hover";
 
@@ -757,6 +758,7 @@ export function livePreviewExtension(
         lineFlashField,
         createInlineLivePreviewPlugin(),
         createLeadingContentCollapseField(),
+        createHtmlBlockLivePreviewExtension(),
         createCodeBlockLivePreviewExtension(),
         createTrailingAppendLineExtension(),
         createImageLivePreviewExtension(vaultRoot),
