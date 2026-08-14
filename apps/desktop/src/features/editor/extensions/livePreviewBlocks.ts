@@ -54,6 +54,7 @@ import {
     renderEmbedPreview,
 } from "./notePreviewSource";
 import { renderMermaidDiagram } from "../mermaid/mermaidRenderer";
+import { createMermaidFullscreenButton } from "../mermaid/mermaidFullscreen";
 import { parseMermaidSvg } from "../mermaid/mermaidSvg";
 import { formatCodeFenceLanguageLabel } from "../codeFencePresentation";
 
@@ -1029,6 +1030,9 @@ class MermaidDiagramWidget extends WidgetType {
                     const svg = parseMermaidSvg(result.svg);
                     if (svg) {
                         body.appendChild(svg);
+                        body.appendChild(
+                            createMermaidFullscreenButton(result.svg),
+                        );
                     } else {
                         renderMermaidError(
                             body,

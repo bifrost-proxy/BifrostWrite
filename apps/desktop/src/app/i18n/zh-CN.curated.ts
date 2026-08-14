@@ -328,9 +328,14 @@ export const CURATED_ZH_CN_TRANSLATIONS: Readonly<Record<string, string>> = {
     "Map view is unavailable in this hardened build":
         "此安全构建暂不支持概念图视图",
     "Mermaid diagram error": "Mermaid 图表错误",
+    "Mermaid canvas": "Mermaid 画布",
     "Mermaid file mode": "Mermaid 文件模式",
     "Mermaid preview": "Mermaid 预览",
     "Mermaid source is empty.": "Mermaid 源码为空。",
+    "Open Mermaid fullscreen": "全屏查看 Mermaid",
+    "Pinch to zoom • Scroll to pan • Esc to close":
+        "双指捏合缩放 • 滚动平移 • Esc 关闭",
+    "Reset zoom": "重置缩放",
     "No backlinks": "没有反向链接",
     "No concept maps yet.": "还没有概念图。",
     "No file tab active": "当前没有打开的文件标签页",

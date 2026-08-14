@@ -4,6 +4,7 @@ import {
     renderMermaidDiagram,
     type MermaidRenderResult,
 } from "./mermaid/mermaidRenderer";
+import { openMermaidFullscreen } from "./mermaid/mermaidFullscreen";
 import { parseMermaidSvg } from "./mermaid/mermaidSvg";
 
 type MermaidFilePreviewState =
@@ -84,12 +85,26 @@ export function MermaidFilePreview({ source, tabId }: MermaidFilePreviewProps) {
                 ) : null}
                 {state.status === "rendered" ? (
                     <div
-                        className="mermaid-file-preview-body flex min-h-full items-start justify-center"
-                        ref={(node) => {
-                            if (!node) return;
-                            node.replaceChildren(state.svg.cloneNode(true));
-                        }}
-                    />
+                        className="mermaid-file-preview-body relative flex min-h-full items-start justify-center"
+                    >
+                        <div
+                            ref={(node) => {
+                                if (!node) return;
+                                node.replaceChildren(
+                                    state.svg.cloneNode(true),
+                                );
+                            }}
+                        />
+                        <button
+                            type="button"
+                            className="mermaid-fullscreen-trigger"
+                            aria-label={translate("Open Mermaid fullscreen")}
+                            title={translate("Open Mermaid fullscreen")}
+                            onClick={() => openMermaidFullscreen(state.svg)}
+                        >
+                            ⛶
+                        </button>
+                    </div>
                 ) : null}
                 {state.status === "error" ? (
                     <div

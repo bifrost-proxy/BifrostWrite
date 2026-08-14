@@ -1069,6 +1069,7 @@ export const livePreviewTheme = EditorView.baseTheme({
         fontSize: "0.9em",
     },
     ".cm-mermaid-preview-body-rendered": {
+        position: "relative",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",

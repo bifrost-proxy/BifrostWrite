@@ -119,6 +119,7 @@ import { useChatFoldersStore } from "./features/ai/store/chatFoldersStore";
 import { useTerminalRuntimeStore } from "./features/terminal/terminalRuntimeStore";
 import { shouldAllowNativeContextMenu } from "./features/spellcheck/contextMenu";
 import { YouTubeModalHost } from "./features/editor/YouTubeModalHost";
+import { MermaidFullscreenHost } from "./features/editor/mermaid/MermaidFullscreenHost";
 import { ClipNotification } from "./features/clip/ClipNotification";
 import { useClipImportStore } from "./features/clip/clipImportStore";
 import {
@@ -2328,6 +2329,7 @@ export default function App() {
                     <EditorPaneContent emptyStateMessage={translate("No note is open in this window")} />
                 </div>
                 <YouTubeModalHost />
+                <MermaidFullscreenHost />
                 <CommandPalette />
                 <QuickSwitcher />
             </div>
@@ -2373,6 +2375,7 @@ export default function App() {
             </div>
 
             <YouTubeModalHost />
+            <MermaidFullscreenHost />
             <ClipNotification />
             <CommandPalette />
             <QuickSwitcher />
