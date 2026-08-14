@@ -32,6 +32,12 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.2.5] - 2026-08-14
+
+### Fixed
+
+- Fixed Mermaid diagrams with HTML labels or named entities failing to display in Markdown live preview and standalone Mermaid files.
+
 ## [1.2.4] - 2026-08-14
 
 ### Fixed

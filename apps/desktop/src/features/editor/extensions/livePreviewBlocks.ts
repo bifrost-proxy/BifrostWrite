@@ -54,6 +54,7 @@ import {
     renderEmbedPreview,
 } from "./notePreviewSource";
 import { renderMermaidDiagram } from "../mermaid/mermaidRenderer";
+import { parseMermaidSvg } from "../mermaid/mermaidSvg";
 import { formatCodeFenceLanguageLabel } from "../codeFencePresentation";
 
 const IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|svg|webp|bmp|ico|avif)([?#].*)?$/i;
@@ -1071,13 +1072,6 @@ const codeBlockLineOnlyUnlabeled = Decoration.line({
 const mermaidBlockSourceHidden = Decoration.line({
     class: "cm-code-block-fence-hidden cm-mermaid-source-hidden",
 });
-
-function parseMermaidSvg(svg: string): SVGElement | null {
-    const parsed = new DOMParser().parseFromString(svg, "image/svg+xml");
-    const root = parsed.documentElement;
-    if (root.nodeName.toLowerCase() !== "svg") return null;
-    return document.importNode(root, true) as unknown as SVGElement;
-}
 
 function renderMermaidError(container: HTMLElement, message: string) {
     container.className = "cm-mermaid-preview-body cm-mermaid-preview-error";
