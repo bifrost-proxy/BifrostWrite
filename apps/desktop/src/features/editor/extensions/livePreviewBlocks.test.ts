@@ -5,7 +5,7 @@ import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { forceParsing } from "@codemirror/language";
 import { EditorSelection, EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     getFencedCodeBlockKind,
     resolvePreviewAssetPath,
@@ -51,6 +51,10 @@ function createDeferredRender() {
 
 beforeEach(() => {
     mockedRenderMermaidDiagram.mockReset();
+});
+
+afterEach(() => {
+    vi.unstubAllGlobals();
 });
 
 describe("resolvePreviewAssetPath", () => {
@@ -230,6 +234,108 @@ describe("code block live preview", () => {
         expect(view.dom.querySelector(".cm-mermaid-preview-error")).toBeNull();
 
         view.destroy();
+        parent.remove();
+    });
+
+    it("defers offscreen Mermaid rendering and restores cached SVG", async () => {
+        const observers: FakeIntersectionObserver[] = [];
+
+        class FakeIntersectionObserver {
+            private callback: IntersectionObserverCallback;
+            disconnected = false;
+            observed: Element | null = null;
+
+            constructor(callback: IntersectionObserverCallback) {
+                this.callback = callback;
+                observers.push(this);
+            }
+
+            observe(target: Element) {
+                this.observed = target;
+            }
+
+            disconnect() {
+                this.disconnected = true;
+            }
+
+            trigger(target: Element, isIntersecting: boolean) {
+                this.callback(
+                    [
+                        {
+                            target,
+                            isIntersecting,
+                        } as IntersectionObserverEntry,
+                    ],
+                    this as unknown as IntersectionObserver,
+                );
+            }
+        }
+
+        vi.stubGlobal("IntersectionObserver", FakeIntersectionObserver);
+        vi.stubGlobal(
+            "requestIdleCallback",
+            (callback: IdleRequestCallback) => {
+                callback({
+                    didTimeout: false,
+                    timeRemaining: () => 50,
+                });
+                return 1;
+            },
+        );
+        vi.stubGlobal("cancelIdleCallback", vi.fn());
+        mockedRenderMermaidDiagram.mockResolvedValueOnce({
+            status: "ok",
+            svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>Lazy</text></svg>',
+        });
+
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+        const doc = ["```mermaid", "flowchart TD", "  A --> B", "```"].join(
+            "\n",
+        );
+        const view = new EditorView({
+            state: createLivePreviewState(doc),
+            parent,
+        });
+
+        await flushPromises();
+
+        const preview = view.dom.querySelector<HTMLElement>(
+            ".cm-mermaid-preview",
+        );
+        const body = preview?.querySelector<HTMLElement>(
+            ".cm-mermaid-preview-body",
+        );
+        expect(preview).not.toBeNull();
+        expect(body).not.toBeNull();
+        const observer = observers.find(
+            (item) => !item.disconnected && item.observed === preview,
+        );
+        expect(observer).toBeDefined();
+        expect(mockedRenderMermaidDiagram).not.toHaveBeenCalled();
+
+        observer!.trigger(preview!, true);
+        await flushPromises();
+
+        expect(body?.querySelector("svg text")?.textContent).toBe("Lazy");
+        expect(mockedRenderMermaidDiagram).toHaveBeenCalledTimes(1);
+
+        vi.spyOn(body!, "getBoundingClientRect").mockReturnValue({
+            ...body!.getBoundingClientRect(),
+            height: 240,
+        });
+        observer!.trigger(preview!, false);
+
+        expect(body?.querySelector("svg")).toBeNull();
+        expect(body?.style.minHeight).toBe("240px");
+
+        observer!.trigger(preview!, true);
+
+        expect(body?.querySelector("svg text")?.textContent).toBe("Lazy");
+        expect(mockedRenderMermaidDiagram).toHaveBeenCalledTimes(1);
+
+        view.destroy();
+        expect(observer!.disconnected).toBe(true);
         parent.remove();
     });
 

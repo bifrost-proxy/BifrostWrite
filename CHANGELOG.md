@@ -32,6 +32,12 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.2.7] - 2026-08-14
+
+### Changed
+
+- Improved scrolling performance in Markdown files with many Mermaid diagrams by rendering diagrams only near the viewport, unloading offscreen SVG DOM while preserving layout, and restoring cached results without rerunning Mermaid.
+
 ## [1.2.6] - 2026-08-14
 
 ### Added
