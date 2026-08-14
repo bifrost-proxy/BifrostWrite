@@ -150,7 +150,12 @@ function syncDesktopWindowChrome(themeName: ThemeName, isDark: boolean) {
     ) {
         void effectsWindow
             .setEffects({
-                effects: ["underWindowBackground", "mica", "acrylic"],
+                effects: [
+                    "sidebar",
+                    "underWindowBackground",
+                    "mica",
+                    "acrylic",
+                ],
                 state: "followsWindowActiveState",
                 radius: 12,
             })

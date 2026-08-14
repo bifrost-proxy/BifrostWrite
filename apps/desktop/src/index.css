@@ -485,17 +485,17 @@ html[data-desktop-platform="macos"],
 html[data-desktop-platform="windows"] {
     --sidebar-vibrancy-tint: color-mix(
         in srgb,
-        var(--bg-primary) 68%,
+        var(--bg-primary) 78%,
         transparent
     );
     --window-glass-panel: color-mix(
         in srgb,
-        var(--bg-secondary) 66%,
+        var(--bg-secondary) 76%,
         transparent
     );
     --window-glass-chrome: color-mix(
         in srgb,
-        var(--bg-secondary) 60%,
+        var(--bg-secondary) 72%,
         transparent
     );
     --window-glass-hairline: color-mix(
@@ -518,17 +518,17 @@ html[data-desktop-platform="macos"].dark,
 html[data-desktop-platform="windows"].dark {
     --sidebar-vibrancy-tint: color-mix(
         in srgb,
-        var(--bg-primary) 72%,
+        var(--bg-primary) 82%,
         transparent
     );
     --window-glass-panel: color-mix(
         in srgb,
-        var(--bg-secondary) 70%,
+        var(--bg-secondary) 80%,
         transparent
     );
     --window-glass-chrome: color-mix(
         in srgb,
-        var(--bg-secondary) 64%,
+        var(--bg-secondary) 76%,
         transparent
     );
     --window-glass-hairline: color-mix(

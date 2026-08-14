@@ -7,7 +7,6 @@ import {
     WidgetType,
 } from "@codemirror/view";
 import {
-    EditorSelection,
     type EditorState,
     RangeSetBuilder,
     StateEffect,
@@ -643,7 +642,7 @@ function moveEmptyListPrefixClickToContentStart(
 
     event.preventDefault();
     view.dispatch({
-        selection: EditorSelection.cursor(prefixEnd),
+        selection: { anchor: prefixEnd },
         scrollIntoView: true,
     });
     view.focus();
@@ -2124,6 +2123,16 @@ export function createInlineLivePreviewPlugin() {
 
 function selectionOnLine(state: EditorState, from: number, to: number) {
     return state.selection.ranges.some((range) => {
+        // Selection updates triggered from pointer handlers can briefly cross
+        // an extension reconfiguration during development/HMR. Never let a
+        // transient malformed range take down the editor decoration pipeline.
+        if (
+            !range ||
+            !Number.isFinite(range.from) ||
+            !Number.isFinite(range.to)
+        ) {
+            return false;
+        }
         if (
             from === 0 &&
             range.empty &&

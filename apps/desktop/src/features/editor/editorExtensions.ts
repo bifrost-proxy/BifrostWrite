@@ -64,7 +64,11 @@ export const baseTheme = EditorView.theme({
         paddingBottom: "72px",
         scrollbarColor: "var(--app-scrollbar-thumb) transparent",
         minWidth: 0,
-        overflowAnchor: "auto",
+        // CodeMirror maintains its own height map and viewport compensation.
+        // Native browser scroll anchoring competes with that bookkeeping when
+        // live preview turns a line such as `1. ` into a rendered list item,
+        // causing the viewport to jump in both directions.
+        overflowAnchor: "none",
     },
     '&[data-line-wrapping="false"] .cm-scroller': {
         overflowX: "auto",

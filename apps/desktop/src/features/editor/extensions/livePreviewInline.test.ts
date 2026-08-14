@@ -159,6 +159,11 @@ describe("createInlineLivePreviewPlugin", () => {
                 deco.className.split(" ").includes("cm-lp-li-line"),
             ),
         ).toBe(true);
+        const listLine = findDecorationByClass(
+            decorations,
+            "cm-lp-li-line",
+        );
+        expect(listLine?.style).toContain("--cm-lp-list-padding-y: 0em");
 
         view.destroy();
         parent.remove();

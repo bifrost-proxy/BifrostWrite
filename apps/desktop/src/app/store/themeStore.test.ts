@@ -68,7 +68,12 @@ describe("themeStore global persistence", () => {
             "#00000000",
         );
         expect(runtimeWindow.setEffects).toHaveBeenLastCalledWith({
-            effects: ["underWindowBackground", "mica", "acrylic"],
+            effects: [
+                "sidebar",
+                "underWindowBackground",
+                "mica",
+                "acrylic",
+            ],
             state: "followsWindowActiveState",
             radius: 12,
         });

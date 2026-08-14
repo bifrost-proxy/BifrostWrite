@@ -38,7 +38,7 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 - Added inline body tags using Apple Notes-style `#tag` syntax, with themed editor highlighting, Unicode and hierarchy support, automatic indexing, Tags panel aggregation, Search and Graph filtering, and matching Web Clipper output.
 - Added safe live rendering for common inline and block HTML in Markdown, with theme-aware presentation and one-click access to edit the original HTML source.
-- Added native macOS vibrancy and translucent glass effects outside document content areas.
+- Added native macOS vibrancy with theme-tinted frosted glass outside document content areas, preserving blurred desktop color without exposing distracting background detail.
 - Added hourly background update checks and an update button beside the main-window create control when a verified release is available.
 
 ### Changed
@@ -50,6 +50,8 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 ### Fixed
 
 - Fixed live-preview block elements trapping appended content inside the final block, and added Shift+Enter and Command+Enter shortcuts to exit a block into a new paragraph.
+- Fixed backtick entry so a single backtick remains literal instead of creating an automatic pair; pressing Enter after an opening three-backtick fence now inserts the matching closing fence and places the caret inside the code block.
+- Fixed live-preview list conversion causing the editor viewport and caret to jump when typing markers such as `1. ` or `- `.
 - Fixed editor, graph, search, AI, and accessibility labels that bypassed localization or used inaccurate machine translations.
 
 ## [1.1.2] - 2026-08-14

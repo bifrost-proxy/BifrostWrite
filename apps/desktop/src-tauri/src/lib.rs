@@ -467,6 +467,7 @@ pub fn run() {
                 let _ = window.set_effects(
                     EffectsBuilder::new()
                         .effects([
+                            Effect::Sidebar,
                             Effect::UnderWindowBackground,
                             Effect::Mica,
                             Effect::Acrylic,
