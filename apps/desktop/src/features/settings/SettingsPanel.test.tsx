@@ -1093,6 +1093,33 @@ describe("SettingsPanel", () => {
         });
     });
 
+    it("uses the main window glass surfaces in standalone settings", async () => {
+        setNavigatorIdentity(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_0) AppleWebKit/605.1.15",
+            "MacIntel",
+        );
+        vi.mocked(listen).mockResolvedValue(vi.fn());
+
+        renderComponent(<SettingsPanel onClose={() => {}} standalone />);
+
+        const chromeRoot = screen
+            .getByText("Settings")
+            .closest("[data-window-platform]");
+
+        await waitFor(() => {
+            expect((chromeRoot as HTMLElement).style.background).toBe(
+                "var(--window-glass-chrome, var(--bg-secondary))",
+            );
+            expect((chromeRoot as HTMLElement).style.backdropFilter).toBe(
+                "blur(28px) saturate(150%)",
+            );
+            expect(screen.getByTestId("settings-sidebar")).toHaveStyle({
+                backgroundColor:
+                    "var(--window-glass-panel, var(--bg-secondary))",
+            });
+        });
+    });
+
     it("renders AI send hints with the platform primary modifier", async () => {
         useChatStore.setState({
             requireCmdEnterToSend: true,
