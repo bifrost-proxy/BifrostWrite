@@ -1057,6 +1057,8 @@ export const livePreviewTheme = EditorView.baseTheme({
         margin: "12px 0",
         maxWidth: "100%",
         overflowX: "auto",
+        contentVisibility: "auto",
+        containIntrinsicSize: "auto 160px",
         borderTop: "1px solid var(--border)",
         borderBottom: "1px solid var(--border)",
         background:

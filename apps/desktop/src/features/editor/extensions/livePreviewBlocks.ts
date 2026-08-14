@@ -53,7 +53,10 @@ import {
     getNotePreviewContentState,
     renderEmbedPreview,
 } from "./notePreviewSource";
-import { renderMermaidDiagram } from "../mermaid/mermaidRenderer";
+import {
+    renderMermaidDiagram,
+    type MermaidRenderResult,
+} from "../mermaid/mermaidRenderer";
 import { createMermaidFullscreenButton } from "../mermaid/mermaidFullscreen";
 import { parseMermaidSvg } from "../mermaid/mermaidSvg";
 import { formatCodeFenceLanguageLabel } from "../codeFencePresentation";
@@ -982,9 +985,17 @@ function setCodeBlockCopyButtonState(
     button.replaceChildren(createCodeBlockCopyIcon(copied));
 }
 
+const mermaidWidgetOwners = new WeakMap<HTMLElement, MermaidDiagramWidget>();
+
 class MermaidDiagramWidget extends WidgetType {
     private source: string;
     private diagramId: string;
+    private observer: IntersectionObserver | null = null;
+    private idleHandle: number | null = null;
+    private renderResult: MermaidRenderResult | null = null;
+    private renderPromise: Promise<MermaidRenderResult> | null = null;
+    private isNearViewport = false;
+    private destroyed = false;
 
     constructor(source: string, diagramId: string) {
         super();
@@ -1009,49 +1020,163 @@ class MermaidDiagramWidget extends WidgetType {
         body.className = "cm-mermaid-preview-body";
         body.textContent = translate("Rendering Mermaid diagram...");
         outer.appendChild(body);
+        mermaidWidgetOwners.set(outer, this);
+
+        if (typeof IntersectionObserver === "undefined") {
+            this.isNearViewport = true;
+            this.startRender(outer, body);
+        } else {
+            queueMicrotask(() => this.observeVisibility(outer, body));
+        }
+
+        return outer;
+    }
+
+    private observeVisibility(outer: HTMLElement, body: HTMLElement) {
+        if (this.destroyed || !outer.isConnected) return;
+
+        const root = outer.closest<HTMLElement>(".cm-scroller");
+        this.observer = new IntersectionObserver(
+            (entries) => {
+                const entry = entries.find((item) => item.target === outer);
+                if (!entry) return;
+
+                this.isNearViewport = entry.isIntersecting;
+                if (entry.isIntersecting) {
+                    this.activate(outer, body);
+                } else {
+                    this.deactivate(body);
+                }
+            },
+            {
+                root,
+                rootMargin: "400px 0px",
+            },
+        );
+        this.observer.observe(outer);
+    }
+
+    private activate(outer: HTMLElement, body: HTMLElement) {
+        if (this.renderResult) {
+            this.mountResult(body, this.renderResult);
+            return;
+        }
+        if (this.renderPromise || this.idleHandle !== null) return;
+
+        this.idleHandle = requestMermaidIdleWork(() => {
+            this.idleHandle = null;
+            if (
+                this.destroyed ||
+                !this.isNearViewport ||
+                !outer.isConnected
+            ) {
+                return;
+            }
+            this.startRender(outer, body);
+        });
+    }
+
+    private deactivate(body: HTMLElement) {
+        if (this.idleHandle !== null) {
+            cancelMermaidIdleWork(this.idleHandle);
+            this.idleHandle = null;
+        }
+        if (this.renderResult) {
+            this.showDeferredPlaceholder(body);
+        }
+    }
+
+    private startRender(outer: HTMLElement, body: HTMLElement) {
+        if (this.renderPromise || this.renderResult || this.destroyed) return;
 
         const expectedId = this.diagramId;
         const expectedSource = this.source;
+        this.renderPromise = renderMermaidDiagram(this.source, this.diagramId);
+        void this.renderPromise.then((result) => {
+            this.renderPromise = null;
+            if (
+                this.destroyed ||
+                !outer.isConnected ||
+                outer.dataset.mermaidId !== expectedId ||
+                outer.dataset.mermaidSource !== expectedSource
+            ) {
+                return;
+            }
 
-        void renderMermaidDiagram(this.source, this.diagramId).then(
-            (result) => {
-                if (
-                    !outer.isConnected ||
-                    outer.dataset.mermaidId !== expectedId ||
-                    outer.dataset.mermaidSource !== expectedSource
-                ) {
-                    return;
-                }
+            this.renderResult = result;
+            if (this.isNearViewport) {
+                this.mountResult(body, result);
+            } else {
+                this.showDeferredPlaceholder(body);
+            }
+        });
+    }
 
-                body.replaceChildren();
-                if (result.status === "ok") {
-                    body.className =
-                        "cm-mermaid-preview-body cm-mermaid-preview-body-rendered";
-                    const svg = parseMermaidSvg(result.svg);
-                    if (svg) {
-                        body.appendChild(svg);
-                        body.appendChild(
-                            createMermaidFullscreenButton(result.svg),
-                        );
-                    } else {
-                        renderMermaidError(
-                            body,
-                            "Unable to read Mermaid SVG output.",
-                        );
-                    }
-                    return;
-                }
+    private mountResult(body: HTMLElement, result: MermaidRenderResult) {
+        body.replaceChildren();
+        body.style.removeProperty("min-height");
 
-                renderMermaidError(body, result.message);
-            },
-        );
+        if (result.status === "ok") {
+            body.className =
+                "cm-mermaid-preview-body cm-mermaid-preview-body-rendered";
+            const svg = parseMermaidSvg(result.svg);
+            if (svg) {
+                body.appendChild(svg);
+                body.appendChild(createMermaidFullscreenButton(result.svg));
+                return;
+            }
+            renderMermaidError(body, "Unable to read Mermaid SVG output.");
+            return;
+        }
 
-        return outer;
+        renderMermaidError(body, result.message);
+    }
+
+    private showDeferredPlaceholder(body: HTMLElement) {
+        const renderedHeight = Math.ceil(body.getBoundingClientRect().height);
+        body.className = "cm-mermaid-preview-body";
+        body.replaceChildren();
+        body.textContent = translate("Rendering Mermaid diagram...");
+        if (renderedHeight > 0) {
+            body.style.minHeight = `${renderedHeight}px`;
+        }
+    }
+
+    private dispose() {
+        this.destroyed = true;
+        this.observer?.disconnect();
+        this.observer = null;
+        if (this.idleHandle !== null) {
+            cancelMermaidIdleWork(this.idleHandle);
+            this.idleHandle = null;
+        }
+    }
+
+    destroy(dom: HTMLElement) {
+        // CodeMirror may reuse an equal widget's DOM with a newer widget
+        // instance. Always dispose the instance that originally owns it.
+        mermaidWidgetOwners.get(dom)?.dispose();
+        mermaidWidgetOwners.delete(dom);
     }
 
     ignoreEvent() {
         return true;
     }
+}
+
+function requestMermaidIdleWork(callback: () => void) {
+    if ("requestIdleCallback" in globalThis) {
+        return globalThis.requestIdleCallback(callback, { timeout: 200 });
+    }
+    return window.setTimeout(callback, 16);
+}
+
+function cancelMermaidIdleWork(handle: number) {
+    if ("cancelIdleCallback" in globalThis) {
+        globalThis.cancelIdleCallback(handle);
+        return;
+    }
+    window.clearTimeout(handle);
 }
 
 const codeBlockFenceHidden = Decoration.line({
