@@ -32,6 +32,12 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.2.2] - 2026-08-14
+
+### Fixed
+
+- Fixed the standalone Settings window becoming too transparent to read by matching its title bar and sidebar glass surfaces to the main window while keeping the settings content opaque.
+
 ## [1.2.1] - 2026-08-14
 
 ### Fixed

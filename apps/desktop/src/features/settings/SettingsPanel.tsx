@@ -5671,10 +5671,9 @@ export function SettingsPanel({
     const isStandaloneNativeTitlebarOverlay =
         standalone &&
         (desktopPlatform === "windows" || desktopPlatform === "linux");
-    // Standalone Settings uses the native window material (macOS vibrancy,
-    // Windows 11 acrylic) on the top bar and left sidebar. The outer shell
-    // stays transparent so the material shows through; the content pane
-    // re-anchors to a solid bg so only the chrome is translucent.
+    // Standalone Settings uses the same native glass surfaces as the main
+    // window. The outer shell stays transparent so the material shows
+    // through, while the content pane re-anchors to a solid background.
     const useWindowMaterial =
         standalone &&
         (desktopPlatform === "macos" || desktopPlatform === "windows");
@@ -5682,7 +5681,10 @@ export function SettingsPanel({
         ? "transparent"
         : "var(--bg-primary)";
     const chromeBackground = useWindowMaterial
-        ? "var(--sidebar-vibrancy-tint, var(--bg-secondary))"
+        ? "var(--window-glass-chrome, var(--bg-secondary))"
+        : "var(--bg-secondary)";
+    const sidebarBackground = useWindowMaterial
+        ? "var(--window-glass-panel, var(--bg-secondary))"
         : "var(--bg-secondary)";
     const [active, setActive] = useState<Category>(resolvedInitialCategory);
     const [search, setSearch] = useState("");
@@ -5824,6 +5826,20 @@ export function SettingsPanel({
                         void standaloneWindow?.startDragging();
                     }
                 }}
+                shellStyle={
+                    useWindowMaterial
+                        ? {
+                              background: chromeBackground,
+                              borderBottom:
+                                  "1px solid var(--window-glass-hairline, var(--border))",
+                              backdropFilter: "blur(28px) saturate(150%)",
+                              WebkitBackdropFilter:
+                                  "blur(28px) saturate(150%)",
+                              boxShadow:
+                                  "inset 0 1px 0 var(--window-glass-highlight, transparent), 0 8px 28px var(--window-glass-glow, transparent)",
+                          }
+                        : undefined
+                }
                 barStyle={{
                     alignItems: "center",
                     position: "relative",
@@ -5833,9 +5849,13 @@ export function SettingsPanel({
                     // 140px — reserve that space so the header content never
                     // slides under them.
                     paddingRight: isStandaloneNativeTitlebarOverlay ? 140 : 20,
-                    borderBottom: "1px solid var(--border)",
+                    borderBottom: useWindowMaterial
+                        ? undefined
+                        : "1px solid var(--border)",
                     flexShrink: 0,
-                    backgroundColor: chromeBackground,
+                    backgroundColor: useWindowMaterial
+                        ? "transparent"
+                        : chromeBackground,
                     cursor: standalone ? "default" : undefined,
                 }}
             >
@@ -5898,13 +5918,19 @@ export function SettingsPanel({
             >
                 {/* Sidebar */}
                 <div
+                    data-testid="settings-sidebar"
                     style={{
                         width: 220,
                         flexShrink: 0,
-                        borderRight: "1px solid var(--border)",
+                        borderRight: useWindowMaterial
+                            ? "1px solid var(--window-glass-hairline, var(--border))"
+                            : "1px solid var(--border)",
                         display: "flex",
                         flexDirection: "column",
-                        backgroundColor: chromeBackground,
+                        backgroundColor: sidebarBackground,
+                        boxShadow: useWindowMaterial
+                            ? "inset -1px 0 0 var(--window-glass-highlight, transparent), 12px 0 34px var(--window-glass-glow, transparent)"
+                            : "none",
                         overflow: "hidden",
                     }}
                 >
