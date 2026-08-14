@@ -1387,14 +1387,14 @@ function StatusMessage({ message }: { message: AIChatMessage }) {
             <div
                 className="min-w-0 max-w-full rounded-lg px-2.5 py-2"
                 style={{
-                    border: "1px solid color-mix(in srgb, #dc2626 30%, var(--border))",
+                    border: "1px solid color-mix(in srgb, var(--diff-remove) 30%, var(--border))",
                     backgroundColor:
-                        "color-mix(in srgb, #dc2626 8%, transparent)",
+                        "color-mix(in srgb, var(--diff-remove) 8%, var(--bg-primary))",
                 }}
             >
                 <div
                     className="flex items-center gap-2"
-                    style={{ color: "#f87171" }}
+                    style={{ color: "var(--diff-remove)" }}
                 >
                     <svg
                         width="14"
@@ -2346,8 +2346,10 @@ function ErrorMessage({
         <div
             className="group flex min-w-0 max-w-full items-start gap-2 rounded-lg px-2.5 py-2 pr-1.5"
             style={{
-                color: "#fca5a5",
-                backgroundColor: "color-mix(in srgb, #dc2626 8%, transparent)",
+                color: "var(--diff-remove)",
+                backgroundColor:
+                    "color-mix(in srgb, var(--diff-remove) 8%, var(--bg-primary))",
+                border: "1px solid color-mix(in srgb, var(--diff-remove) 28%, var(--border))",
                 fontSize: "0.85em",
             }}
         >
@@ -2361,7 +2363,6 @@ function ErrorMessage({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 className="mt-0.5 shrink-0"
-                style={{ color: "#f87171" }}
             >
                 <circle cx="7" cy="7" r="5.5" />
                 <path d="M7 4.5v3M7 9.5h.005" />
@@ -2383,12 +2384,12 @@ function ErrorMessage({
                     onClick={() => onDismiss(message.id)}
                     className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
                     style={{
-                        color: "#fecaca",
+                        color: "var(--diff-remove)",
                         backgroundColor: "transparent",
                     }}
                     onMouseEnter={(event) => {
                         event.currentTarget.style.backgroundColor =
-                            "color-mix(in srgb, #fecaca 12%, transparent)";
+                            "color-mix(in srgb, var(--diff-remove) 12%, transparent)";
                     }}
                     onMouseLeave={(event) => {
                         event.currentTarget.style.backgroundColor =
