@@ -242,6 +242,9 @@ const emptyListCaretAnchorDecoration = Decoration.widget({
     widget: emptyListCaretAnchorWidget,
     side: -1,
 });
+const emptyListPrefixHideMark = Decoration.mark({
+    class: "cm-lp-hidden cm-lp-empty-list-prefix",
+});
 
 function createMathMark(display: "inline" | "block") {
     return Decoration.mark({
@@ -253,8 +256,6 @@ function getHeadingLevel(nodeName: string): number | null {
     if (nodeName.startsWith("ATXHeading")) {
         return parseInt(nodeName.slice(10), 10);
     }
-    if (nodeName === "SetextHeading1") return 1;
-    if (nodeName === "SetextHeading2") return 2;
     return null;
 }
 
@@ -816,8 +817,6 @@ const headingRule: NodeRule = (node, context) => {
         return;
     }
 
-    const isSetext = node.name.startsWith("SetextHeading");
-
     // Collect header marks in a single pass
     const headerMarks: Array<{ from: number; to: number }> = [];
     const childCursor = node.node.cursor();
@@ -832,54 +831,22 @@ const headingRule: NodeRule = (node, context) => {
         } while (childCursor.nextSibling());
     }
 
-    // For setext headings, don't apply heading style while editing the
-    // underline.  This prevents the paragraph from suddenly becoming an h2
-    // when the user types "-" to start a list below it.
-    let editingUnderline = false;
-    if (isSetext) {
-        editingUnderline = headerMarks.some((markRange) => {
-            registerRevealSensitiveRange(
-                context,
-                "line",
-                markRange.from,
-                markRange.to,
-            );
-            return selectionTouchesLine(
-                context.state,
-                markRange.from,
-                markRange.to,
-            );
-        });
-    }
-
-    if (!editingUnderline) {
-        const mark = headingMarks[headingLevel];
-        if (mark) {
-            pushDeco(context, node.from, node.to, mark);
-        }
+    const mark = headingMarks[headingLevel];
+    if (mark) {
+        pushDeco(context, node.from, node.to, mark);
     }
 
     for (const hm of headerMarks) {
         if (editingHeadingLine) continue;
 
-        let hideFrom = hm.from;
+        const hideFrom = hm.from;
         let hideTo = hm.to;
 
-        if (node.name.startsWith("ATXHeading")) {
-            if (
-                hideTo < node.to &&
-                context.state.doc.sliceString(hideTo, hideTo + 1) === " "
-            ) {
-                hideTo++;
-            }
-        }
-
         if (
-            isSetext &&
-            hideFrom > node.from &&
-            context.state.doc.sliceString(hideFrom - 1, hideFrom) === "\n"
+            hideTo < node.to &&
+            context.state.doc.sliceString(hideTo, hideTo + 1) === " "
         ) {
-            hideFrom--;
+            hideTo++;
         }
 
         hideRange(context, hideFrom, hideTo);
@@ -959,7 +926,12 @@ const listMarkRule: NodeRule = (node, context) => {
         line.to,
     );
 
-    hideRange(context, line.from, hideTo);
+    hideRange(
+        context,
+        line.from,
+        hideTo,
+        activeEmptyItem ? emptyListPrefixHideMark : hideMark,
+    );
     if (activeEmptyItem && !isTaskItem) {
         addEmptyListCaretAnchor(context, hideTo);
     }

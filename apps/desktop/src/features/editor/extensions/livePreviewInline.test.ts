@@ -243,7 +243,14 @@ describe("createInlineLivePreviewPlugin", () => {
 
         const decorations = collectDecorations(view, plugin);
 
-        expect(hasHiddenRange(decorations, 0, 2)).toBe(true);
+        expect(
+            hasHiddenRange(
+                decorations,
+                0,
+                2,
+                "cm-lp-hidden cm-lp-empty-list-prefix",
+            ),
+        ).toBe(true);
         expect(
             decorations.some((deco) =>
                 deco.className.split(" ").includes("cm-lp-li-line"),
@@ -264,7 +271,14 @@ describe("createInlineLivePreviewPlugin", () => {
         const decorations = collectDecorations(view, plugin);
 
         expect(hasHiddenRange(decorations, 0, 2)).toBe(true);
-        expect(hasHiddenRange(decorations, 9, doc.length)).toBe(true);
+        expect(
+            hasHiddenRange(
+                decorations,
+                9,
+                doc.length,
+                "cm-lp-hidden cm-lp-empty-list-prefix",
+            ),
+        ).toBe(true);
 
         view.destroy();
         parent.remove();
@@ -380,13 +394,44 @@ describe("createInlineLivePreviewPlugin", () => {
 
         const decorations = collectDecorations(view, plugin);
 
-        expect(hasHiddenRange(decorations, 0, 2)).toBe(true);
+        expect(
+            hasHiddenRange(
+                decorations,
+                0,
+                2,
+                "cm-lp-hidden cm-lp-empty-list-prefix",
+            ),
+        ).toBe(true);
         expect(hasHiddenRange(decorations, 2, doc.length)).toBe(true);
         expect(
             decorations.some((deco) =>
                 deco.className.split(" ").includes("cm-lp-task-line"),
             ),
         ).toBe(true);
+
+        view.destroy();
+        parent.remove();
+    });
+
+    it("does not render Setext syntax as a heading when a lone hyphen follows text", () => {
+        const doc = "asfsdf\n1asdfsadf\n-";
+        const { plugin, parent, view } = createView(
+            doc,
+            EditorSelection.cursor(doc.length),
+        );
+
+        const decorations = collectDecorations(view, plugin);
+
+        expect(
+            decorations.some((deco) =>
+                deco.className.split(" ").some((className) =>
+                    className.startsWith("cm-lp-h"),
+                ),
+            ),
+        ).toBe(false);
+        expect(hasHiddenRange(decorations, doc.length - 1, doc.length)).toBe(
+            false,
+        );
 
         view.destroy();
         parent.remove();

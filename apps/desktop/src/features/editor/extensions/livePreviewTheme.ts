@@ -20,6 +20,8 @@ export const livePreviewTheme = EditorView.baseTheme({
         display: "inline-block",
         width: "0",
         height: "1em",
+        fontSize: "var(--editor-font-size)",
+        lineHeight: "var(--text-input-line-height)",
         overflow: "hidden",
         verticalAlign: "text-bottom",
     },
@@ -30,6 +32,13 @@ export const livePreviewTheme = EditorView.baseTheme({
         width: "0",
         overflow: "hidden",
         opacity: "0",
+    },
+    ".cm-lp-hidden.cm-lp-empty-list-prefix": {
+        // The prefix remains zero-width and invisible, but it must retain the
+        // editor font metrics. Otherwise CodeMirror measures the caret against
+        // the zero-sized hidden marker and renders only a tiny dot.
+        fontSize: "var(--editor-font-size)",
+        lineHeight: "var(--text-input-line-height)",
     },
     ".cm-lp-hidden-inline": {
         display: "inline-block",
