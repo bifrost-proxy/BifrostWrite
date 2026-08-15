@@ -32,6 +32,13 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.2.8] - 2026-08-15
+
+### Changed
+
+- Added consistent spacing between adjacent rendered code cards in Markdown live preview.
+- Kept document location, status, live-preview, and line-wrapping controls pinned to the top of the editor while scrolling.
+
 ## [1.2.7] - 2026-08-14
 
 ### Changed
