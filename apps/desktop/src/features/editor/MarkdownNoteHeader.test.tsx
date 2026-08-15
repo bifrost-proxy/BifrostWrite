@@ -45,6 +45,15 @@ function renderHeader(lineWrapping: boolean) {
     );
 
     return {
+        spacer: document.querySelector(
+            '[data-editor-note-toolbar-spacer="true"]',
+        ) as HTMLElement | null,
+        toolbar: document.querySelector(
+            '[data-editor-note-toolbar="true"]',
+        ) as HTMLElement | null,
+        toolbarInner: document.querySelector(
+            '[data-editor-note-toolbar-inner="true"]',
+        ) as HTMLElement | null,
         outer: document.querySelector(
             '[data-editor-note-header="true"]',
         ) as HTMLElement | null,
@@ -64,13 +73,29 @@ describe("MarkdownNoteHeader", () => {
     });
 
     it("keeps the centered reading layout when line wrapping is enabled", () => {
-        const { outer, inner } = renderHeader(true);
+        const { spacer, toolbar, toolbarInner, outer, inner } =
+            renderHeader(true);
+        expect(spacer).toHaveStyle({ height: "32px", flex: "0 0 100%" });
+        expect(toolbar).toHaveAttribute("data-line-wrapping", "true");
+        expect(toolbar).toHaveStyle({
+            position: "sticky",
+            top: "0px",
+            width: "100%",
+            flex: "0 0 100%",
+            padding: "6px var(--editor-horizontal-inset)",
+        });
+        expect(toolbarInner).toHaveStyle({
+            width: "min(100%, var(--editor-content-width))",
+            maxWidth: "var(--editor-content-width)",
+            margin: "0 auto",
+        });
         expect(outer).not.toBeNull();
         expect(inner).not.toBeNull();
         expect(outer).toHaveAttribute("data-line-wrapping", "true");
         expect(outer).toHaveStyle({
             width: "100%",
-            padding: "40px var(--editor-horizontal-inset) 0",
+            padding: "14px var(--editor-horizontal-inset) 0",
+            flex: "0 0 100%",
         });
         expect(inner).toHaveStyle({
             width: "min(100%, var(--editor-content-width))",
@@ -82,13 +107,18 @@ describe("MarkdownNoteHeader", () => {
     });
 
     it("switches to a left-aligned layout when line wrapping is disabled", () => {
-        const { outer, inner } = renderHeader(false);
+        const { toolbarInner, outer, inner } = renderHeader(false);
         expect(outer).not.toBeNull();
         expect(inner).not.toBeNull();
         expect(outer).toHaveAttribute("data-line-wrapping", "false");
         expect(outer).toHaveStyle({
             width: "100%",
-            padding: "40px var(--editor-horizontal-inset) 0",
+            padding: "14px var(--editor-horizontal-inset) 0",
+        });
+        expect(toolbarInner).toHaveStyle({
+            width: "100%",
+            maxWidth: "none",
+            margin: "0px",
         });
         expect(inner).toHaveStyle({
             width: "100%",

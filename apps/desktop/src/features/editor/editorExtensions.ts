@@ -75,8 +75,10 @@ export const baseTheme = EditorView.theme({
         overflowY: "auto",
     },
     ".cm-lp-scroll-header": {
-        flex: "0 0 100%",
-        boxSizing: "border-box",
+        // Let the spacer, sticky action bar, and document header participate
+        // directly in the scroller's flex layout. A sticky descendant would
+        // otherwise stop sticking at the bottom of this short wrapper.
+        display: "contents",
     },
     ".cm-content": {
         flex: "1 1 0%",

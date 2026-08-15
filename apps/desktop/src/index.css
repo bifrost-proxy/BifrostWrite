@@ -758,6 +758,7 @@ html[data-desktop-platform="windows"].dark {
     --code-fence-radius: 6px;
     --code-fence-inline-size: min(100%, 68ch);
     --editor-code-fence-inline-size: min(100%, 88ch);
+    --editor-code-card-gap: 0.75rem;
 }
 
 .chat-code-frame {
@@ -796,7 +797,7 @@ html[data-desktop-platform="windows"].dark {
 }
 
 .cm-code-block-header-shell {
-    padding-top: 0.25rem;
+    padding-top: var(--editor-code-card-gap);
     font-family: var(--font-mono), ui-monospace, monospace;
     font-size: 0.93em;
 }
@@ -820,14 +821,14 @@ html[data-desktop-platform="windows"].dark {
 .cm-code-block-header-shell-unlabeled {
     position: relative;
     z-index: 10;
-    height: 0;
+    height: var(--editor-code-card-gap);
     padding-top: 0;
     pointer-events: none;
 }
 
 .cm-code-block-header-unlabeled {
     position: absolute;
-    top: 0.55em;
+    top: calc(100% + 0.55em);
     right: 0.55em;
     min-height: 0;
     padding: 0;
@@ -841,7 +842,7 @@ html[data-desktop-platform="windows"].dark {
 
 .cm-code-block-header-shell-unlabeled-empty {
     height: auto;
-    padding-top: 0.25rem;
+    padding-top: var(--editor-code-card-gap);
 }
 
 .cm-code-block-header-unlabeled.cm-code-block-header-only {

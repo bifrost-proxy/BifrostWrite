@@ -2593,9 +2593,15 @@ describe("Editor", () => {
         renderComponent(<Editor />);
 
         const firstView = getEditorView();
-        expect(firstView.scrollDOM.firstElementChild).toHaveClass(
-            "cm-lp-scroll-header",
-        );
+        const firstScrollHeader = firstView.scrollDOM
+            .firstElementChild as HTMLElement;
+        expect(firstScrollHeader).toHaveClass("cm-lp-scroll-header");
+        expect(getComputedStyle(firstScrollHeader).display).toBe("contents");
+        expect(
+            firstScrollHeader.querySelector(
+                '[data-editor-note-toolbar="true"]',
+            ),
+        ).toHaveStyle({ position: "sticky", top: "0px" });
 
         await act(async () => {
             useEditorStore.getState().switchTab("tab-2");
