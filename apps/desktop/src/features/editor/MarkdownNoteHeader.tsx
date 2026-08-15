@@ -182,38 +182,56 @@ export function MarkdownNoteHeader({
 
     const bannerCopy = status ? BANNER_COPY[status] : undefined;
 
+    const readingWidth = lineWrapping
+        ? "min(100%, var(--editor-content-width))"
+        : "100%";
+    const readingMaxWidth = lineWrapping
+        ? "var(--editor-content-width)"
+        : "none";
+    const readingMargin = lineWrapping ? "0 auto" : "0";
+
     return (
-        <div
-            data-editor-note-header="true"
-            data-line-wrapping={String(lineWrapping)}
-            style={{
-                width: "100%",
-                padding: "40px var(--editor-horizontal-inset) 0",
-                boxSizing: "border-box",
-            }}
-        >
+        <>
             <div
-                data-editor-note-header-inner="true"
+                aria-hidden="true"
+                data-editor-note-toolbar-spacer="true"
                 style={{
-                    width: lineWrapping
-                        ? "min(100%, var(--editor-content-width))"
-                        : "100%",
-                    maxWidth: lineWrapping
-                        ? "var(--editor-content-width)"
-                        : "none",
-                    minWidth: 0,
-                    margin: lineWrapping ? "0 auto" : "0",
+                    flex: "0 0 100%",
+                    width: "100%",
+                    height: 32,
+                }}
+            />
+            <div
+                data-editor-note-toolbar="true"
+                data-line-wrapping={String(lineWrapping)}
+                style={{
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 30,
+                    flex: "0 0 100%",
+                    width: "100%",
+                    padding: "6px var(--editor-horizontal-inset)",
+                    boxSizing: "border-box",
+                    background:
+                        "color-mix(in srgb, var(--bg-primary) 94%, var(--bg-secondary))",
+                    borderBottom:
+                        "1px solid color-mix(in srgb, var(--border) 72%, transparent)",
+                    boxShadow: "0 5px 14px rgb(0 0 0 / 0.06)",
+                    backdropFilter: "blur(14px)",
+                    WebkitBackdropFilter: "blur(14px)",
                 }}
             >
-                {/* Location breadcrumb + OKF status / type badges */}
                 <div
+                    data-editor-note-toolbar-inner="true"
                     style={{
+                        width: readingWidth,
+                        maxWidth: readingMaxWidth,
+                        minWidth: 0,
+                        margin: readingMargin,
                         display: "flex",
                         alignItems: "center",
                         gap: 8,
                         flexWrap: "wrap",
-                        minWidth: 0,
-                        marginBottom: 14,
                     }}
                 >
                     {locationSegments.length > 0 && (
@@ -264,61 +282,83 @@ export function MarkdownNoteHeader({
                         <MetaBadge
                             label={translate("No OKF type")}
                             tone="muted"
-                            title={translate("OKF vaults expect a type field in frontmatter")}
+                            title={translate(
+                                "OKF vaults expect a type field in frontmatter",
+                            )}
                             onClick={() => {
                                 if (!propertiesExpanded) onToggleProperties();
                             }}
                         />
                     )}
                 </div>
-
-                {/* Title row */}
-                <EditableNoteTitle
-                    value={editableTitle}
-                    onChange={onTitleChange}
-                    textareaRef={titleInputRef}
-                    onContextMenu={onTitleContextMenu}
-                />
-
-                {/* Toolbar: Properties toggle + Search */}
+            </div>
+            <div
+                data-editor-note-header="true"
+                data-line-wrapping={String(lineWrapping)}
+                style={{
+                    flex: "0 0 100%",
+                    width: "100%",
+                    padding: "14px var(--editor-horizontal-inset) 0",
+                    boxSizing: "border-box",
+                }}
+            >
                 <div
+                    data-editor-note-header-inner="true"
                     style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                        flexWrap: "wrap",
+                        width: readingWidth,
+                        maxWidth: readingMaxWidth,
                         minWidth: 0,
-                        marginTop: 12,
-                        marginBottom: 8,
+                        margin: readingMargin,
                     }}
                 >
-                    <ToolbarButton
-                        label={translate("Properties")}
-                        icon={<PropertiesIcon />}
-                        active={propertiesExpanded}
-                        onClick={onToggleProperties}
+                    {/* Title row */}
+                    <EditableNoteTitle
+                        value={editableTitle}
+                        onChange={onTitleChange}
+                        textareaRef={titleInputRef}
+                        onContextMenu={onTitleContextMenu}
                     />
-                    <ToolbarButton
-                        label={translate("Search")}
-                        icon={<SearchIcon />}
-                        onClick={onSearchClick}
-                    />
-                </div>
 
-                {/* Trust banner (draft / in_review / deprecated / archived) */}
-                {status && bannerCopy && (
-                    <TrustBanner status={status} copy={bannerCopy} />
-                )}
-
-                {/* Properties body (expanded below toolbar) */}
-                {propertiesExpanded && (
-                    <div style={{ minWidth: 0, marginBottom: 8 }}>
-                        <FrontmatterBody
-                            raw={frontmatterRaw}
-                            onChange={onFrontmatterChange}
+                    {/* Toolbar: Properties toggle + Search */}
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                            flexWrap: "wrap",
+                            minWidth: 0,
+                            marginTop: 12,
+                            marginBottom: 8,
+                        }}
+                    >
+                        <ToolbarButton
+                            label={translate("Properties")}
+                            icon={<PropertiesIcon />}
+                            active={propertiesExpanded}
+                            onClick={onToggleProperties}
+                        />
+                        <ToolbarButton
+                            label={translate("Search")}
+                            icon={<SearchIcon />}
+                            onClick={onSearchClick}
                         />
                     </div>
-                )}
+
+                    {/* Trust banner (draft / in_review / deprecated / archived) */}
+                    {status && bannerCopy && (
+                        <TrustBanner status={status} copy={bannerCopy} />
+                    )}
+
+                    {/* Properties body (expanded below toolbar) */}
+                    {propertiesExpanded && (
+                        <div style={{ minWidth: 0, marginBottom: 8 }}>
+                            <FrontmatterBody
+                                raw={frontmatterRaw}
+                                onChange={onFrontmatterChange}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
 
             {statusMenu && (
@@ -340,7 +380,7 @@ export function MarkdownNoteHeader({
                     ]}
                 />
             )}
-        </div>
+        </>
     );
 }
 
