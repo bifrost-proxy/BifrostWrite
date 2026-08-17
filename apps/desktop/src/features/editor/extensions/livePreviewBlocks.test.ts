@@ -12,6 +12,10 @@ import {
 } from "./livePreviewBlocks";
 import { exitFencedCodeBlock, livePreviewExtension } from "./livePreview";
 import { renderMermaidDiagram } from "../mermaid/mermaidRenderer";
+import {
+    OPEN_IMAGE_PREVIEW_EVENT,
+    type OpenImagePreviewPayload,
+} from "../imagePreview";
 
 vi.mock("../mermaid/mermaidRenderer", () => ({
     renderMermaidDiagram: vi.fn(),
@@ -86,6 +90,45 @@ describe("resolvePreviewAssetPath", () => {
                 "/vault/notes/daily/today.md",
             ),
         ).toBe("/vault/attachments/diagram.png");
+    });
+});
+
+describe("image live preview", () => {
+    it("opens a rendered image in the zoom overlay without replacing its widget", () => {
+        const parent = document.createElement("div");
+        document.body.appendChild(parent);
+        const doc = [
+            "![Architecture](https://example.com/architecture.png)",
+            "",
+            "After image",
+        ].join("\n");
+        const state = createLivePreviewState(doc, doc.length);
+        const view = new EditorView({ state, parent });
+        const image = view.dom.querySelector<HTMLImageElement>(
+            ".cm-inline-image",
+        );
+        const previews: OpenImagePreviewPayload[] = [];
+        const handlePreview = (event: Event) => {
+            previews.push(
+                (event as CustomEvent<OpenImagePreviewPayload>).detail,
+            );
+        };
+        window.addEventListener(OPEN_IMAGE_PREVIEW_EVENT, handlePreview);
+
+        expect(image).not.toBeNull();
+        image!.click();
+
+        expect(previews).toEqual([
+            {
+                src: "https://example.com/architecture.png",
+                alt: "Architecture",
+            },
+        ]);
+        expect(image!.isConnected).toBe(true);
+
+        window.removeEventListener(OPEN_IMAGE_PREVIEW_EVENT, handlePreview);
+        view.destroy();
+        parent.remove();
     });
 });
 

@@ -60,6 +60,7 @@ import {
 import { createMermaidFullscreenButton } from "../mermaid/mermaidFullscreen";
 import { parseMermaidSvg } from "../mermaid/mermaidSvg";
 import { formatCodeFenceLanguageLabel } from "../codeFencePresentation";
+import { openImagePreview } from "../imagePreview";
 
 const IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|svg|webp|bmp|ico|avif)([?#].*)?$/i;
 const PDF_EXTENSION = /\.pdf([?#].*)?$/i;
@@ -483,6 +484,20 @@ class ImageWidget extends WidgetType {
         img.draggable = false;
         img.loading = "lazy";
         img.decoding = "async";
+        img.tabIndex = 0;
+        img.setAttribute("role", "button");
+        img.setAttribute("aria-label", translate("Open image preview"));
+        img.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            openImagePreview(this.src, this.alt);
+        });
+        img.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            event.stopPropagation();
+            openImagePreview(this.src, this.alt);
+        });
         if (this.title) img.title = this.title;
         if (this.width) {
             img.style.width = `${this.width}px`;

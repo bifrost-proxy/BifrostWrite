@@ -331,6 +331,9 @@ export const CURATED_ZH_CN_TRANSLATIONS: Readonly<Record<string, string>> = {
     "Mermaid canvas": "Mermaid 画布",
     "Mermaid file mode": "Mermaid 文件模式",
     "Mermaid preview": "Mermaid 预览",
+    "Image preview": "图片预览",
+    "Image canvas": "图片画布",
+    "Open image preview": "放大查看图片",
     "Mermaid source is empty.": "Mermaid 源码为空。",
     "Open Mermaid fullscreen": "全屏查看 Mermaid",
     "Pinch to zoom • Scroll to pan • Esc to close":

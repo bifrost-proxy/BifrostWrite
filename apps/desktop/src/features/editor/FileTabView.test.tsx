@@ -23,6 +23,10 @@ import {
     setVaultEntries,
 } from "../../test/test-utils";
 import { resetExternalReloadBaselinesForTests } from "./externalReloadBaselineCache";
+import {
+    OPEN_IMAGE_PREVIEW_EVENT,
+    type OpenImagePreviewPayload,
+} from "./imagePreview";
 
 function seedTrackedDiff(
     targetPath: string,
@@ -109,6 +113,40 @@ describe("FileTabView", () => {
         expect(vi.mocked(openPath)).toHaveBeenCalledWith(
             "/vault/assets/photo.webp",
         );
+    });
+
+    it("opens image files in the zoom preview by click", async () => {
+        const user = userEvent.setup();
+        const previews: OpenImagePreviewPayload[] = [];
+        const handlePreview = (event: Event) => {
+            previews.push(
+                (event as CustomEvent<OpenImagePreviewPayload>).detail,
+            );
+        };
+        window.addEventListener(OPEN_IMAGE_PREVIEW_EVENT, handlePreview);
+
+        setEditorTabs([
+            {
+                id: "image-tab",
+                kind: "file",
+                relativePath: "assets/photo.webp",
+                title: "photo.webp",
+                path: "/vault/assets/photo.webp",
+                mimeType: "image/webp",
+                viewer: "image",
+                content: "",
+            },
+        ]);
+
+        renderComponent(<FileTabView />);
+        await user.click(
+            screen.getByRole("button", { name: "Open image preview" }),
+        );
+
+        expect(previews).toEqual([
+            expect.objectContaining({ alt: "photo.webp" }),
+        ]);
+        window.removeEventListener(OPEN_IMAGE_PREVIEW_EVENT, handlePreview);
     });
 
     it("supports Command + wheel zoom from fit mode", async () => {
