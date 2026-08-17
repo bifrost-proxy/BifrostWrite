@@ -729,6 +729,7 @@ export const livePreviewTheme = EditorView.baseTheme({
         maxHeight: "500px",
         borderRadius: "6px",
         objectFit: "contain",
+        cursor: "zoom-in",
     },
     ".cm-inline-image-fallback": {
         color: "var(--text-secondary)",

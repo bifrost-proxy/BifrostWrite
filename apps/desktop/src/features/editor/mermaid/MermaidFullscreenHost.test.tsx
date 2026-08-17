@@ -6,6 +6,7 @@ import {
     createMermaidFullscreenButton,
     openMermaidFullscreen,
 } from "./mermaidFullscreen";
+import { openImagePreview } from "../imagePreview";
 
 const TEST_SVG = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
@@ -95,5 +96,55 @@ describe("MermaidFullscreenHost", () => {
         fireEvent.keyDown(window, { key: "Escape" });
 
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("previews images with the same zoom overlay", () => {
+        renderComponent(<MermaidFullscreenHost />);
+
+        act(() => openImagePreview("https://example.com/photo.png", "Photo"));
+
+        expect(
+            screen.getByRole("dialog", { name: "Image preview" }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole("img", { name: "Photo" })).toHaveAttribute(
+            "src",
+            "https://example.com/photo.png",
+        );
+
+        fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+        expect(screen.getByRole("button", { name: "Reset zoom" })).toHaveTextContent(
+            "125%",
+        );
+    });
+
+    it("keeps the source Mermaid node mounted and preserves body layout styles", () => {
+        renderComponent(<MermaidFullscreenHost />);
+        const source = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "svg",
+        );
+        const sourceText = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "text",
+        );
+        sourceText.textContent = "Source diagram";
+        source.appendChild(sourceText);
+        document.body.appendChild(source);
+        document.body.style.overflow = "auto";
+
+        act(() => openMermaidFullscreen(source));
+
+        expect(source.isConnected).toBe(true);
+        expect(source.parentElement).toBe(document.body);
+        expect(document.body.style.overflow).toBe("auto");
+        expect(screen.getAllByText("Source diagram")).toHaveLength(2);
+
+        fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+        expect(source.isConnected).toBe(true);
+        expect(source.parentElement).toBe(document.body);
+        expect(document.body.style.overflow).toBe("auto");
+        source.remove();
+        document.body.style.removeProperty("overflow");
     });
 });

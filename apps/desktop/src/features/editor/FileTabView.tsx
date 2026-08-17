@@ -26,6 +26,7 @@ import { formatZoomPercentage } from "../../app/utils/zoom";
 import { FileTextTabView } from "./FileTextTabView";
 import { CsvFileTabView } from "./CsvFileTabView";
 import { HtmlTabView } from "./HtmlTabView";
+import { openImagePreview } from "./imagePreview";
 
 const IMG_MIN_ZOOM = 0.1;
 const IMG_MAX_ZOOM = 10;
@@ -236,6 +237,17 @@ function ImageFileViewer({ tab }: { tab: FileTab }) {
             <FileHeader tab={tab}>
                 <button
                     type="button"
+                    onClick={() =>
+                        previewUrl && openImagePreview(previewUrl, tab.title)
+                    }
+                    className="inline-flex items-center rounded px-1.5 text-[10px]"
+                    style={headerButtonStyle}
+                    disabled={!previewUrl || status === "error"}
+                >
+                    {translate("Preview")}
+                </button>
+                <button
+                    type="button"
                     onClick={setFit}
                     className="inline-flex items-center rounded px-1.5 text-[10px]"
                     style={isFit ? activeHeaderButtonStyle : headerButtonStyle}
@@ -314,6 +326,21 @@ function ImageFileViewer({ tab }: { tab: FileTab }) {
                             src={previewUrl ?? ""}
                             alt={tab.title}
                             draggable={false}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={translate("Open image preview")}
+                            onClick={() =>
+                                previewUrl &&
+                                openImagePreview(previewUrl, tab.title)
+                            }
+                            onKeyDown={(event) => {
+                                if (event.key !== "Enter" && event.key !== " ")
+                                    return;
+                                event.preventDefault();
+                                if (previewUrl) {
+                                    openImagePreview(previewUrl, tab.title);
+                                }
+                            }}
                             onLoad={() => setStatus("ready")}
                             onError={() => setStatus("error")}
                             style={{
@@ -322,6 +349,7 @@ function ImageFileViewer({ tab }: { tab: FileTab }) {
                                 width: "auto",
                                 height: "auto",
                                 objectFit: "contain",
+                                cursor: "zoom-in",
                                 touchAction: IMAGE_TOUCH_ACTION,
                                 boxShadow: "0 16px 40px rgba(0, 0, 0, 0.18)",
                             }}
@@ -338,6 +366,21 @@ function ImageFileViewer({ tab }: { tab: FileTab }) {
                             src={previewUrl ?? ""}
                             alt={tab.title}
                             draggable={false}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={translate("Open image preview")}
+                            onClick={() =>
+                                previewUrl &&
+                                openImagePreview(previewUrl, tab.title)
+                            }
+                            onKeyDown={(event) => {
+                                if (event.key !== "Enter" && event.key !== " ")
+                                    return;
+                                event.preventDefault();
+                                if (previewUrl) {
+                                    openImagePreview(previewUrl, tab.title);
+                                }
+                            }}
                             onLoad={() => setStatus("ready")}
                             onError={() => setStatus("error")}
                             style={{
@@ -348,6 +391,7 @@ function ImageFileViewer({ tab }: { tab: FileTab }) {
                                 transformOrigin: "center top",
                                 transform: `scale(${zoom})`,
                                 touchAction: IMAGE_TOUCH_ACTION,
+                                cursor: "zoom-in",
                                 boxShadow: "0 16px 40px rgba(0, 0, 0, 0.18)",
                             }}
                         />

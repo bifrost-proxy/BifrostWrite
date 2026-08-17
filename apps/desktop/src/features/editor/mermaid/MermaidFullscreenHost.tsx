@@ -6,6 +6,7 @@ import {
     useRef,
     useState,
 } from "react";
+import { createPortal } from "react-dom";
 import {
     isWheelZoomGesture,
     useWheelZoomModifier,
@@ -17,6 +18,10 @@ import {
     type OpenMermaidFullscreenPayload,
 } from "./mermaidFullscreen";
 import { parseMermaidSvg } from "./mermaidSvg";
+import {
+    OPEN_IMAGE_PREVIEW_EVENT,
+    type OpenImagePreviewPayload,
+} from "../imagePreview";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 8;
@@ -30,6 +35,10 @@ interface ZoomAnchor {
     nextZoom: number;
 }
 
+type PreviewContent =
+    | { kind: "mermaid"; source: string }
+    | { kind: "image"; src: string; alt: string };
+
 function clampZoom(value: number) {
     return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
 }
@@ -39,7 +48,7 @@ function clampScrollOffset(value: number) {
 }
 
 export function MermaidFullscreenHost() {
-    const [svgSource, setSvgSource] = useState<string | null>(null);
+    const [content, setContent] = useState<PreviewContent | null>(null);
     const [zoom, setZoom] = useState(1);
     const viewportRef = useRef<HTMLDivElement>(null);
     const svgMountRef = useRef<HTMLDivElement>(null);
@@ -47,15 +56,31 @@ export function MermaidFullscreenHost() {
     const pendingZoomAnchorRef = useRef<ZoomAnchor | null>(null);
     const previousFocusRef = useRef<HTMLElement | null>(null);
     const wheelZoomModifierRef = useWheelZoomModifier();
-    const svg = useMemo(
-        () => (svgSource ? parseMermaidSvg(svgSource) : null),
-        [svgSource],
-    );
+    const svg = useMemo(() => {
+        if (content?.kind !== "mermaid") return null;
+        return parseMermaidSvg(content.source);
+    }, [content]);
 
     const close = useCallback(() => {
-        setSvgSource(null);
+        setContent(null);
         pendingZoomAnchorRef.current = null;
-        window.setTimeout(() => previousFocusRef.current?.focus(), 0);
+        window.setTimeout(() => {
+            const previousFocus = previousFocusRef.current;
+            if (previousFocus?.isConnected) {
+                previousFocus.focus({ preventScroll: true });
+            }
+        }, 0);
+    }, []);
+
+    const open = useCallback((nextContent: PreviewContent) => {
+        previousFocusRef.current =
+            document.activeElement instanceof HTMLElement
+                ? document.activeElement
+                : null;
+        zoomRef.current = 1;
+        pendingZoomAnchorRef.current = null;
+        setZoom(1);
+        setContent(nextContent);
     }, []);
 
     const setZoomAround = useCallback((requestedZoom: number, anchor?: { x: number; y: number }) => {
@@ -81,30 +106,32 @@ export function MermaidFullscreenHost() {
                 .detail;
             if (!detail?.svg.trim() || !parseMermaidSvg(detail.svg)) return;
 
-            previousFocusRef.current =
-                document.activeElement instanceof HTMLElement
-                    ? document.activeElement
-                    : null;
-            zoomRef.current = 1;
-            pendingZoomAnchorRef.current = null;
-            setZoom(1);
-            setSvgSource(detail.svg);
+            open({ kind: "mermaid", source: detail.svg });
+        };
+
+        const handleOpenImage = (event: Event) => {
+            const detail = (event as CustomEvent<OpenImagePreviewPayload>)
+                .detail;
+            if (!detail?.src.trim()) return;
+            open({ kind: "image", src: detail.src, alt: detail.alt });
         };
 
         window.addEventListener(OPEN_MERMAID_FULLSCREEN_EVENT, handleOpen);
-        return () =>
+        window.addEventListener(OPEN_IMAGE_PREVIEW_EVENT, handleOpenImage);
+        return () => {
             window.removeEventListener(
                 OPEN_MERMAID_FULLSCREEN_EVENT,
                 handleOpen,
             );
-    }, []);
+            window.removeEventListener(
+                OPEN_IMAGE_PREVIEW_EVENT,
+                handleOpenImage,
+            );
+        };
+    }, [open]);
 
     useEffect(() => {
-        if (!svgSource) return;
-
-        const previousOverflow = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
-        viewportRef.current?.focus();
+        if (!content) return;
 
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key !== "Escape") return;
@@ -115,14 +142,13 @@ export function MermaidFullscreenHost() {
 
         window.addEventListener("keydown", handleKeyDown, true);
         return () => {
-            document.body.style.overflow = previousOverflow;
             window.removeEventListener("keydown", handleKeyDown, true);
         };
-    }, [close, svgSource]);
+    }, [close, content]);
 
     useEffect(() => {
         const viewport = viewportRef.current;
-        if (!viewport || !svgSource) return;
+        if (!viewport || !content) return;
         let gestureStartZoom = zoomRef.current;
 
         const handleWheel = (event: WheelEvent) => {
@@ -171,7 +197,7 @@ export function MermaidFullscreenHost() {
             viewport.removeEventListener("gesturestart", handleGestureStart);
             viewport.removeEventListener("gesturechange", handleGestureChange);
         };
-    }, [setZoomAround, svgSource, wheelZoomModifierRef]);
+    }, [content, setZoomAround, wheelZoomModifierRef]);
 
     useLayoutEffect(() => {
         const viewport = viewportRef.current;
@@ -202,9 +228,13 @@ export function MermaidFullscreenHost() {
         mount.replaceChildren(clone);
     }, [svg]);
 
-    if (!svgSource || !svg) return null;
+    if (!content || (content.kind === "mermaid" && !svg)) return null;
 
-    return (
+    const previewLabel = translate(
+        content.kind === "mermaid" ? "Mermaid preview" : "Image preview",
+    );
+
+    return createPortal(
         <div
             className="fixed inset-0"
             style={{
@@ -215,7 +245,7 @@ export function MermaidFullscreenHost() {
             }}
             role="dialog"
             aria-modal="true"
-            aria-label={translate("Mermaid preview")}
+            aria-label={previewLabel}
         >
             <div
                 className="absolute left-4 top-4 z-10 rounded-lg px-3 py-2 text-[12px] font-semibold"
@@ -226,7 +256,7 @@ export function MermaidFullscreenHost() {
                     boxShadow: "var(--shadow-soft)",
                 }}
             >
-                {translate("Mermaid preview")}
+                {previewLabel}
             </div>
 
             <div
@@ -295,29 +325,57 @@ export function MermaidFullscreenHost() {
                     touchAction: "pan-x pan-y pinch-zoom",
                 }}
                 tabIndex={-1}
-                aria-label={translate("Mermaid canvas")}
+                aria-label={translate(
+                    content.kind === "mermaid"
+                        ? "Mermaid canvas"
+                        : "Image canvas",
+                )}
             >
-                <div
-                    className="flex min-h-full items-start justify-center"
-                    style={{
-                        width: `${zoom * 100}%`,
-                        margin: "0 auto",
-                    }}
-                >
+                {content.kind === "mermaid" ? (
                     <div
-                        ref={svgMountRef}
+                        className="flex min-h-full items-start justify-center"
                         style={{
-                            width: "100%",
-                            minWidth: 0,
-                            borderRadius: 12,
-                            padding: 16,
-                            background: "var(--bg-primary)",
-                            boxShadow: "0 24px 80px rgb(0 0 0 / 0.22)",
+                            width: `${zoom * 100}%`,
+                            margin: "0 auto",
                         }}
-                    />
-                </div>
+                    >
+                        <div
+                            ref={svgMountRef}
+                            style={{
+                                width: "100%",
+                                minWidth: 0,
+                                borderRadius: 12,
+                                padding: 16,
+                                background: "var(--bg-primary)",
+                                boxShadow: "0 24px 80px rgb(0 0 0 / 0.22)",
+                            }}
+                        />
+                    </div>
+                ) : (
+                    <div
+                        className="flex min-h-full min-w-full items-start justify-center"
+                    >
+                        <div style={{ zoom }}>
+                            <img
+                                src={content.src}
+                                alt={content.alt}
+                                draggable={false}
+                                style={{
+                                    display: "block",
+                                    maxWidth: "calc(100vw - 64px)",
+                                    maxHeight: "calc(100vh - 96px)",
+                                    objectFit: "contain",
+                                    borderRadius: 12,
+                                    boxShadow:
+                                        "0 24px 80px rgb(0 0 0 / 0.28)",
+                                }}
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
-        </div>
+        </div>,
+        document.body,
     );
 }
 
