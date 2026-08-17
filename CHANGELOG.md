@@ -32,6 +32,16 @@ refactors, dependency updates, CI changes, and code cleanup do not belong here.
 
 ---
 
+## [1.2.9] - 2026-08-17
+
+### Added
+
+- Added click-to-open image previews for Markdown images and image files, with trackpad zoom, panning, toolbar zoom controls, reset, Escape-to-close, and a close button.
+
+### Fixed
+
+- Kept the original Mermaid editor and rendered diagram mounted while the full-screen preview is open, preventing editor rerenders and scroll-position shifts when the preview closes.
+
 ## [1.2.8] - 2026-08-15
 
 ### Changed
